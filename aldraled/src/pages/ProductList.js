@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
 const CATEGORIES = ['Alle', 'Bedrijfswagens', 'Bouwverlichting', 'Werkplaats', 'Accessoires'];
 
 const getImageSrc = (url) => {
@@ -178,7 +178,7 @@ const ProductList = () => {
   useEffect(() => {
     axios.get(`${API_URL}/api/products`)
       .then(res => { setProducts(res.data); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch((err) => { console.error('Failed to load products:', err); setLoading(false); });
   }, []);
 
   const filteredProducts = products.filter(p => {

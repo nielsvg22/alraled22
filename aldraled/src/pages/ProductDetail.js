@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
 
 const SPECS = [
   { label: "Lichtopbrengst", value: "12.000 Lumen" },
