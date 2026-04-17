@@ -50,6 +50,13 @@ ensureAdmin();
 
 app.use(cors());
 app.use(express.json());
+
+// Log all requests
+app.use((req, res, next) => {
+  console.log(`[server] ${req.method} ${req.url}`);
+  next();
+});
+
 const uploadsDir = process.env.UPLOADS_DIR
   ? path.resolve(process.env.UPLOADS_DIR)
   : path.join(process.cwd(), 'uploads');
