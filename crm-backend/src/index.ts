@@ -16,11 +16,37 @@ import aiRoutes from './routes/aiRoutes';
 import geoRoutes from './routes/geoRoutes';
 import snelstartRoutes from './routes/snelstartRoutes';
 import discountCodeRoutes from './routes/discountCodeRoutes';
+import { db } from './lib/db';
+import { users } from './db/schema';
+import bcrypt from 'bcryptjs';
+import { sql } from 'drizzle-orm';
 
 dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT || 5000);
+
+// Ensure default admin exists
+async function ensureAdmin() {
+  try {
+    const userCountResult = db.select({ count: sql<number>`count(*)` }).from(users).get();
+    const userCount = userCountResult?.count ?? 0;
+    if (userCount === 0) {
+      console.log('[server] No users found. Creating default admin...');
+      const hashedPassword = await bcrypt.hash('admin1234', 12);
+      db.insert(users).values({
+        email: 'admin@alraled.nl',
+        password: hashedPassword,
+        name: 'Admin',
+        role: 'ADMIN',
+      }).run();
+      console.log('[server] Default admin created: admin@alraled.nl / admin1234');
+    }
+  } catch (err) {
+    console.error('[server] Error ensuring admin:', err);
+  }
+}
+ensureAdmin();
 
 app.use(cors());
 app.use(express.json());
