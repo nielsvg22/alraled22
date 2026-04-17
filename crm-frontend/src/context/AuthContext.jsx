@@ -9,20 +9,27 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const bootstrapAuth = async () => {
-      const savedUser = localStorage.getItem('user');
-      const token = localStorage.getItem('token');
-
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
-      }
-
       try {
-        const res = await api.get('/auth/me');
+        const savedUser = localStorage.getItem('user');
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+          setUser(null);
+          return;
+        }
+
+        if (savedUser) {
+          try {
+            setUser(JSON.parse(savedUser));
+          } catch {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setUser(null);
+            return;
+          }
+        }
+
+        const res = await api.get('/auth/me', { timeout: 15000 });
         localStorage.setItem('user', JSON.stringify(res.data));
         setUser(res.data);
       } catch (error) {
