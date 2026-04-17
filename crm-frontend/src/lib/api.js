@@ -18,7 +18,13 @@ function normalizeBaseUrl(value) {
 }
 
 const API_URL = normalizeBaseUrl(import.meta.env.VITE_API_URL) || 'http://localhost:5000';
-const API_BASE = normalizeBaseUrl(import.meta.env.VITE_API_BASE) || `${API_URL}/api`;
+const API_BASE_FROM_ENV = normalizeBaseUrl(import.meta.env.VITE_API_BASE);
+
+const API_BASE = API_BASE_FROM_ENV
+  ? API_BASE_FROM_ENV
+  : API_URL.endsWith('/api')
+    ? API_URL
+    : `${API_URL}/api`;
 
 const api = axios.create({
   baseURL: API_BASE,
