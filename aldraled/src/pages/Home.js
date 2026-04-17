@@ -108,7 +108,7 @@ function useTypewriter(words, speed = 80, pause = 2000) {
       }
     }, delay);
     return () => clearTimeout(timer);
-  }, [charIdx, deleting, wordIdx, words, speed, pause]);
+  }, [charIdx, deleting, wordIdx, words, speed, pause, isTest]);
 
   return display;
 }

@@ -29,7 +29,6 @@ const ProductDetail = () => {
   const [related, setRelated]           = useState([]);
   const [fbt, setFbt]                   = useState([]);
   const [explicit, setExplicit]         = useState([]);
-  const [alternatives, setAlternatives] = useState([]);
   const [bundle, setBundle]             = useState(null);
   const [loading, setLoading]           = useState(true);
   const [qty, setQty]                   = useState(1);
@@ -48,7 +47,6 @@ const ProductDetail = () => {
           .then(r => {
             setFbt(r.data?.fbt || []);
             setExplicit(r.data?.explicit?.map(e => e.relatedProduct) || []);
-            setAlternatives(r.data?.alternatives || []);
             setBundle(r.data?.bundle || null);
             setRelated((r.data?.alternatives || []).slice(0, 4));
           })

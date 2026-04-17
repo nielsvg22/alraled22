@@ -71,7 +71,7 @@ const Footer = () => {
             </p>
             <div className="flex gap-3 pt-1">
               {['Li', 'Ig', 'Fb'].map(s => (
-                <a key={s} href="#" className="w-8 h-8 bg-white/10 hover:bg-primary rounded-lg flex items-center justify-center text-[10px] font-bold text-white/60 hover:text-white transition-all">
+                <a key={s} href="#!" className="w-8 h-8 bg-white/10 hover:bg-primary rounded-lg flex items-center justify-center text-[10px] font-bold text-white/60 hover:text-white transition-all">
                   {s}
                 </a>
               ))}
@@ -133,8 +133,8 @@ const Footer = () => {
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-white/30">
           <span>© {new Date().getFullYear()} {general.bottomCopy}</span>
           <div className="flex gap-5">
-            <a href="#" className="hover:text-white/60 transition-colors">{general.privacyLabel}</a>
-            <a href="#" className="hover:text-white/60 transition-colors">{general.termsLabel}</a>
+            <a href="#!" className="hover:text-white/60 transition-colors">{general.privacyLabel}</a>
+            <a href="#!" className="hover:text-white/60 transition-colors">{general.termsLabel}</a>
           </div>
         </div>
       </div>

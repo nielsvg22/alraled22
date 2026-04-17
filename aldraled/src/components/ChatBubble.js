@@ -72,6 +72,18 @@ export default function ChatBubble() {
   const primaryRgb = 'rgb(var(--color-primary))';
   const primaryAlpha = (a) => `rgba(var(--color-primary)/${a})`;
 
+  const { i18n } = useTranslation();
+  const [general, setGeneral] = useState({});
+
+  useEffect(() => {
+    const lang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
+    axios.get(`${API_URL}/api/content/general`, { params: { lang } })
+      .then(res => setGeneral(res.data))
+      .catch(() => {});
+  }, [i18n.resolvedLanguage, i18n.language]);
+
+  const toggleOpen = () => setOpen(!open);
+
   return (
     <>
       {/* ── Chat panel ─────────────────────────── */}

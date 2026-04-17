@@ -8,6 +8,7 @@ function readTime(text = '') {
   return Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 200));
 }
 
+/*
 function HeroPost({ block }) {
   const { id, data } = block;
   const title   = data.title || data.heading || 'Zonder titel';
@@ -23,13 +24,11 @@ function HeroPost({ block }) {
           <img src={image} alt={title}
             className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-35 group-hover:scale-[1.03] transition-all duration-700 ease-out" />
         )}
-        {/* Grain texture overlay */}
         <div className="absolute inset-0 opacity-[0.15]"
           style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")` }} />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%)' }} />
 
         <div className="relative px-8 md:px-14 py-16 md:py-24 flex flex-col justify-end min-h-[480px]">
-          {/* Index number */}
           <span className="absolute top-8 right-10 text-white/10 font-black text-8xl select-none leading-none">01</span>
 
           <div className="space-y-4 max-w-2xl">
@@ -89,13 +88,11 @@ function ListPost({ block, index }) {
   return (
     <Link to={`/blog/${id}`}
       className="group flex gap-5 py-6 border-b border-gray-100 hover:border-gray-300 transition-colors last:border-0">
-      {/* Number */}
       <span className="text-2xl font-black text-gray-100 group-hover:text-gray-200 transition-colors select-none shrink-0 leading-none mt-1"
         style={{ fontVariantNumeric: 'tabular-nums' }}>
         {num}
       </span>
 
-      {/* Content */}
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-center gap-2 text-[11px] text-gray-400 font-medium">
           {date && <span>{date}</span>}
@@ -121,7 +118,6 @@ function ListPost({ block, index }) {
         </div>
       </div>
 
-      {/* Thumb */}
       {image && (
         <div className="w-24 h-20 rounded-xl overflow-hidden shrink-0 bg-gray-100">
           <img src={image} alt={title}
@@ -131,6 +127,7 @@ function ListPost({ block, index }) {
     </Link>
   );
 }
+*/
 
 function GridPost({ block, index }) {
   const { id, data } = block;
@@ -209,8 +206,8 @@ export default function Blog() {
   }, []);
 
   const articles = blocks.filter(b => ['blog_post','image_text','text_block'].includes(b.type));
-  const featured = articles[0] || null;
-  const rest     = articles.slice(1);
+  // const featured = articles[0] || null;
+  // const rest     = articles.slice(1);
 
   return (
     <div className="min-h-screen bg-white">
