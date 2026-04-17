@@ -2,6 +2,9 @@
   "name": "aldraled",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "@stripe/stripe-js": "^8.7.0",
     "@testing-library/dom": "^10.4.1",
