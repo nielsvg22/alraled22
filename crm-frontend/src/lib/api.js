@@ -3,7 +3,18 @@ import axios from 'axios';
 function normalizeBaseUrl(value) {
   const raw = String(value || '').trim();
   const unquoted = raw.replace(/^['"]|['"]$/g, '');
-  return unquoted.replace(/\/+$/, '');
+  const trimmed = unquoted.replace(/\/+$/, '');
+
+  if (!trimmed) return '';
+  if (trimmed.startsWith('/')) return trimmed;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith('localhost') || trimmed.startsWith('127.0.0.1')) {
+    return `http://${trimmed}`;
+  }
+  if (trimmed.includes('.')) {
+    return `https://${trimmed}`;
+  }
+  return trimmed;
 }
 
 const API_URL = normalizeBaseUrl(import.meta.env.VITE_API_URL) || 'http://localhost:5000';
