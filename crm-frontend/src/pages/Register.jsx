@@ -8,16 +8,22 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault?.();
+    e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    setError('');
     try {
       await register(email, password, name);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || err.response?.data?.message || err.message || 'Registration failed');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -65,10 +71,10 @@ export default function Register() {
           <div>
             <button
               type="submit"
-              onClick={handleSubmit}
+              disabled={submitting}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
-              Register
+              {submitting ? 'Registering...' : 'Register'}
             </button>
           </div>
           <div className="text-center text-sm">
