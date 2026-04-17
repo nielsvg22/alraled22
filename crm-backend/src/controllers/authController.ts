@@ -54,23 +54,21 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-    process.stdout.write(`Login attempt for: ${email}\n`);
+    console.log(`[auth] Login attempt: ${email}`);
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    process.stdout.write('Finding user...\n');
     const user = db.select().from(users).where(eq(users.email, email)).get();
-    process.stdout.write(`User found: ${!!user}\n`);
     if (!user) {
+      console.log(`[auth] User not found: ${email}`);
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    process.stdout.write('Comparing passwords...\n');
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    process.stdout.write(`Password valid: ${isPasswordValid}\n`);
     if (!isPasswordValid) {
+      console.log(`[auth] Invalid password for: ${email}`);
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
@@ -80,10 +78,10 @@ export const login = async (req: Request, res: Response) => {
       { expiresIn: '1d' }
     );
 
+    console.log(`[auth] Login successful: ${email} (${user.role})`);
     res.json({ user: { id: user.id, email: user.email, name: user.name, role: user.role }, token });
   } catch (error: any) {
-    process.stdout.write(`Login error: ${error.message}\n`);
-    process.stdout.write(`Login error stack: ${error.stack}\n`);
+    console.error(`[auth] Login error:`, error);
     res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 };

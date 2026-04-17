@@ -8,127 +8,6 @@ function readTime(text = '') {
   return Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 200));
 }
 
-/*
-function HeroPost({ block }) {
-  const { id, data } = block;
-  const title   = data.title || data.heading || 'Zonder titel';
-  const excerpt = data.excerpt || data.body  || '';
-  const image   = data.imageUrl;
-  const author  = data.author || 'ALRA LED';
-  const date    = data.date   || '';
-
-  return (
-    <Link to={`/blog/${id}`} className="group block">
-      <div className="relative overflow-hidden rounded-none md:rounded-2xl" style={{ background: '#0a0a0a' }}>
-        {image && (
-          <img src={image} alt={title}
-            className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-35 group-hover:scale-[1.03] transition-all duration-700 ease-out" />
-        )}
-        <div className="absolute inset-0 opacity-[0.15]"
-          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")` }} />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%)' }} />
-
-        <div className="relative px-8 md:px-14 py-16 md:py-24 flex flex-col justify-end min-h-[480px]">
-          <span className="absolute top-8 right-10 text-white/10 font-black text-8xl select-none leading-none">01</span>
-
-          <div className="space-y-4 max-w-2xl">
-            <div className="flex items-center gap-3">
-              <div className="h-px w-8" style={{ background: 'rgb(var(--color-primary))' }} />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'rgb(var(--color-primary))' }}>
-                Uitgelicht
-              </span>
-            </div>
-
-            <h2 className="text-3xl md:text-5xl font-black text-white leading-[1.1] tracking-tight group-hover:text-white/90 transition-colors">
-              {title}
-            </h2>
-
-            {excerpt && (
-              <p className="text-white/50 text-base leading-relaxed line-clamp-2 font-light">{excerpt}</p>
-            )}
-
-            <div className="flex items-center gap-5 pt-3">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full text-white text-[10px] font-black flex items-center justify-center"
-                  style={{ background: 'rgba(var(--color-primary)/0.7)' }}>
-                  {author[0]?.toUpperCase()}
-                </div>
-                <span className="text-white/40 text-xs font-medium">{author}</span>
-              </div>
-              {date && <span className="text-white/25 text-xs">·</span>}
-              {date && <span className="text-white/40 text-xs">{date}</span>}
-              <span className="text-white/25 text-xs">·</span>
-              <span className="text-white/40 text-xs">{readTime(excerpt)} min</span>
-            </div>
-
-            <div className="pt-2">
-              <span className="inline-flex items-center gap-2 text-sm font-bold border-b border-white/20 pb-0.5 group-hover:border-white/60 transition-colors text-white/70 group-hover:text-white">
-                Lees artikel
-                <svg className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function ListPost({ block, index }) {
-  const { id, data } = block;
-  const title   = data.title || data.heading || 'Zonder titel';
-  const excerpt = data.excerpt || data.body  || '';
-  const image   = data.imageUrl;
-  const author  = data.author || 'ALRA LED';
-  const date    = data.date   || '';
-  const num     = String(index + 2).padStart(2, '0');
-
-  return (
-    <Link to={`/blog/${id}`}
-      className="group flex gap-5 py-6 border-b border-gray-100 hover:border-gray-300 transition-colors last:border-0">
-      <span className="text-2xl font-black text-gray-100 group-hover:text-gray-200 transition-colors select-none shrink-0 leading-none mt-1"
-        style={{ fontVariantNumeric: 'tabular-nums' }}>
-        {num}
-      </span>
-
-      <div className="flex-1 min-w-0 space-y-2">
-        <div className="flex items-center gap-2 text-[11px] text-gray-400 font-medium">
-          {date && <span>{date}</span>}
-          {date && <span>·</span>}
-          <span>{readTime(excerpt)} min lezen</span>
-        </div>
-        <h3 className="font-black text-gray-900 text-lg leading-snug group-hover:text-primary transition-colors line-clamp-2"
-          style={{ '--tw-text-opacity': 1 }}>
-          <span className="group-hover:underline decoration-2 underline-offset-2"
-            style={{ textDecorationColor: 'rgb(var(--color-primary))' }}>
-            {title}
-          </span>
-        </h3>
-        {excerpt && (
-          <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed font-light">{excerpt}</p>
-        )}
-        <div className="flex items-center gap-2 pt-1">
-          <div className="w-5 h-5 rounded-full text-white text-[9px] font-black flex items-center justify-center shrink-0"
-            style={{ background: 'rgb(var(--color-primary))' }}>
-            {author[0]?.toUpperCase()}
-          </div>
-          <span className="text-xs text-gray-400">{author}</span>
-        </div>
-      </div>
-
-      {image && (
-        <div className="w-24 h-20 rounded-xl overflow-hidden shrink-0 bg-gray-100">
-          <img src={image} alt={title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-        </div>
-      )}
-    </Link>
-  );
-}
-*/
-
 function GridPost({ block, index }) {
   const { id, data } = block;
   const title   = data.title || data.heading || 'Zonder titel';
@@ -206,8 +85,6 @@ export default function Blog() {
   }, []);
 
   const articles = blocks.filter(b => ['blog_post','image_text','text_block'].includes(b.type));
-  // const featured = articles[0] || null;
-  // const rest     = articles.slice(1);
 
   return (
     <div className="min-h-screen bg-white">
