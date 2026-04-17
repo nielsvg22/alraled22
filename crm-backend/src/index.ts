@@ -19,7 +19,7 @@ import discountCodeRoutes from './routes/discountCodeRoutes';
 import { db } from './lib/db';
 import { users } from './db/schema';
 import bcrypt from 'bcryptjs';
-import { sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 dotenv.config();
 
@@ -29,19 +29,33 @@ const PORT = Number(process.env.PORT || 5000);
 // Ensure default admin exists
 async function ensureAdmin() {
   try {
-    const userCountResult = await db.select({ count: sql<number>`count(*)` }).from(users);
-    const userCount = Number(userCountResult[0]?.count ?? 0);
-    if (userCount === 0) {
-      console.log('[server] No users found. Creating default admin...');
-      const hashedPassword = await bcrypt.hash('admin1234', 12);
+    const adminEmail = 'admin@alraled.nl';
+    const adminPassword = 'admin1234';
+    const adminEmailLower = adminEmail.toLowerCase();
+
+    const existing = await db.select().from(users).where(eq(users.email, adminEmailLower));
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
+
+    if (existing.length === 0) {
+      console.log('[server] Creating default admin...');
       await db.insert(users).values({
-        email: 'admin@alraled.nl',
+        email: adminEmailLower,
         password: hashedPassword,
         name: 'Admin',
         role: 'ADMIN',
       });
-      console.log('[server] Default admin created: admin@alraled.nl / admin1234');
+      console.log(`[server] Default admin created: ${adminEmail} / ${adminPassword}`);
+      return;
     }
+
+    await db.update(users).set({
+      role: 'ADMIN',
+      password: hashedPassword,
+      name: existing[0]?.name ?? 'Admin',
+      updatedAt: new Date(),
+    }).where(eq(users.email, adminEmailLower));
+
+    console.log('[server] Default admin ensured');
   } catch (err) {
     console.error('[server] Error ensuring admin:', err);
   }
