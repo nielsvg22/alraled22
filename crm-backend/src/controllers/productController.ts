@@ -129,14 +129,13 @@ export const getProductRelations = async (req: Request, res: Response) => {
     const all = await productsRepo.listProducts({ category: undefined, search: undefined, lowStock: false });
     
     // Check for explicit relations
-    const explicit = db.select({
+    const explicit = await db.select({
       id: productRelations.id,
       relatedProduct: productsTable
     })
     .from(productRelations)
     .innerJoin(productsTable, eq(productRelations.relatedProductId, productsTable.id))
-    .where(eq(productRelations.productId, id))
-    .all();
+    .where(eq(productRelations.productId, id));
 
     const sameCategory = all.filter(p => p.id !== product.id && (!!product.category ? p.category === product.category : true));
     const shuffled = [...sameCategory].sort(() => Math.random() - 0.5);
@@ -170,11 +169,11 @@ export const addProductRelation = async (req: Request, res: Response) => {
     const { relatedProductId, type = 'RELATED' } = req.body;
     if (!relatedProductId) return res.status(400).json({ error: 'Related Product ID required' });
 
-    db.insert(productRelations).values({
+    await db.insert(productRelations).values({
       productId: id,
       relatedProductId,
       type
-    }).run();
+    });
 
     res.json({ ok: true });
   } catch (error) {
@@ -185,7 +184,7 @@ export const addProductRelation = async (req: Request, res: Response) => {
 export const deleteProductRelation = async (req: Request, res: Response) => {
   try {
     const relationId = req.params.relationId as string;
-    db.delete(productRelations).where(eq(productRelations.id, relationId)).run();
+    await db.delete(productRelations).where(eq(productRelations.id, relationId));
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
@@ -200,10 +199,10 @@ const priceTierSchema = z.array(z.object({
 export const getProductPriceTiers = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const tiers = db.query.productPriceTiers.findMany({
+    const tiers = await db.query.productPriceTiers.findMany({
       where: eq(productPriceTiers.productId, id),
       orderBy: (t, { asc }) => [asc(t.minQty)],
-    }).sync();
+    });
     res.json(tiers);
   } catch {
     res.status(500).json({ error: 'Internal server error' });
@@ -214,16 +213,20 @@ export const setProductPriceTiers = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const tiers = priceTierSchema.parse(req.body);
-    db.transaction((tx) => {
-      tx.delete(productPriceTiers).where(eq(productPriceTiers.productId, id)).run();
-      tx.insert(productPriceTiers).values(
-        tiers.map((t) => ({ productId: id, minQty: t.minQty, price: t.price }))
-      ).run();
+    
+    await db.transaction(async (tx) => {
+      await tx.delete(productPriceTiers).where(eq(productPriceTiers.productId, id));
+      if (tiers.length > 0) {
+        await tx.insert(productPriceTiers).values(
+          tiers.map((t) => ({ productId: id, minQty: t.minQty, price: t.price }))
+        );
+      }
     });
-    const updated = db.query.productPriceTiers.findMany({
+
+    const updated = await db.query.productPriceTiers.findMany({
       where: eq(productPriceTiers.productId, id),
       orderBy: (t, { asc }) => [asc(t.minQty)],
-    }).sync();
+    });
     res.json(updated);
   } catch (error: any) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.issues });

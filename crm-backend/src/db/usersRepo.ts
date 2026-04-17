@@ -1,4 +1,4 @@
-import { eq, sql, desc } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from '../lib/db';
 import { customerGroups, users } from './schema';
 import bcrypt from 'bcryptjs';
@@ -6,34 +6,38 @@ import bcrypt from 'bcryptjs';
 export type Role = 'USER' | 'ADMIN';
 
 export async function countUsers(): Promise<number> {
-  const result = db.select({ count: sql<number>`count(*)` }).from(users).get();
-  return result?.count ?? 0;
+  const result = await db.select({ count: sql<number>`count(*)` }).from(users);
+  return Number(result[0]?.count ?? 0);
 }
 
 export async function findUserByEmail(email: string) {
-  return db.select().from(users).where(eq(users.email, email.toLowerCase())).get() ?? null;
+  const result = await db.select().from(users).where(eq(users.email, email.toLowerCase()));
+  return result[0] ?? null;
 }
 
 export async function findUserById(id: string) {
-  return db.select().from(users).where(eq(users.id, id)).get() ?? null;
+  const result = await db.select().from(users).where(eq(users.id, id));
+  return result[0] ?? null;
 }
 
 export async function findUserByEmailWithGroup(email: string) {
-  return db.query.users.findFirst({
+  const user = await db.query.users.findFirst({
     where: eq(users.email, email.toLowerCase()),
     with: { customerGroup: true },
-  }).sync() ?? null;
+  });
+  return user ?? null;
 }
 
 export async function findUserByIdWithGroup(id: string) {
-  return db.query.users.findFirst({
+  const user = await db.query.users.findFirst({
     where: eq(users.id, id),
     with: { customerGroup: true },
-  }).sync() ?? null;
+  });
+  return user ?? null;
 }
 
 export async function listUsers() {
-  return db.query.users.findMany({
+  return await db.query.users.findMany({
     columns: {
       id: true,
       email: true,
@@ -45,21 +49,22 @@ export async function listUsers() {
     },
     with: { customerGroup: true },
     orderBy: (u, { desc }) => [desc(u.createdAt)],
-  }).sync();
+  });
 }
 
 export async function createUser(input: { email: string; name: string; password: string; role: Role }) {
   const passwordHash = await bcrypt.hash(input.password, 12);
   try {
-    const result = db.insert(users).values({
+    await db.insert(users).values({
       email: input.email.toLowerCase(),
       name: input.name,
       password: passwordHash,
       role: input.role,
-    }).returning().get();
-    return result;
+    });
+    return await findUserByEmail(input.email);
   } catch (error: any) {
-    if (error?.message?.includes('UNIQUE constraint failed')) {
+    // MySQL error code for duplicate entry
+    if (error?.code === 'ER_DUP_ENTRY' || error?.message?.includes('Duplicate entry')) {
       const err = new Error('User already exists');
       (err as any).code = 'USER_EXISTS';
       throw err;
@@ -73,18 +78,19 @@ export async function verifyPassword(user: { password: string }, password: strin
 }
 
 export async function setUserCustomerGroup(userId: string, customerGroupId: string | null) {
-  const group = customerGroupId
-    ? db.select().from(customerGroups).where(eq(customerGroups.id, customerGroupId)).get()
-    : null;
-  if (customerGroupId && !group) {
-    const err = new Error('Customer group not found');
-    (err as any).code = 'GROUP_NOT_FOUND';
-    throw err;
+  if (customerGroupId) {
+    const groupResult = await db.select().from(customerGroups).where(eq(customerGroups.id, customerGroupId));
+    if (groupResult.length === 0) {
+      const err = new Error('Customer group not found');
+      (err as any).code = 'GROUP_NOT_FOUND';
+      throw err;
+    }
   }
 
-  db.update(users).set({
+  await db.update(users).set({
     customerGroupId,
-    updatedAt: new Date().toISOString(),
-  }).where(eq(users.id, userId)).run();
-  return findUserByIdWithGroup(userId);
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+  
+  return await findUserByIdWithGroup(userId);
 }

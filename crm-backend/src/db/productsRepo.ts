@@ -39,29 +39,32 @@ export async function listProducts(filters: ProductFilters = {}) {
     conditions.push(lte(products.stock, 10));
   }
 
-  return db.select().from(products)
+  return await db.select().from(products)
     .where(conditions.length > 0 ? and(...(conditions as [ReturnType<typeof or>])) : undefined)
-    .orderBy(desc(products.createdAt))
-    .all();
+    .orderBy(desc(products.createdAt));
 }
 
 export async function getProduct(id: string) {
-  return db.select().from(products).where(eq(products.id, id)).get() ?? null;
+  const result = await db.select().from(products).where(eq(products.id, id));
+  return result[0] ?? null;
 }
 
 export async function createProduct(input: ProductInput) {
-  return db.insert(products).values({
+  const id = crypto.randomUUID();
+  await db.insert(products).values({
+    id,
     name: input.name,
     description: input.description ?? null,
     price: input.price,
     stock: input.stock,
     imageUrl: input.imageUrl ?? null,
     category: input.category ?? null,
-  }).returning().get();
+  });
+  return await getProduct(id);
 }
 
 export async function updateProduct(id: string, patch: Partial<ProductInput>) {
-  const result = db.update(products)
+  await db.update(products)
     .set({
       ...(patch.name !== undefined ? { name: patch.name } : {}),
       ...(patch.description !== undefined ? { description: patch.description } : {}),
@@ -69,27 +72,27 @@ export async function updateProduct(id: string, patch: Partial<ProductInput>) {
       ...(patch.stock !== undefined ? { stock: patch.stock } : {}),
       ...(patch.imageUrl !== undefined ? { imageUrl: patch.imageUrl } : {}),
       ...(patch.category !== undefined ? { category: patch.category } : {}),
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date(),
     })
-    .where(eq(products.id, id))
-    .returning()
-    .get();
-  return result ?? null;
+    .where(eq(products.id, id));
+  return await getProduct(id);
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
-  const result = db.delete(products).where(eq(products.id, id)).returning().get();
-  return result !== undefined;
+  const existing = await getProduct(id);
+  if (!existing) return false;
+  await db.delete(products).where(eq(products.id, id));
+  return true;
 }
 
 export async function getInventorySummary() {
-  const totalResult = db.select({ count: sql<number>`count(*)` }).from(products).get();
-  const lowStockResult = db.select({ count: sql<number>`count(*)` }).from(products).where(and(gt(products.stock, 0), lte(products.stock, 10))).get();
-  const outOfStockResult = db.select({ count: sql<number>`count(*)` }).from(products).where(lte(products.stock, 0)).get();
+  const totalResult = await db.select({ count: sql<number>`count(*)` }).from(products);
+  const lowStockResult = await db.select({ count: sql<number>`count(*)` }).from(products).where(and(gt(products.stock, 0), lte(products.stock, 10)));
+  const outOfStockResult = await db.select({ count: sql<number>`count(*)` }).from(products).where(lte(products.stock, 0));
 
-  const totalProducts = totalResult?.count ?? 0;
-  const lowStockProducts = lowStockResult?.count ?? 0;
-  const outOfStockProducts = outOfStockResult?.count ?? 0;
+  const totalProducts = Number(totalResult[0]?.count ?? 0);
+  const lowStockProducts = Number(lowStockResult[0]?.count ?? 0);
+  const outOfStockProducts = Number(outOfStockResult[0]?.count ?? 0);
 
   return {
     totalProducts,

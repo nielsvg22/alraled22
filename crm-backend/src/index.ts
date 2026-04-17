@@ -29,17 +29,17 @@ const PORT = Number(process.env.PORT || 5000);
 // Ensure default admin exists
 async function ensureAdmin() {
   try {
-    const userCountResult = db.select({ count: sql<number>`count(*)` }).from(users).get();
-    const userCount = userCountResult?.count ?? 0;
+    const userCountResult = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const userCount = Number(userCountResult[0]?.count ?? 0);
     if (userCount === 0) {
       console.log('[server] No users found. Creating default admin...');
       const hashedPassword = await bcrypt.hash('admin1234', 12);
-      db.insert(users).values({
+      await db.insert(users).values({
         email: 'admin@alraled.nl',
         password: hashedPassword,
         name: 'Admin',
         role: 'ADMIN',
-      }).run();
+      });
       console.log('[server] Default admin created: admin@alraled.nl / admin1234');
     }
   } catch (err) {
@@ -93,16 +93,12 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://0.0.0.0:${PORT}`);
 });
 
-// Graceful shutdown: flush WAL and close SQLite cleanly
+// Graceful shutdown
 const shutdown = (signal: string) => {
   console.log(`[server] ${signal} received — shutting down gracefully`);
   server.close(() => {
-    // db module closes sqlite connection on process exit automatically via better-sqlite3
-    console.log('[server] HTTP server closed');
     process.exit(0);
   });
-  // Force exit after 5 s if something hangs
-  setTimeout(() => process.exit(1), 5000).unref();
 };
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));

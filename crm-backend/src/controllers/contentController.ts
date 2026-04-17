@@ -15,24 +15,35 @@ function getStorageKey(baseKey: string, lang: string | null): string {
   return `${baseKey}.${lang}`;
 }
 
-export const fetchContent = (req: Request, res: Response) => {
+export const fetchContent = async (req: Request, res: Response) => {
   const key = req.params.key as string;
   const lang = normalizeLang(req.query.lang);
 
-  const data =
-    (lang ? getContent(getStorageKey(key, lang)) : null) ||
-    getContent(key) ||
-    (lang === 'nl' ? getContent(getStorageKey(key, lang)) : null);
+  const langKey = lang ? getStorageKey(key, lang) : null;
+  
+  let data = null;
+  if (langKey) {
+    data = await getContent(langKey);
+  }
+  
+  if (!data) {
+    data = await getContent(key);
+  }
+  
+  if (!data && lang === 'nl') {
+    data = await getContent(getStorageKey(key, 'nl'));
+  }
+
   if (!data) return res.status(404).json({ error: 'Not found' });
   res.json(data);
 };
 
-export const saveContent = (req: Request, res: Response) => {
+export const saveContent = async (req: Request, res: Response) => {
   const key = req.params.key as string;
   if (!key || typeof req.body !== 'object') {
     return res.status(400).json({ error: 'Invalid payload' });
   }
   const lang = normalizeLang(req.query.lang);
-  setContent(getStorageKey(key, lang), req.body);
+  await setContent(getStorageKey(key, lang), req.body);
   res.json({ ok: true });
 };

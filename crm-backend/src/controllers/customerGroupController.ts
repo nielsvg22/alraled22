@@ -13,7 +13,7 @@ const groupSchema = z.object({
 
 export const listCustomerGroups = async (_req: Request, res: Response) => {
   try {
-    const rows = db.select().from(customerGroups).all();
+    const rows = await db.select().from(customerGroups);
     res.json(rows);
   } catch {
     res.status(500).json({ error: 'Internal server error' });
@@ -23,14 +23,16 @@ export const listCustomerGroups = async (_req: Request, res: Response) => {
 export const createCustomerGroup = async (req: Request, res: Response) => {
   try {
     const data = groupSchema.parse(req.body);
-    const created = db.insert(customerGroups).values({
+    const id = crypto.randomUUID();
+    await db.insert(customerGroups).values({
+      id,
       name: data.name,
       discountPercent: data.discountPercent,
       vatReverseCharge: data.vatReverseCharge,
       netPrices: data.netPrices,
-      updatedAt: new Date().toISOString(),
-    }).returning().get();
-    res.status(201).json(created);
+    });
+    const result = await db.select().from(customerGroups).where(eq(customerGroups.id, id));
+    res.status(201).json(result[0]);
   } catch (error: any) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.issues });
     res.status(500).json({ error: 'Internal server error' });
@@ -41,19 +43,19 @@ export const updateCustomerGroup = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const patch = groupSchema.partial().parse(req.body);
-    const existing = db.select().from(customerGroups).where(eq(customerGroups.id, id)).get();
-    if (!existing) return res.status(404).json({ error: 'Not found' });
+    const existing = await db.select().from(customerGroups).where(eq(customerGroups.id, id));
+    if (existing.length === 0) return res.status(404).json({ error: 'Not found' });
 
-    db.update(customerGroups).set({
+    await db.update(customerGroups).set({
       ...(patch.name !== undefined ? { name: patch.name } : {}),
       ...(patch.discountPercent !== undefined ? { discountPercent: patch.discountPercent } : {}),
       ...(patch.vatReverseCharge !== undefined ? { vatReverseCharge: patch.vatReverseCharge } : {}),
       ...(patch.netPrices !== undefined ? { netPrices: patch.netPrices } : {}),
-      updatedAt: new Date().toISOString(),
-    }).where(eq(customerGroups.id, id)).run();
+      updatedAt: new Date(),
+    }).where(eq(customerGroups.id, id));
 
-    const updated = db.select().from(customerGroups).where(eq(customerGroups.id, id)).get();
-    res.json(updated);
+    const updated = await db.select().from(customerGroups).where(eq(customerGroups.id, id));
+    res.json(updated[0]);
   } catch (error: any) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.issues });
     res.status(500).json({ error: 'Internal server error' });
@@ -63,12 +65,11 @@ export const updateCustomerGroup = async (req: Request, res: Response) => {
 export const deleteCustomerGroup = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const existing = db.select().from(customerGroups).where(eq(customerGroups.id, id)).get();
-    if (!existing) return res.status(404).json({ error: 'Not found' });
-    db.delete(customerGroups).where(eq(customerGroups.id, id)).run();
+    const existing = await db.select().from(customerGroups).where(eq(customerGroups.id, id));
+    if (existing.length === 0) return res.status(404).json({ error: 'Not found' });
+    await db.delete(customerGroups).where(eq(customerGroups.id, id));
     res.status(204).send();
   } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-

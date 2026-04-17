@@ -1,106 +1,106 @@
-import { sqliteTable, text, real, integer } from 'drizzle-orm/sqlite-core';
+import { mysqlTable, varchar, double, int, text, timestamp, mysqlEnum } from 'drizzle-orm/mysql-core';
 import { relations, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 
-export const customerGroups = sqliteTable('CustomerGroup', {
-  id: text('id').primaryKey().$defaultFn(() => randomUUID()),
-  name: text('name').notNull().unique(),
-  discountPercent: real('discountPercent').notNull().default(0),
-  vatReverseCharge: integer('vatReverseCharge').notNull().default(0),
-  netPrices: integer('netPrices').notNull().default(1),
-  createdAt: text('createdAt').notNull().default(sql`(datetime('now'))`),
-  updatedAt: text('updatedAt').notNull().default(sql`(datetime('now'))`),
+export const customerGroups = mysqlTable('CustomerGroup', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  name: varchar('name', { length: 255 }).notNull().unique(),
+  discountPercent: double('discountPercent').notNull().default(0),
+  vatReverseCharge: int('vatReverseCharge').notNull().default(0),
+  netPrices: int('netPrices').notNull().default(1),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
 
-export const users = sqliteTable('User', {
-  id: text('id').primaryKey().$defaultFn(() => randomUUID()),
-  email: text('email').notNull().unique(),
-  password: text('password').notNull(),
-  name: text('name'),
-  role: text('role', { enum: ['USER', 'ADMIN'] }).notNull().default('USER'),
-  customerGroupId: text('customerGroupId').references(() => customerGroups.id, { onDelete: 'set null' }),
-  createdAt: text('createdAt').notNull().default(sql`(datetime('now'))`),
-  updatedAt: text('updatedAt').notNull().default(sql`(datetime('now'))`),
+export const users = mysqlTable('User', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  password: varchar('password', { length: 255 }).notNull(),
+  name: varchar('name', { length: 255 }),
+  role: mysqlEnum('role', ['USER', 'ADMIN']).notNull().default('USER'),
+  customerGroupId: varchar('customerGroupId', { length: 36 }).references(() => customerGroups.id, { onDelete: 'set null' }),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
 
-export const products = sqliteTable('Product', {
-  id: text('id').primaryKey().$defaultFn(() => randomUUID()),
-  name: text('name').notNull(),
+export const products = mysqlTable('Product', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
-  price: real('price').notNull(),
-  stock: integer('stock').notNull().default(0),
-  imageUrl: text('imageUrl'),
-  category: text('category'),
-  createdAt: text('createdAt').notNull().default(sql`(datetime('now'))`),
-  updatedAt: text('updatedAt').notNull().default(sql`(datetime('now'))`),
+  price: double('price').notNull(),
+  stock: int('stock').notNull().default(0),
+  imageUrl: varchar('imageUrl', { length: 512 }),
+  category: varchar('category', { length: 255 }),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
 
-export const productPriceTiers = sqliteTable('ProductPriceTier', {
-  id: text('id').primaryKey().$defaultFn(() => randomUUID()),
-  productId: text('productId').notNull().references(() => products.id, { onDelete: 'cascade' }),
-  minQty: integer('minQty').notNull(),
-  price: real('price').notNull(),
-  createdAt: text('createdAt').notNull().default(sql`(datetime('now'))`),
+export const productPriceTiers = mysqlTable('ProductPriceTier', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  productId: varchar('productId', { length: 36 }).notNull().references(() => products.id, { onDelete: 'cascade' }),
+  minQty: int('minQty').notNull(),
+  price: double('price').notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
 });
 
-export const orders = sqliteTable('Order', {
-  id: text('id').primaryKey().$defaultFn(() => randomUUID()),
-  userId: text('userId').notNull().references(() => users.id),
-  total: real('total').notNull(),
-  discountCodeId: text('discountCodeId').references(() => discountCodes.id),
-  discountAmount: real('discountAmount').notNull().default(0),
-  status: text('status', { enum: ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'] }).notNull().default('PENDING'),
-  createdAt: text('createdAt').notNull().default(sql`(datetime('now'))`),
-  updatedAt: text('updatedAt').notNull().default(sql`(datetime('now'))`),
+export const orders = mysqlTable('Order', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  userId: varchar('userId', { length: 36 }).notNull().references(() => users.id),
+  total: double('total').notNull(),
+  discountCodeId: varchar('discountCodeId', { length: 36 }).references(() => discountCodes.id),
+  discountAmount: double('discountAmount').notNull().default(0),
+  status: mysqlEnum('status', ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']).notNull().default('PENDING'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
 
-export const productRelations = sqliteTable('ProductRelation', {
-  id: text('id').primaryKey().$defaultFn(() => randomUUID()),
-  productId: text('productId').notNull().references(() => products.id, { onDelete: 'cascade' }),
-  relatedProductId: text('relatedProductId').notNull().references(() => products.id, { onDelete: 'cascade' }),
-  type: text('type', { enum: ['UPSELL', 'CROSS_SELL', 'RELATED'] }).notNull().default('RELATED'),
+export const productRelations = mysqlTable('ProductRelation', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  productId: varchar('productId', { length: 36 }).notNull().references(() => products.id, { onDelete: 'cascade' }),
+  relatedProductId: varchar('relatedProductId', { length: 36 }).notNull().references(() => products.id, { onDelete: 'cascade' }),
+  type: mysqlEnum('type', ['UPSELL', 'CROSS_SELL', 'RELATED']).notNull().default('RELATED'),
 });
 
-export const discountCodes = sqliteTable('DiscountCode', {
-  id: text('id').primaryKey().$defaultFn(() => randomUUID()),
-  code: text('code').notNull().unique(),
-  type: text('type', { enum: ['PERCENTAGE', 'FIXED'] }).notNull().default('PERCENTAGE'),
-  value: real('value').notNull(),
-  minOrderAmount: real('minOrderAmount').notNull().default(0),
-  startDate: text('startDate'),
-  endDate: text('endDate'),
-  usageLimit: integer('usageLimit'),
-  usageCount: integer('usageCount').notNull().default(0),
-  active: integer('active').notNull().default(1),
-  createdAt: text('createdAt').notNull().default(sql`(datetime('now'))`),
+export const discountCodes = mysqlTable('DiscountCode', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  code: varchar('code', { length: 50 }).notNull().unique(),
+  type: mysqlEnum('type', ['PERCENTAGE', 'FIXED']).notNull().default('PERCENTAGE'),
+  value: double('value').notNull(),
+  minOrderAmount: double('minOrderAmount').notNull().default(0),
+  startDate: timestamp('startDate'),
+  endDate: timestamp('endDate'),
+  usageLimit: int('usageLimit'),
+  usageCount: int('usageCount').notNull().default(0),
+  active: int('active').notNull().default(1),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
 });
 
-export const orderItems = sqliteTable('OrderItem', {
-  id: text('id').primaryKey().$defaultFn(() => randomUUID()),
-  orderId: text('orderId').notNull().references(() => orders.id),
-  productId: text('productId').references(() => products.id, { onDelete: 'set null' }),
-  quantity: integer('quantity').notNull(),
-  price: real('price').notNull(),
+export const orderItems = mysqlTable('OrderItem', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  orderId: varchar('orderId', { length: 36 }).notNull().references(() => orders.id),
+  productId: varchar('productId', { length: 36 }).references(() => products.id, { onDelete: 'set null' }),
+  quantity: int('quantity').notNull(),
+  price: double('price').notNull(),
 });
 
-export const rmas = sqliteTable('Rma', {
-  id: text('id').primaryKey().$defaultFn(() => randomUUID()),
-  orderId: text('orderId').notNull().references(() => orders.id),
-  userId: text('userId').notNull().references(() => users.id),
-  status: text('status', { enum: ['REQUESTED', 'APPROVED', 'REJECTED', 'RECEIVED', 'REFUNDED', 'CLOSED'] }).notNull().default('REQUESTED'),
+export const rmas = mysqlTable('Rma', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  orderId: varchar('orderId', { length: 36 }).notNull().references(() => orders.id),
+  userId: varchar('userId', { length: 36 }).notNull().references(() => users.id),
+  status: mysqlEnum('status', ['REQUESTED', 'APPROVED', 'REJECTED', 'RECEIVED', 'REFUNDED', 'CLOSED']).notNull().default('REQUESTED'),
   reason: text('reason'),
   message: text('message'),
   adminNote: text('adminNote'),
-  createdAt: text('createdAt').notNull().default(sql`(datetime('now'))`),
-  updatedAt: text('updatedAt').notNull().default(sql`(datetime('now'))`),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
 
-export const rmaItems = sqliteTable('RmaItem', {
-  id: text('id').primaryKey().$defaultFn(() => randomUUID()),
-  rmaId: text('rmaId').notNull().references(() => rmas.id),
-  orderItemId: text('orderItemId').notNull().references(() => orderItems.id),
-  quantity: integer('quantity').notNull(),
-  createdAt: text('createdAt').notNull().default(sql`(datetime('now'))`),
+export const rmaItems = mysqlTable('RmaItem', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  rmaId: varchar('rmaId', { length: 36 }).notNull().references(() => rmas.id),
+  orderItemId: varchar('orderItemId', { length: 36 }).notNull().references(() => orderItems.id),
+  quantity: int('quantity').notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
 });
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -156,42 +156,42 @@ export const rmaItemsRelations = relations(rmaItems, ({ one }) => ({
   orderItem: one(orderItems, { fields: [rmaItems.orderItemId], references: [orderItems.id] }),
 }));
 
-export const siteContent = sqliteTable('SiteContent', {
-  key: text('key').primaryKey(),
+export const siteContent = mysqlTable('SiteContent', {
+  key: varchar('key', { length: 255 }).primaryKey(),
   value: text('value').notNull(),
-  updatedAt: text('updatedAt').notNull().default(sql`(datetime('now'))`),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
 
-export const snelstartConfigs = sqliteTable('SnelstartConfig', {
-  id: text('id').primaryKey().$defaultFn(() => randomUUID()),
-  apiKey: text('apiKey'),
-  clientKey: text('clientKey'),
-  ledgerNumberSales: text('ledgerNumberSales'),
-  ledgerNumberVat21: text('ledgerNumberVat21'),
-  ledgerNumberVat9: text('ledgerNumberVat9'),
-  ledgerNumberVat0: text('ledgerNumberVat0'),
-  ledgerNumberShipping: text('ledgerNumberShipping'),
-  snelstartVatCode21: text('snelstartVatCode21'),
-  snelstartVatCode9: text('snelstartVatCode9'),
-  snelstartVatCode0: text('snelstartVatCode0'),
-  enabled: integer('enabled').notNull().default(0),
-  updatedAt: text('updatedAt').notNull().default(sql`(datetime('now'))`),
+export const snelstartConfigs = mysqlTable('SnelstartConfig', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  apiKey: varchar('apiKey', { length: 255 }),
+  clientKey: varchar('clientKey', { length: 255 }),
+  ledgerNumberSales: varchar('ledgerNumberSales', { length: 50 }),
+  ledgerNumberVat21: varchar('ledgerNumberVat21', { length: 50 }),
+  ledgerNumberVat9: varchar('ledgerNumberVat9', { length: 50 }),
+  ledgerNumberVat0: varchar('ledgerNumberVat0', { length: 50 }),
+  ledgerNumberShipping: varchar('ledgerNumberShipping', { length: 50 }),
+  snelstartVatCode21: varchar('snelstartVatCode21', { length: 50 }),
+  snelstartVatCode9: varchar('snelstartVatCode9', { length: 50 }),
+  snelstartVatCode0: varchar('snelstartVatCode0', { length: 50 }),
+  enabled: int('enabled').notNull().default(0),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
 
-export const snelstartSyncLogs = sqliteTable('SnelstartSyncLog', {
-  id: text('id').primaryKey().$defaultFn(() => randomUUID()),
-  orderId: text('orderId').notNull().references(() => orders.id),
-  status: text('status', { enum: ['SUCCESS', 'FAILED'] }).notNull(),
+export const snelstartSyncLogs = mysqlTable('SnelstartSyncLog', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  orderId: varchar('orderId', { length: 36 }).notNull().references(() => orders.id),
+  status: mysqlEnum('status', ['SUCCESS', 'FAILED']).notNull(),
   errorMessage: text('errorMessage'),
-  syncedAt: text('syncedAt').notNull().default(sql`(datetime('now'))`),
+  syncedAt: timestamp('syncedAt').notNull().defaultNow(),
 });
 
-export const snelstartLedgers = sqliteTable('SnelstartLedger', {
-  id: text('id').primaryKey().$defaultFn(() => randomUUID()),
-  code: text('code').notNull().unique(),
-  name: text('name').notNull(),
-  type: text('type', { enum: ['SALES', 'VAT', 'SHIPPING', 'OTHER'] }).notNull().default('OTHER'),
-  createdAt: text('createdAt').notNull().default(sql`(datetime('now'))`),
+export const snelstartLedgers = mysqlTable('SnelstartLedger', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  code: varchar('code', { length: 50 }).notNull().unique(),
+  name: varchar('name', { length: 255 }).notNull(),
+  type: mysqlEnum('type', ['SALES', 'VAT', 'SHIPPING', 'OTHER']).notNull().default('OTHER'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
 });
 
 export const snelstartSyncLogsRelations = relations(snelstartSyncLogs, ({ one }) => ({

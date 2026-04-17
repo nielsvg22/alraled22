@@ -9,15 +9,15 @@ const discountCodeSchema = z.object({
   type: z.enum(['PERCENTAGE', 'FIXED']),
   value: z.number().positive(),
   minOrderAmount: z.number().nonnegative().default(0),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  usageLimit: z.number().int().positive().optional(),
+  startDate: z.string().optional().nullable(),
+  endDate: z.string().optional().nullable(),
+  usageLimit: z.number().int().positive().optional().nullable(),
   active: z.number().int().min(0).max(1).default(1),
 });
 
 export const getDiscountCodes = async (req: Request, res: Response) => {
   try {
-    const codes = db.select().from(discountCodes).orderBy(desc(discountCodes.createdAt)).all();
+    const codes = await db.select().from(discountCodes).orderBy(desc(discountCodes.createdAt));
     res.json(codes);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch discount codes' });
@@ -27,7 +27,11 @@ export const getDiscountCodes = async (req: Request, res: Response) => {
 export const createDiscountCode = async (req: Request, res: Response) => {
   try {
     const payload = discountCodeSchema.parse(req.body);
-    db.insert(discountCodes).values(payload).run();
+    await db.insert(discountCodes).values({
+      ...payload,
+      startDate: payload.startDate ? new Date(payload.startDate) : null,
+      endDate: payload.endDate ? new Date(payload.endDate) : null,
+    });
     res.json({ ok: true });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.issues });
@@ -39,7 +43,11 @@ export const updateDiscountCode = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const payload = discountCodeSchema.partial().parse(req.body);
-    db.update(discountCodes).set(payload).where(eq(discountCodes.id, id)).run();
+    await db.update(discountCodes).set({
+      ...payload,
+      startDate: payload.startDate ? new Date(payload.startDate) : (payload.startDate === null ? null : undefined),
+      endDate: payload.endDate ? new Date(payload.endDate) : (payload.endDate === null ? null : undefined),
+    }).where(eq(discountCodes.id, id));
     res.json({ ok: true });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.issues });
@@ -50,7 +58,7 @@ export const updateDiscountCode = async (req: Request, res: Response) => {
 export const deleteDiscountCode = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    db.delete(discountCodes).where(eq(discountCodes.id, id)).run();
+    await db.delete(discountCodes).where(eq(discountCodes.id, id));
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete discount code' });
@@ -62,13 +70,14 @@ export const validateDiscountCode = async (req: Request, res: Response) => {
   if (!code) return res.status(400).json({ error: 'Code required' });
 
   try {
-    const now = new Date().toISOString();
-    const discount = db.select().from(discountCodes)
+    const now = new Date();
+    const discounts = await db.select().from(discountCodes)
       .where(and(
         eq(discountCodes.code, code.toUpperCase()),
         eq(discountCodes.active, 1)
-      ))
-      .get();
+      ));
+    
+    const discount = discounts[0];
 
     if (!discount) return res.status(404).json({ error: 'Invalid or inactive discount code' });
 

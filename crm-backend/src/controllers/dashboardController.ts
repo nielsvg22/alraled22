@@ -18,12 +18,12 @@ export async function getDashboardStats(req: AuthRequest, res: Response) {
 
     const inventory = await productsRepo.getInventorySummary();
 
-    const allOrders = db.query.orders.findMany({
+    const allOrders = await db.query.orders.findMany({
       where: orderWhere,
       with: { items: true },
-    }).sync();
+    });
 
-    const latestOrders = db.query.orders.findMany({
+    const latestOrders = await db.query.orders.findMany({
       where: orderWhere,
       orderBy: (o, { desc }) => [desc(o.createdAt)],
       limit: 5,
@@ -35,7 +35,7 @@ export async function getDashboardStats(req: AuthRequest, res: Response) {
           },
         },
       },
-    }).sync();
+    });
 
     const totalRevenue = allOrders.reduce((sum, order) => sum + order.total, 0);
     const totalOrders = allOrders.length;
@@ -44,7 +44,9 @@ export async function getDashboardStats(req: AuthRequest, res: Response) {
 
     const monthlyRevenueMap = new Map<string, number>();
     for (const order of allOrders) {
-      const key = order.createdAt.slice(0, 7);
+      // MySQL timestamp to string
+      const dateStr = order.createdAt instanceof Date ? order.createdAt.toISOString() : String(order.createdAt);
+      const key = dateStr.slice(0, 7);
       monthlyRevenueMap.set(key, (monthlyRevenueMap.get(key) ?? 0) + order.total);
     }
 

@@ -21,14 +21,14 @@ const updateStatusSchema = z.object({
   status: z.enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
 });
 
-function getOrderWithRelations(orderId: string) {
-  return db.query.orders.findFirst({
+async function getOrderWithRelations(orderId: string) {
+  return await db.query.orders.findFirst({
     where: eq(orders.id, orderId),
     with: {
       user: { columns: { id: true, name: true, email: true } },
       items: { with: { product: true } },
     },
-  }).sync();
+  });
 }
 
 function formatEuro(value: number): string {
@@ -47,26 +47,27 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     const { items, discountCodeId } = orderSchema.parse(req.body);
 
     const productIds = items.map((item) => item.productId);
-    const foundProducts = db.select().from(products).where(inArray(products.id, productIds)).all();
+    const foundProducts = await db.select().from(products).where(inArray(products.id, productIds));
 
     if (foundProducts.length !== items.length) {
       return res.status(400).json({ error: 'Some products not found' });
     }
 
-    const pricing = getPricingContextForUser(userId);
+    const pricing = await getPricingContextForUser(userId);
     let subtotal = 0;
-    const orderItemsData = items.map((item) => {
+    const orderItemsData = await Promise.all(items.map(async (item) => {
       const product = foundProducts.find((p) => p.id === item.productId);
       if (!product) throw new Error('Product not found');
       if (product.stock < item.quantity) throw new Error(`Insufficient stock for product ${product.name}`);
-      const unitPrice = getEffectiveUnitPrice(item.productId, item.quantity, pricing.discountPercent);
+      const unitPrice = await getEffectiveUnitPrice(item.productId, item.quantity, pricing.discountPercent);
       subtotal += unitPrice * item.quantity;
       return { productId: item.productId, quantity: item.quantity, price: unitPrice };
-    });
+    }));
 
     let discountAmount = 0;
     if (discountCodeId) {
-      const discount = db.select().from(discountCodes).where(eq(discountCodes.id, discountCodeId)).get();
+      const discounts = await db.select().from(discountCodes).where(eq(discountCodes.id, discountCodeId));
+      const discount = discounts[0];
       if (discount && discount.active) {
         if (discount.type === 'PERCENTAGE') {
           discountAmount = subtotal * (discount.value / 100);
@@ -78,35 +79,39 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
 
     const total = Math.max(0, subtotal - discountAmount);
 
-    const newOrder = db.transaction((tx) => {
-      const created = tx.insert(orders).values({ 
+    const newOrder = await db.transaction(async (tx) => {
+      const orderId = crypto.randomUUID();
+      await tx.insert(orders).values({ 
+        id: orderId,
         userId, 
         total, 
         discountCodeId, 
         discountAmount 
-      }).returning().get();
+      });
       
-      tx.insert(orderItems).values(
-        orderItemsData.map((item) => ({ ...item, orderId: created.id }))
-      ).run();
+      await tx.insert(orderItems).values(
+        orderItemsData.map((item) => ({ 
+          id: crypto.randomUUID(),
+          ...item, 
+          orderId 
+        }))
+      );
 
       if (discountCodeId) {
-        tx.update(discountCodes)
+        await tx.update(discountCodes)
           .set({ usageCount: sql`${discountCodes.usageCount} + 1` })
-          .where(eq(discountCodes.id, discountCodeId))
-          .run();
+          .where(eq(discountCodes.id, discountCodeId));
       }
 
       for (const item of items) {
-        tx.update(products)
+        await tx.update(products)
           .set({ stock: sql`${products.stock} - ${item.quantity}` })
-          .where(eq(products.id, item.productId))
-          .run();
+          .where(eq(products.id, item.productId));
       }
-      return created;
+      return { id: orderId };
     });
 
-    const fullOrder = getOrderWithRelations(newOrder.id);
+    const fullOrder = await getOrderWithRelations(newOrder.id);
     res.status(201).json(fullOrder);
 
     // Send emails async — don't block response
@@ -127,14 +132,14 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
     const role = req.user?.role;
 
-    const result = db.query.orders.findMany({
+    const result = await db.query.orders.findMany({
       where: role === 'ADMIN' ? undefined : eq(orders.userId, userId!),
       with: {
         user: { columns: { id: true, name: true, email: true } },
         items: { with: { product: true } },
       },
       orderBy: (o, { desc }) => [desc(o.createdAt)],
-    }).sync();
+    });
 
     res.json(result);
   } catch (error) {
@@ -147,32 +152,30 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;
     const { status } = updateStatusSchema.parse(req.body);
 
-    const currentOrder = db.query.orders.findFirst({
+    const currentOrder = await db.query.orders.findFirst({
       where: eq(orders.id, id),
       with: { items: true },
-    }).sync();
+    });
 
     if (!currentOrder) {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    db.transaction((tx) => {
+    await db.transaction(async (tx) => {
       if (status === 'CANCELLED' && currentOrder.status !== 'CANCELLED') {
         for (const item of currentOrder.items) {
           if (!item.productId) continue;
-          tx.update(products)
+          await tx.update(products)
             .set({ stock: sql`${products.stock} + ${item.quantity}` })
-            .where(eq(products.id, item.productId))
-            .run();
+            .where(eq(products.id, item.productId));
         }
       }
-      tx.update(orders)
-        .set({ status, updatedAt: new Date().toISOString() })
-        .where(eq(orders.id, id))
-        .run();
+      await tx.update(orders)
+        .set({ status, updatedAt: new Date() })
+        .where(eq(orders.id, id));
     });
 
-    const updatedOrder = getOrderWithRelations(id);
+    const updatedOrder = await getOrderWithRelations(id);
     res.json(updatedOrder);
 
     // Send status update email async
@@ -194,15 +197,15 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
     const role = req.user?.role;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const order = getOrderWithRelations(id);
+    const order = await getOrderWithRelations(id);
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
     const isOwner = order.userId === userId;
     const isAdmin = role === 'ADMIN';
     if (!isOwner && !isAdmin) return res.status(403).json({ error: 'Forbidden' });
 
-    const contact = (getContent('contact') || {}) as any;
-    const general = (getContent('general') || {}) as any;
+    const contact = (await getContent('contact') || {}) as any;
+    const general = (await getContent('general') || {}) as any;
     const companyName = safeText(general?.companyName) || 'ALRA LED';
     const companyAddress = safeText(contact?.address) || safeText(general?.footerAddress) || '';
     const companyEmail = safeText(general?.footerEmail) || safeText(contact?.email) || '';
@@ -217,9 +220,8 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
 
     const total = Number(order.total || 0);
     const discountAmount = Number(order.discountAmount || 0);
-    const subtotalWithDiscount = total;
     
-    const pricing = getPricingContextForUser(order.userId);
+    const pricing = await getPricingContextForUser(order.userId);
     const vatRate = pricing.vatReverseCharge ? 0 : 0.21;
     
     const subtotalEx = (total + discountAmount) / (1 + vatRate);
@@ -299,56 +301,32 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
       return yStart + blockH + 18;
     };
 
-    const drawTableHeader = (yStart: number) => {
-      const rowH = 22;
-      doc.roundedRect(left, yStart, right - left, rowH, 10).fill(accent);
-      doc.fontSize(9).font('Helvetica-Bold').fillColor('#ffffff');
-      doc.text('Omschrijving', left + 12, yStart + 6, { width: 290 });
-      doc.text('Aantal', left + 310, yStart + 6, { width: 55, align: 'right' });
-      doc.text('Prijs', left + 372, yStart + 6, { width: 70, align: 'right' });
-      doc.text('Totaal', left + 450, yStart + 6, { width: right - (left + 450) - 12, align: 'right' });
-      return yStart + rowH + 10;
+    let y = drawHeader();
+    drawFooter(1);
+    y = drawPartyBlocks(y);
+
+    const cols = {
+      product: { x: left + 14, w: 280, label: 'Omschrijving' },
+      qty: { x: left + 300, w: 60, label: 'Aantal', align: 'center' as const },
+      price: { x: left + 370, w: 80, label: 'Prijs p.s.', align: 'right' as const },
+      total: { x: left + 460, w: 80, label: 'Totaal', align: 'right' as const }
     };
 
-    let page = 1;
-    let y = drawHeader();
-    y = drawPartyBlocks(y);
-    y = drawTableHeader(y);
+    doc.fontSize(9).font('Helvetica-Bold').fillColor(muted);
+    Object.values(cols).forEach(c => doc.text(c.label, c.x, y, { width: c.w, align: c.align }));
+    y += 18;
+    doc.moveTo(left + 14, y).lineTo(right - 14, y).strokeColor(border).lineWidth(0.5).stroke();
+    y += 12;
 
-    const maxYBeforeTotals = doc.page.height - doc.page.margins.bottom - 170;
-    let rowAlt = false;
     doc.fontSize(10).font('Helvetica').fillColor(text);
-
-    for (const item of order.items || []) {
-      const name = item.product?.name || 'Product';
-      const qty = Number(item.quantity || 0);
-      const unit = Number(item.price || 0);
-      const line = unit * qty;
-
-      const nameHeight = doc.heightOfString(name, { width: 290, lineGap: 2 });
-      const rowH = Math.max(22, nameHeight + 12);
-
-      if (y + rowH > maxYBeforeTotals) {
-        drawFooter(page);
-        doc.addPage();
-        page += 1;
-        y = drawHeader();
-        y = drawTableHeader(y + 10);
-      }
-
-      if (rowAlt) {
-        doc.roundedRect(left, y - 6, right - left, rowH, 10).fill(surface);
-      }
-      rowAlt = !rowAlt;
-
-      doc.fontSize(10).font('Helvetica').fillColor(text);
-      doc.text(name, left + 12, y, { width: 290, lineGap: 2 });
-      doc.text(String(qty), left + 310, y, { width: 55, align: 'right' });
-      doc.text(formatEuro(unit), left + 372, y, { width: 70, align: 'right' });
-      doc.text(formatEuro(line), left + 450, y, { width: right - (left + 450) - 12, align: 'right' });
-
-      y += rowH + 6;
-    }
+    order.items.forEach(item => {
+      const itemTotal = (item.price || 0) * (item.quantity || 0);
+      doc.text(item.product?.name || 'Onbekend product', cols.product.x, y, { width: cols.product.w });
+      doc.text(String(item.quantity), cols.qty.x, y, { width: cols.qty.w, align: cols.qty.align });
+      doc.text(formatEuro(item.price), cols.price.x, y, { width: cols.price.w, align: cols.price.align });
+      doc.text(formatEuro(itemTotal), cols.total.x, y, { width: cols.total.w, align: cols.total.align });
+      y += 18;
+    });
 
     const totalsBoxW = 250;
     const totalsBoxH = discountAmount > 0 ? 106 : 88;
@@ -376,15 +354,9 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
     doc.text('Totaal (incl. BTW)', totalsX + 14, currentY, { width: 140 });
     doc.text(formatEuro(total), totalsX + 14, currentY - 2, { width: totalsBoxW - 28, align: 'right' });
 
-    doc.fontSize(9).font('Helvetica').fillColor(muted);
-    doc.text('Bedankt voor je bestelling.', left, totalsY + totalsBoxH + 12, { align: 'left' });
-    if (vatRate === 0) {
-      doc.text('BTW verlegd.', left, totalsY + totalsBoxH + 26, { align: 'left' });
-    }
-    drawFooter(page);
-
     doc.end();
-  } catch {
-    res.status(500).json({ error: 'Internal server error' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to generate PDF' });
   }
 };

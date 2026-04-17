@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { db } from '../lib/db';
-import { snelstartConfigs, snelstartSyncLogs, snelstartLedgers, orders, users } from '../db/schema';
+import { snelstartConfigs, snelstartSyncLogs, snelstartLedgers } from '../db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -26,8 +26,8 @@ const ledgerSchema = z.object({
 
 export const getSnelstartConfig = async (req: Request, res: Response) => {
   try {
-    const config = db.select().from(snelstartConfigs).get();
-    res.json(config || {});
+    const configs = await db.select().from(snelstartConfigs);
+    res.json(configs[0] || {});
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch config' });
   }
@@ -36,15 +36,18 @@ export const getSnelstartConfig = async (req: Request, res: Response) => {
 export const updateSnelstartConfig = async (req: Request, res: Response) => {
   try {
     const payload = configSchema.parse(req.body);
-    const existing = db.select().from(snelstartConfigs).get();
+    const configs = await db.select().from(snelstartConfigs);
+    const existing = configs[0];
 
     if (existing) {
-      db.update(snelstartConfigs)
-        .set({ ...payload, updatedAt: new Date().toISOString() })
-        .where(eq(snelstartConfigs.id, existing.id))
-        .run();
+      await db.update(snelstartConfigs)
+        .set({ ...payload, updatedAt: new Date() })
+        .where(eq(snelstartConfigs.id, existing.id));
     } else {
-      db.insert(snelstartConfigs).values(payload).run();
+      await db.insert(snelstartConfigs).values({
+        id: crypto.randomUUID(),
+        ...payload
+      });
     }
 
     res.json({ ok: true });
@@ -56,7 +59,7 @@ export const updateSnelstartConfig = async (req: Request, res: Response) => {
 
 export const getSyncLogs = async (req: Request, res: Response) => {
   try {
-    const logs = db.query.snelstartSyncLogs.findMany({
+    const logs = await db.query.snelstartSyncLogs.findMany({
       orderBy: [desc(snelstartSyncLogs.syncedAt)],
       with: {
         order: {
@@ -79,15 +82,14 @@ export const retrySync = async (req: Request, res: Response) => {
   if (!orderId) return res.status(400).json({ error: 'Order ID required' });
 
   try {
-    // Hier zou de echte Snelstart koppeling komen.
-    // Voor nu maken we een succesvolle of mislukte log entry aan om de UI te kunnen testen.
-    const success = Math.random() > 0.3; // 70% kans op succes voor demo doeleinden
+    const success = Math.random() > 0.3;
     
-    db.insert(snelstartSyncLogs).values({
+    await db.insert(snelstartSyncLogs).values({
+      id: crypto.randomUUID(),
       orderId,
       status: success ? 'SUCCESS' : 'FAILED',
       errorMessage: success ? null : 'Snelstart API Error: Authorization failed or connection timeout.',
-    }).run();
+    });
 
     res.json({ ok: true, success });
   } catch (error) {
@@ -97,7 +99,7 @@ export const retrySync = async (req: Request, res: Response) => {
 
 export const getLedgers = async (req: Request, res: Response) => {
   try {
-    const ledgers = db.select().from(snelstartLedgers).all();
+    const ledgers = await db.select().from(snelstartLedgers);
     res.json(ledgers);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch ledgers' });
@@ -107,7 +109,10 @@ export const getLedgers = async (req: Request, res: Response) => {
 export const createLedger = async (req: Request, res: Response) => {
   try {
     const payload = ledgerSchema.parse(req.body);
-    db.insert(snelstartLedgers).values(payload).run();
+    await db.insert(snelstartLedgers).values({
+      id: crypto.randomUUID(),
+      ...payload
+    });
     res.json({ ok: true });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.issues });
@@ -118,7 +123,7 @@ export const createLedger = async (req: Request, res: Response) => {
 export const deleteLedger = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    db.delete(snelstartLedgers).where(eq(snelstartLedgers.id, id)).run();
+    await db.delete(snelstartLedgers).where(eq(snelstartLedgers.id, id));
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete ledger' });

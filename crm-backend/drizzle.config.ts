@@ -8,8 +8,8 @@ const dbUrl = process.env.DATABASE_URL ?? '';
 export default defineConfig({
   schema: './src/db/schema.ts',
   out: './drizzle',
-  dialect: 'sqlite',
+  dialect: 'mysql',
   dbCredentials: {
-    url: dbUrl.replace(/^file:/, ''),
+    url: process.env.DATABASE_URL || process.env.MYSQL_URL || '',
   },
 });

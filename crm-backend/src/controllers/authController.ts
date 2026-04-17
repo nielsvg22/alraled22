@@ -19,20 +19,24 @@ export const register = async (req: Request, res: Response) => {
   try {
     const { email, password, name } = registerSchema.parse(req.body);
 
-    const existingUser = db.select().from(users).where(eq(users.email, email)).get();
-    if (existingUser) {
+    const existingUsers = await db.select().from(users).where(eq(users.email, email));
+    if (existingUsers.length > 0) {
       return res.status(400).json({ error: 'User already exists' });
     }
 
-    const userCountResult = db.select({ count: sql<number>`count(*)` }).from(users).get();
-    const userCount = userCountResult?.count ?? 0;
+    const userCountResult = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const userCount = Number(userCountResult[0]?.count ?? 0);
     const hashedPassword = await bcrypt.hash(password, 12);
-    const user = db.insert(users).values({
+    
+    await db.insert(users).values({
       email,
       password: hashedPassword,
       name,
       role: userCount === 0 ? 'ADMIN' : 'USER',
-    }).returning().get();
+    });
+
+    const newUserResult = await db.select().from(users).where(eq(users.email, email));
+    const user = newUserResult[0];
 
     const token = jwt.sign(
       { userId: user.id, role: user.role },
@@ -60,7 +64,8 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const user = db.select().from(users).where(eq(users.email, email)).get();
+    const foundUsers = await db.select().from(users).where(eq(users.email, email));
+    const user = foundUsers[0];
     if (!user) {
       console.log(`[auth] User not found: ${email}`);
       return res.status(400).json({ error: 'Invalid credentials' });
@@ -88,14 +93,25 @@ export const login = async (req: Request, res: Response) => {
 
 export const getUsers = async (req: Request, res: Response) => {
   try {
-    const userList = db.select({
+    const userList = await db.select({
       id: users.id,
       email: users.email,
       name: users.name,
       role: users.role,
       createdAt: users.createdAt,
-    }).from(users).all();
+    }).from(users);
     res.json(userList);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const updateUserRole = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+    await db.update(users).set({ role }).where(eq(users.id, id));
+    res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }

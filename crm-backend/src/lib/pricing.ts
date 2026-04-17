@@ -1,5 +1,5 @@
 import { db } from './db';
-import { customerGroups, productPriceTiers, products, users } from '../db/schema';
+import { productPriceTiers, products, users } from '../db/schema';
 import { and, desc, eq, lte } from 'drizzle-orm';
 
 export type PricingContext = {
@@ -7,11 +7,11 @@ export type PricingContext = {
   vatReverseCharge: boolean;
 };
 
-export function getPricingContextForUser(userId: string): PricingContext {
-  const row = db.query.users.findFirst({
+export async function getPricingContextForUser(userId: string): PricingContext {
+  const row = await db.query.users.findFirst({
     where: eq(users.id, userId),
     with: { customerGroup: true },
-  }).sync();
+  });
 
   const g = (row as any)?.customerGroup;
   return {
@@ -20,11 +20,11 @@ export function getPricingContextForUser(userId: string): PricingContext {
   };
 }
 
-export function getTierUnitPrice(productId: string, quantity: number): number | null {
-  const tier = db.query.productPriceTiers.findFirst({
+export async function getTierUnitPrice(productId: string, quantity: number): Promise<number | null> {
+  const tier = await db.query.productPriceTiers.findFirst({
     where: and(eq(productPriceTiers.productId, productId), lte(productPriceTiers.minQty, quantity)),
     orderBy: (t, { desc }) => [desc(t.minQty)],
-  }).sync();
+  });
   return tier ? Number(tier.price) : null;
 }
 
@@ -34,10 +34,11 @@ export function applyDiscount(unitPrice: number, discountPercent: number): numbe
   return Math.round((v + Number.EPSILON) * 100) / 100;
 }
 
-export function getEffectiveUnitPrice(productId: string, quantity: number, discountPercent: number): number {
-  const p = db.select().from(products).where(eq(products.id, productId)).get();
+export async function getEffectiveUnitPrice(productId: string, quantity: number, discountPercent: number): Promise<number> {
+  const pResult = await db.select().from(products).where(eq(products.id, productId));
+  const p = pResult[0];
   if (!p) throw new Error('Product not found');
-  const base = getTierUnitPrice(productId, quantity) ?? Number(p.price);
+  const tierPrice = await getTierUnitPrice(productId, quantity);
+  const base = tierPrice ?? Number(p.price);
   return applyDiscount(base, discountPercent);
 }
-
