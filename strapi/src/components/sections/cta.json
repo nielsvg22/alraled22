@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_sections_ctas",
+  "info": {
+    "displayName": "CTA",
+    "icon": "bullhorn"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "text"
+    },
+    "primaryButton": {
+      "type": "string"
+    },
+    "secondaryButton": {
+      "type": "string"
+    }
+  }
+}

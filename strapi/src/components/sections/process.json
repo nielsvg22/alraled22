@@ -1,0 +1,31 @@
+{
+  "collectionName": "components_sections_processes",
+  "info": {
+    "displayName": "Process",
+    "icon": "sync"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "steps": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.step"
+    },
+    "buttonText": {
+      "type": "string"
+    }
+  }
+}

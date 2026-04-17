@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "Over ons",
+    "webshop": "Webshop",
+    "blog": "Blog",
+    "contact": "Contact",
+    "shop_now": "Shop nu"
+  },
+  "header": {
+    "free_shipping": "Gratis verzending boven €250",
+    "warranty": "5 jaar garantie",
+    "ce_certified": "CE gecertificeerd",
+    "login": "Inloggen",
+    "search_placeholder": "Zoek producten..."
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Er is een fout opgetreden"
+  }
+}

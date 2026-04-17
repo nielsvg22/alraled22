@@ -1,0 +1,533 @@
+{
+  "common": {
+    "loading": "Laden...",
+    "cancel": "Annuleren"
+  },
+  "languages": {
+    "nl": "Nederlands",
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "Over ons",
+    "products": "Webshop",
+    "dealers": "Verkooppunten",
+    "blog": "Blog",
+    "contact": "Contact",
+    "shopNow": "Shop nu",
+    "account": "Account",
+    "login": "Inloggen"
+  },
+  "header": {
+    "language": "Taal",
+    "featureList": [
+      "Gratis verzending boven EUR 250",
+      "5 jaar garantie",
+      "CE gecertificeerd"
+    ],
+    "searchPlaceholder": "Zoek producten...",
+    "searchNoResults": "Geen producten gevonden voor \"<0>{{query}}</0>\"",
+    "searchViewAll": "Alle resultaten bekijken →",
+    "themeOn": "Lights on",
+    "themeOff": "Lights off",
+    "cart": "Winkelwagen",
+    "menu": "Menu"
+  },
+  "footer": {
+    "newsletterTitle": "Blijf op de hoogte",
+    "newsletterText": "Ontvang nieuws, productlanceringen en exclusieve aanbiedingen.",
+    "newsletterPlaceholder": "uw@email.nl",
+    "newsletterButton": "Aanmelden",
+    "brandText": "Specialist in professionele LED-verlichting voor bedrijfswagens, bouwplaatsen en werkplaatsen. Kwaliteit en betrouwbaarheid voorop.",
+    "navigation": "Navigatie",
+    "productsTitle": "Producten",
+    "contactTitle": "Contact",
+    "productLinks": [
+      "Bedrijfswagenverlichting",
+      "LED Bouwlichtslangen",
+      "LED Hefbrugverlichting",
+      "Accessoires"
+    ],
+    "privacy": "Privacy Policy",
+    "terms": "Algemene Voorwaarden",
+    "bottomCopy": "ALRA LED Solutions. Alle rechten voorbehouden."
+  },
+  "home": {
+    "hero": {
+      "badge": "Duurzame toekomst",
+      "titlePrefix": "Verlichting voor",
+      "subtitle": "ALRA LED Solutions helpt u kiezen voor een duurzame toekomst. Specialist in LED-verlichting voor bedrijfswagens, bouwplaatsen en werkplaatsen.",
+      "primaryButton": "Bekijk producten",
+      "secondaryButton": "Over ons",
+      "scroll": "Scroll"
+    },
+    "typewriterWords": [
+      "bedrijfswagens.",
+      "bouwplaatsen.",
+      "werkplaatsen.",
+      "professionals."
+    ],
+    "trustItems": [
+      {
+        "title": "Gratis verzending",
+        "subtitle": "boven EUR 250"
+      },
+      {
+        "title": "5 jaar garantie",
+        "subtitle": "op alle producten"
+      },
+      {
+        "title": "CE & RoHS",
+        "subtitle": "gecertificeerd"
+      },
+      {
+        "title": "Snel geleverd",
+        "subtitle": "direct uit voorraad"
+      },
+      {
+        "title": "Expert advies",
+        "subtitle": "085-0021 606"
+      }
+    ],
+    "marquee": {
+      "text": "LED SPECIALISTS",
+      "badge": "Duurzame toekomst"
+    },
+    "intro": {
+      "badge": "Over ALRA LED",
+      "title": "Professionele LED-oplossingen voor de moderne werkplek",
+      "description": "Wij zijn specialist in hoogwaardige LED-verlichting voor bedrijfswagens, bouwplaatsen en werkplaatsen. Onze producten worden geleverd met volledige certificering en een servicegerichte aanpak die u ontzorgt.",
+      "link": "Meer over ons",
+      "deliveryTitle": "Direct leverbaar uit voorraad",
+      "deliverySubtitle": "Snelle levering in heel Nederland en Belgie"
+    },
+    "stats": [
+      {
+        "value": "10+",
+        "label": "Jaar actief"
+      },
+      {
+        "value": "225+",
+        "label": "Aangesloten partners"
+      }
+    ],
+    "specializationsSection": {
+      "eyebrow": "Onze specialisaties",
+      "title": "Producten & Cases",
+      "allProducts": "Alle producten",
+      "view": "Bekijk"
+    },
+    "specializations": [
+      {
+        "title": "Bedrijfswagenverlichting",
+        "description": "Optimale LED-werkverlichting voor uw bestelwagen, truck of bedrijfsvoertuig. Meer veiligheid, minder verbruik."
+      },
+      {
+        "title": "LED Bouwlichtslangen",
+        "description": "Robuuste en krachtige LED-verlichting speciaal ontworpen voor gebruik op de bouwplaats."
+      },
+      {
+        "title": "LED Hefbrugverlichting",
+        "description": "Perfecte lichtopbrengst onder het voertuig voor een veilige en efficiente werkplaatsomgeving."
+      }
+    ],
+    "featured": {
+      "eyebrow": "Nieuw in de shop",
+      "title": "Uitgelichte producten",
+      "allProducts": "Alle producten",
+      "viewProduct": "Bekijk product"
+    },
+    "testimonials": {
+      "eyebrow": "Wat onze klanten zeggen",
+      "title": "Ervaringen",
+      "items": [
+        {
+          "quote": "Al jaren klant. Ze willen met je meedenken en hebben kwaliteitsproducten van het A-merk.",
+          "author": "Vaste klant",
+          "role": "Transportbedrijf"
+        },
+        {
+          "quote": "Bedrijfswagenverlichting besteld en het geeft ongelofelijk veel licht. Vrijdag besteld, dinsdag al op kantoor.",
+          "author": "Tevreden klant",
+          "role": "Logistiek bedrijf"
+        }
+      ]
+    },
+    "process": {
+      "eyebrow": "Onze aanpak",
+      "title": "De ontwikkeling van ALRA LED Solutions",
+      "description": "De kracht van ALRA LED Solutions is oplossingsgericht werken in nauw overleg met de opdrachtgever. Gedreven en vakkundige engineers zijn betrokken bij ontwerp, techniek, duurzaamheid en functionaliteit.",
+      "button": "Leer onze methode",
+      "steps": [
+        {
+          "title": "Idee",
+          "description": "We brengen ideeen tot leven. Uw idee wordt de basis van de perfecte verlichtingsoplossing."
+        },
+        {
+          "title": "Ontwerp",
+          "description": "Van eerste schets tot 2D/3D-modellen. Van sample tot eindproduct, stap voor stap uitgewerkt."
+        },
+        {
+          "title": "Kwaliteit",
+          "description": "Uitsluitend LED-producten met de vereiste certificeringen. Kwaliteit en garantie op elk product."
+        },
+        {
+          "title": "Tevredenheid",
+          "description": "Uw mening is gedurende het hele proces van belang. Van eerste contact tot levering."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Benieuwd wat wij voor je kunnen betekenen?",
+      "subtitle": "Loopt u in het werkveld tegen een probleem aan? Wij komen graag bij u langs om samen tot een oplossing te komen.",
+      "primaryButton": "Naar de webshop",
+      "secondaryButton": "Neem contact op"
+    }
+  },
+  "about": {
+    "eyebrow": "Over ons",
+    "title": "Gedreven door kwaliteit en duurzaamheid",
+    "description": "ALRA LED Solutions is in 2014 opgericht met een doel: de allerbeste LED-verlichtingsoplossingen leveren voor professionals. Wij werken uitsluitend met producten van topkwaliteit, voorzien van alle vereiste certificeringen. Ons team van gedreven engineers staat klaar om samen met u tot de perfecte oplossing te komen, van idee tot eindproduct.",
+    "stats": [
+      {
+        "label": "Opgericht",
+        "value": "2014"
+      },
+      {
+        "label": "Partners NL & BE",
+        "value": "225+"
+      },
+      {
+        "label": "Kwaliteitsrating",
+        "value": "A++"
+      },
+      {
+        "label": "Eigen productlijn",
+        "value": "2018"
+      }
+    ],
+    "values": [
+      {
+        "title": "Vakmanschap",
+        "text": "Gedreven engineers betrokken bij ontwerp, techniek, duurzaamheid en functionaliteit. Van schets tot gecertificeerd eindproduct."
+      },
+      {
+        "title": "Kwaliteit & Garantie",
+        "text": "Uitsluitend CE- en RoHS-gecertificeerde LED-producten. Volledige garantie op elk product dat wij leveren."
+      },
+      {
+        "title": "Persoonlijk advies",
+        "text": "Loopt u in het werkveld tegen een probleem aan? Wij komen graag langs om samen tot de beste oplossing te komen."
+      }
+    ],
+    "timelineTitle": "Onze geschiedenis",
+    "timeline": [
+      {
+        "year": "2014",
+        "label": "Oprichting ALRA LED Solutions"
+      },
+      {
+        "year": "2018",
+        "label": "Eerste eigen LED-productlijn ontwikkeld"
+      },
+      {
+        "year": "2020",
+        "label": "50e aangesloten groothandel in Nederland"
+      },
+      {
+        "year": "2022",
+        "label": "150e technische dealer in NL en Belgie"
+      },
+      {
+        "year": "2024",
+        "label": "Nieuw productassortiment weg- en bouwplaatsveiligheid"
+      }
+    ]
+  },
+  "contact": {
+    "eyebrow": "Neem contact op",
+    "title": "Contact",
+    "description": "Loopt u in het werkveld tegen een probleem aan? Laat het ons weten, wij komen graag bij u langs om samen tot een oplossing te komen.",
+    "detailsTitle": "Gegevens",
+    "address": "Adres",
+    "phone": "Telefoon",
+    "email": "Email",
+    "callTitle": "Liever direct bellen?",
+    "callText": "Onze experts helpen u graag telefonisch.",
+    "companyDetails": "Bedrijfsgegevens",
+    "kvk": "KvK",
+    "vat": "BTW",
+    "successTitle": "Bericht verstuurd!",
+    "successText": "We nemen zo snel mogelijk contact met u op.",
+    "newMessage": "Nieuw bericht",
+    "form": {
+      "name": "Naam",
+      "email": "Email",
+      "subject": "Onderwerp",
+      "message": "Bericht",
+      "namePlaceholder": "Uw naam",
+      "emailPlaceholder": "uw@email.nl",
+      "subjectPlaceholder": "Waar gaat uw vraag over?",
+      "messagePlaceholder": "Hoe kunnen we u helpen?",
+      "submit": "Verstuur bericht"
+    }
+  },
+  "products": {
+    "eyebrow": "Onze collectie",
+    "title": "Webshop",
+    "description": "Premium LED-verlichting voor professionals",
+    "searchPlaceholder": "Zoek product...",
+    "count_one": "{{count}} product",
+    "count_other": "{{count}} producten",
+    "compareSelected": "{{count}}/3 geselecteerd voor vergelijking",
+    "emptyTitle": "Geen producten gevonden",
+    "clearFilters": "Filters wissen",
+    "quickView": {
+      "excludingVat": "excl. btw",
+      "added": "Toegevoegd",
+      "addToCart": "In winkelwagen",
+      "fullPage": "Volledige productpagina ->",
+      "title": "Snel bekijken"
+    },
+    "compare": {
+      "title": "Vergelijken",
+      "slot": "+ product",
+      "clear": "Wissen",
+      "compareButton": "Vergelijk {{count}} ->",
+      "comparisonTitle": "Productvergelijking",
+      "price": "Prijs",
+      "category": "Categorie",
+      "description": "Beschrijving",
+      "viewProduct": "Bekijk product ->"
+    },
+    "cards": {
+      "removeFromCompare": "Verwijder uit vergelijking",
+      "addToCompare": "Voeg toe aan vergelijking",
+      "viewDetails": "Bekijk details ->",
+      "excludingVat": "excl. btw"
+    },
+    "serviceItems": [
+      {
+        "title": "Snelle levering",
+        "text": "Gratis verzending boven EUR 250"
+      },
+      {
+        "title": "5 jaar garantie",
+        "text": "Op alle producten"
+      },
+      {
+        "title": "Expert advies",
+        "text": "Bel 085-0021 606"
+      }
+    ],
+    "categories": {
+      "all": "Alle",
+      "vans": "Bedrijfswagens",
+      "construction": "Bouwverlichting",
+      "workshop": "Werkplaats",
+      "accessories": "Accessoires"
+    }
+  },
+  "productDetail": {
+    "loading": "Laden...",
+    "notFound": "Product niet gevonden",
+    "backToShop": "<- Terug naar de shop",
+    "professionalGrade": "Professional Grade",
+    "excludingVat": "excl. btw",
+    "specsTitle": "Specificaties",
+    "specs": [
+      {
+        "label": "Lichtopbrengst",
+        "value": "12.000 lumen"
+      },
+      {
+        "label": "IP-rating",
+        "value": "IP67 waterdicht"
+      },
+      {
+        "label": "Levensduur",
+        "value": "50.000 uur"
+      },
+      {
+        "label": "Garantie",
+        "value": "5 jaar full-service"
+      }
+    ],
+    "quantity": "Aantal",
+    "added": "Toegevoegd",
+    "addToCart": "In winkelwagen",
+    "requestQuote": "Offerte",
+    "trust": [
+      {
+        "title": "Gratis verzending",
+        "subtitle": "Boven EUR 250"
+      },
+      {
+        "title": "CE & RoHS",
+        "subtitle": "Gecertificeerd"
+      },
+      {
+        "title": "30 dagen retour",
+        "subtitle": "Geen vragen"
+      }
+    ],
+    "relatedEyebrow": "Misschien ook interessant",
+    "relatedTitle": "Anderen bekeken ook",
+    "allProducts": "Alle producten ->",
+    "view": "Bekijk ->"
+  },
+  "cart": {
+    "titlePrefix": "Winkel",
+    "titleHighlight": "wagen",
+    "emptyTitle": "Uw wagen is leeg",
+    "startShopping": "Start shopping",
+    "subtotal": "Subtotaal",
+    "shippingNote": "Verzendkosten en belastingen worden berekend bij het afrekenen.",
+    "checkout": "Afrekenen - checkout",
+    "continueShopping": "Verder winkelen"
+  },
+  "login": {
+    "titlePrefix": "IN",
+    "titleHighlight": "LOGGEN",
+    "subtitle": "Welkom terug bij ALRA LED Solutions",
+    "email": "E-mailadres",
+    "password": "Wachtwoord",
+    "submit": "Login",
+    "invalidCredentials": "Ongeldige inloggegevens. Probeer het opnieuw.",
+    "noAccount": "Nog geen account?",
+    "createAccount": "Account aanmaken ->"
+  },
+  "register": {
+    "titlePrefix": "REGIS",
+    "titleHighlight": "TREREN",
+    "subtitle": "Sluit je aan bij de elite professionals",
+    "name": "Naam",
+    "email": "E-mailadres",
+    "password": "Wachtwoord",
+    "submit": "Account aanmaken",
+    "fallbackError": "Registratie mislukt.",
+    "haveAccount": "Heb je al een account?",
+    "login": "Inloggen ->"
+  },
+  "checkout": {
+    "emptyTitlePrefix": "Wagen is",
+    "emptyTitleHighlight": " leeg",
+    "emptyText": "Voeg producten toe aan uw winkelwagen voordat u kunt afrekenen.",
+    "viewProducts": "Bekijk producten",
+    "titlePrefix": "Check",
+    "titleHighlight": "out",
+    "subtitle": "Vul uw gegevens in om de bestelling te plaatsen",
+    "genericError": "Er is een fout opgetreden bij het plaatsen van uw bestelling.",
+    "loginRequiredPrefix": "U moet ",
+    "loginRequiredLink": "ingelogd",
+    "loginRequiredSuffix": " zijn om te kunnen afrekenen.",
+    "contactDetails": "1. Contactgegevens",
+    "shippingAddress": "2. Verzendadres",
+    "email": "E-mailadres",
+    "phone": "Telefoonnummer",
+    "street": "Straat + huisnummer",
+    "postcode": "Postcode",
+    "city": "Stad",
+    "processing": "Verwerken...",
+    "placeOrder": "Bestelling plaatsen",
+    "summaryTitle": "Besteloverzicht",
+    "quantity": "Aantal",
+    "subtotal": "Subtotaal",
+    "shipping": "Verzending",
+    "free": "Gratis",
+    "total": "Totaal",
+    "inclusiveVat": "Inclusief btw"
+  },
+  "account": {
+    "checkingAccount": "Account laden...",
+    "titlePrefix": "Dash",
+    "titleHighlight": "board",
+    "welcome": "Welkom, {{name}}",
+    "logout": "Log out",
+    "profile": "Profiel",
+    "name": "Naam",
+    "email": "E-mailadres",
+    "role": "Rol",
+    "vipTitle": "VIP support",
+    "vipText": "Als geregistreerde klant geniet u van voorrang bij technische vragen.",
+    "vipButton": "Open ticket",
+    "orders": "Bestellingen",
+    "total": "Totaal: {{count}}",
+    "noOrders": "Geen bestellingen gevonden",
+    "startShopping": "Start met winkelen ->",
+    "itemsCount_one": "{{count}} artikel",
+    "itemsCount_other": "{{count}} artikelen",
+    "status": {
+      "PENDING": "In behandeling",
+      "PROCESSING": "Verwerking",
+      "SHIPPED": "Verzonden",
+      "DELIVERED": "Afgeleverd",
+      "CANCELLED": "Geannuleerd"
+    }
+  },
+  "orderSuccess": {
+    "eyebrow": "Bestelling ontvangen",
+    "title": "Bedankt voor uw bestelling!",
+    "description": "Wij hebben uw bestelling in goede orde ontvangen en gaan er direct mee aan de slag. U ontvangt zo snel mogelijk een bevestiging per e-mail.",
+    "details": "Orderdetails",
+    "orderNumber": "Ordernummer",
+    "totalAmount": "Totaalbedrag",
+    "status": "Status",
+    "received": "Ontvangen",
+    "delivery": "Levering",
+    "deliveryWindow": "2-3 werkdagen",
+    "trustItems": [
+      "Snel geleverd",
+      "Veilig verpakt",
+      "085-0021 606"
+    ],
+    "continueShopping": "Verder winkelen",
+    "backHome": "Terug naar home"
+  },
+  "blog": {
+    "brand": "ALRA LED Solutions",
+    "articlesCount_one": "{{count}} artikel",
+    "articlesCount_other": "{{count}} artikelen",
+    "title": "Nieuws",
+    "subtitle": "Professionele inzichten en updates over LED-verlichting.",
+    "featured": "Uitgelicht",
+    "readArticle": "Lees artikel",
+    "untitled": "Zonder titel",
+    "readMore": "Lees meer",
+    "minRead_one": "{{count}} min",
+    "minRead_other": "{{count}} min",
+    "minReadLong_one": "{{count}} min lezen",
+    "minReadLong_other": "{{count}} min lezen",
+    "emptyTitle": "Binnenkort beschikbaar",
+    "emptyText": "Voeg blogberichten toe via CRM -> Pagina Bouwer",
+    "viewProducts": "Bekijk producten ->",
+    "footerInterest": "Interesse in onze producten?",
+    "footerLink": "Bekijk het aanbod ->"
+  },
+  "blogDetail": {
+    "notFound": "Artikel niet gevonden",
+    "backToNews": "<- Terug naar nieuws",
+    "news": "Nieuws",
+    "minRead_one": "{{count}} min lezen",
+    "minRead_other": "{{count}} min lezen",
+    "byline": "ALRA LED Solutions - {{count}} min lezen",
+    "noContent": "Geen inhoud beschikbaar.",
+    "moreArticles": "<- Meer artikelen",
+    "moreReading": "Meer lezen",
+    "articleFallback": "Artikel"
+  },
+  "chat": {
+    "greeting": "Hoi! Ik ben de ALRA LED assistent. Heb je een vraag over onze producten of wil je een offerte? Ik help je graag!",
+    "offline": "Sorry, even geen verbinding. Bel ons gerust direct!",
+    "title": "ALRA LED Assistent",
+    "online": "Online - antwoordt direct",
+    "inputPlaceholder": "Stel een vraag...",
+    "suggestions": [
+      "Welke producten zijn geschikt voor bedrijfswagens?",
+      "Hoe snel wordt er geleverd?",
+      "Hebben jullie CE-gecertificeerde producten?",
+      "Kan ik een offerte aanvragen?"
+    ]
+  }
+}

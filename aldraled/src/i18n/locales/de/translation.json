@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "home": "Startseite",
+    "about": "Über uns",
+    "webshop": "Webshop",
+    "blog": "Blog",
+    "contact": "Kontakt",
+    "shop_now": "Jetzt kaufen"
+  },
+  "header": {
+    "free_shipping": "Kostenloser Versand ab 250 €",
+    "warranty": "5 Jahre Garantie",
+    "ce_certified": "CE-zertifiziert",
+    "login": "Anmelden",
+    "search_placeholder": "Produkte suchen..."
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Ein Fehler ist aufgetreten"
+  }
+}

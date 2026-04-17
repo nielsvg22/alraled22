@@ -1,0 +1,12 @@
+{
+  "name": "aldraled-monorepo",
+  "private": true,
+  "scripts": {
+    "aldraled:build": "cd aldraled && npm install && npm run build",
+    "crm-frontend:build": "cd crm-frontend && npm install && npm run build",
+    "crm-backend:build": "cd crm-backend && npm install && npm run build"
+  },
+  "dependencies": {
+    "axios": "^1.13.5"
+  }
+}

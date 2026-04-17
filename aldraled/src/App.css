@@ -1,0 +1,4 @@
+/* Custom styles if needed, otherwise Tailwind handles most of it */
+.App {
+  min-height: 100vh;
+}

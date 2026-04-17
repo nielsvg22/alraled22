@@ -1,0 +1,179 @@
+{
+  "welcome": "Welcome to ALRA LED Solutions.",
+  "hero_subtitle": "ALRA Led Solutions helps you choose a sustainable future. Specialist in LED lighting for commercial vehicles, construction sites and workshops.",
+  "view_products": "View products",
+  "about_us": "About us",
+  "footer_rights": "All rights reserved.",
+  "language": "Language",
+  "languages": {
+    "nl": "Dutch",
+    "en": "English",
+    "de": "German"
+  },
+  "nav": {
+    "home": "Home",
+    "products": "Products",
+    "about": "About us",
+    "dealers": "Where to buy",
+    "contact": "Contact",
+    "blog": "Blog",
+    "shopNow": "Shop now",
+    "account": "Account",
+    "login": "Login"
+  },
+  "header": {
+    "language": "Language",
+    "featureList": [
+      "Free shipping over EUR 250",
+      "5 years warranty",
+      "CE certified"
+    ],
+    "searchPlaceholder": "Search products...",
+    "searchNoResults": "No products found for \"<0>{{query}}</0>\"",
+    "searchViewAll": "View all results →",
+    "themeOn": "Lights on",
+    "themeOff": "Lights off",
+    "cart": "Cart",
+    "menu": "Menu"
+  },
+  "cart": {
+    "titlePrefix": "Shopping",
+    "titleHighlight": " cart",
+    "emptyTitle": "Your cart is empty",
+    "startShopping": "Start shopping",
+    "subtotal": "Subtotal",
+    "shippingNote": "Shipping and taxes are calculated at checkout.",
+    "checkout": "Checkout",
+    "continueShopping": "Continue shopping"
+  },
+  "footer": {
+    "productLinks": [
+      "Commercial vehicle lighting",
+      "LED construction light strips",
+      "LED workshop lift lighting",
+      "Accessories"
+    ],
+    "newsletterTitle": "Stay up to date",
+    "newsletterText": "Receive news, product launches and exclusive offers.",
+    "newsletterPlaceholder": "you@email.com",
+    "newsletterButton": "Sign up",
+    "brandText": "Specialist in professional LED lighting for commercial vehicles, construction sites and workshops. Quality and reliability first.",
+    "navigation": "Navigation",
+    "productsTitle": "Products",
+    "contactTitle": "Contact",
+    "bottomCopy": "ALRA LED Solutions. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms & Conditions"
+  },
+  "about": {
+    "title": "Driven by quality and sustainability",
+    "description": "ALRA LED Solutions was founded in 2014 with one goal: delivering the very best LED lighting solutions for professionals. We work exclusively with top-quality products, fully certified. Our team of driven engineers is ready to find the perfect solution together with you, from idea to finished product.",
+    "stats": [
+      {
+        "label": "Founded",
+        "value": "2014"
+      },
+      {
+        "label": "Partners NL & BE",
+        "value": "225+"
+      },
+      {
+        "label": "Quality rating",
+        "value": "A++"
+      },
+      {
+        "label": "Own product line",
+        "value": "2018"
+      }
+    ],
+    "values": [
+      {
+        "title": "Craftsmanship",
+        "text": "Driven engineers involved in design, technology, sustainability and functionality. From sketch to certified end product."
+      },
+      {
+        "title": "Quality & warranty",
+        "text": "Only CE and RoHS certified LED products. Full warranty on every product we deliver."
+      },
+      {
+        "title": "Personal advice",
+        "text": "Running into a challenge in the field? We’re happy to visit and find the best solution together."
+      }
+    ],
+    "timeline": [
+      {
+        "year": "2014",
+        "label": "ALRA LED Solutions founded"
+      },
+      {
+        "year": "2018",
+        "label": "First in-house LED product line developed"
+      },
+      {
+        "year": "2020",
+        "label": "50th affiliated wholesaler in the Netherlands"
+      },
+      {
+        "year": "2022",
+        "label": "150th technical dealer in NL and Belgium"
+      },
+      {
+        "year": "2024",
+        "label": "New product range for road and construction site safety"
+      }
+    ],
+    "eyebrow": "About us",
+    "timelineTitle": "Our history"
+  },
+  "contact": {
+    "eyebrow": "Get in touch",
+    "title": "Contact",
+    "description": "Running into an issue in the field? Let us know — we’re happy to visit and find a solution together.",
+    "detailsTitle": "Details",
+    "address": "Address",
+    "phone": "Phone",
+    "email": "Email",
+    "callTitle": "Prefer to call?",
+    "callText": "Our experts are happy to help you by phone.",
+    "companyDetails": "Company details",
+    "kvk": "Chamber of Commerce",
+    "vat": "VAT",
+    "successTitle": "Message sent!",
+    "successText": "We will contact you as soon as possible.",
+    "newMessage": "New message",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Your name",
+      "email": "Email",
+      "emailPlaceholder": "you@email.com",
+      "subject": "Subject",
+      "subjectPlaceholder": "What is your question about?",
+      "message": "Message",
+      "messagePlaceholder": "How can we help you?",
+      "submit": "Send message"
+    }
+  },
+  "login": {
+    "invalidCredentials": "Invalid credentials. Please try again.",
+    "titlePrefix": "LOG",
+    "titleHighlight": "IN",
+    "subtitle": "Welcome back to ALRA LED Solutions",
+    "email": "Email address",
+    "password": "Password",
+    "submit": "Login",
+    "noAccount": "No account yet?",
+    "createAccount": "Create account →"
+  },
+  "register": {
+    "fallbackError": "Registration failed.",
+    "titlePrefix": "REGIS",
+    "titleHighlight": "TER",
+    "subtitle": "Join the elite professionals",
+    "name": "Name",
+    "email": "Email address",
+    "password": "Password",
+    "submit": "Create account",
+    "haveAccount": "Already have an account?",
+    "login": "Login →"
+  }
+}

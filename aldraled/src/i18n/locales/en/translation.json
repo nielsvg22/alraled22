@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About us",
+    "webshop": "Webshop",
+    "blog": "Blog",
+    "contact": "Contact",
+    "shop_now": "Shop now"
+  },
+  "header": {
+    "free_shipping": "Free shipping over €250",
+    "warranty": "5 years warranty",
+    "ce_certified": "CE certified",
+    "login": "Login",
+    "search_placeholder": "Search products..."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred"
+  }
+}

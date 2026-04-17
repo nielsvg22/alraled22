@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_elements_text_lines",
+  "info": {
+    "displayName": "Text Line",
+    "icon": "minus"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "text"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_elements_stats",
+  "info": {
+    "displayName": "Stat",
+    "icon": "chart-bar"
+  },
+  "options": {},
+  "attributes": {
+    "value": {
+      "type": "integer"
+    },
+    "label": {
+      "type": "string"
+    },
+    "suffix": {
+      "type": "string"
+    },
+    "subtext": {
+      "type": "string"
+    }
+  }
+}

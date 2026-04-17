@@ -1,0 +1,179 @@
+{
+  "welcome": "Willkommen bei ALRA LED Solutions.",
+  "hero_subtitle": "ALRA Led Solutions hilft Ihnen bei der Wahl einer nachhaltigen Zukunft. Spezialist für LED-Beleuchtung für Nutzfahrzeuge, Baustellen und Werkstätten.",
+  "view_products": "Produkte ansehen",
+  "about_us": "Über uns",
+  "footer_rights": "Alle Rechte vorbehalten.",
+  "language": "Sprache",
+  "languages": {
+    "nl": "Niederländisch",
+    "en": "Englisch",
+    "de": "Deutsch"
+  },
+  "nav": {
+    "home": "Home",
+    "products": "Produkte",
+    "about": "Über uns",
+    "dealers": "Händler finden",
+    "contact": "Kontakt",
+    "blog": "Blog",
+    "shopNow": "Jetzt kaufen",
+    "account": "Konto",
+    "login": "Anmelden"
+  },
+  "header": {
+    "language": "Sprache",
+    "featureList": [
+      "Kostenloser Versand ab EUR 250",
+      "5 Jahre Garantie",
+      "CE-zertifiziert"
+    ],
+    "searchPlaceholder": "Produkte suchen...",
+    "searchNoResults": "Keine Produkte gefunden für \"<0>{{query}}</0>\"",
+    "searchViewAll": "Alle Ergebnisse anzeigen →",
+    "themeOn": "Lights on",
+    "themeOff": "Lights off",
+    "cart": "Warenkorb",
+    "menu": "Menü"
+  },
+  "cart": {
+    "titlePrefix": "Waren",
+    "titleHighlight": "korb",
+    "emptyTitle": "Ihr Warenkorb ist leer",
+    "startShopping": "Jetzt einkaufen",
+    "subtotal": "Zwischensumme",
+    "shippingNote": "Versandkosten und Steuern werden beim Bezahlen berechnet.",
+    "checkout": "Zur Kasse",
+    "continueShopping": "Weiter einkaufen"
+  },
+  "footer": {
+    "productLinks": [
+      "Nutzfahrzeugbeleuchtung",
+      "LED-Baustellen-Lichtschläuche",
+      "LED-Hebebühnenbeleuchtung",
+      "Zubehör"
+    ],
+    "newsletterTitle": "Bleiben Sie auf dem Laufenden",
+    "newsletterText": "Erhalten Sie News, Produktneuheiten und exklusive Angebote.",
+    "newsletterPlaceholder": "ihre@email.de",
+    "newsletterButton": "Anmelden",
+    "brandText": "Spezialist für professionelle LED-Beleuchtung für Nutzfahrzeuge, Baustellen und Werkstätten. Qualität und Zuverlässigkeit stehen an erster Stelle.",
+    "navigation": "Navigation",
+    "productsTitle": "Produkte",
+    "contactTitle": "Kontakt",
+    "bottomCopy": "ALRA LED Solutions. Alle Rechte vorbehalten.",
+    "privacy": "Datenschutz",
+    "terms": "AGB"
+  },
+  "about": {
+    "title": "Getrieben von Qualität und Nachhaltigkeit",
+    "description": "ALRA LED Solutions wurde 2014 mit einem Ziel gegründet: die besten LED-Beleuchtungslösungen für Profis zu liefern. Wir arbeiten ausschließlich mit hochwertigen, vollständig zertifizierten Produkten. Unser Team engagierter Ingenieure findet gemeinsam mit Ihnen die perfekte Lösung – von der Idee bis zum Endprodukt.",
+    "stats": [
+      {
+        "label": "Gegründet",
+        "value": "2014"
+      },
+      {
+        "label": "Partner NL & BE",
+        "value": "225+"
+      },
+      {
+        "label": "Qualitätsrating",
+        "value": "A++"
+      },
+      {
+        "label": "Eigene Produktlinie",
+        "value": "2018"
+      }
+    ],
+    "values": [
+      {
+        "title": "Handwerk",
+        "text": "Engagierte Ingenieure sind in Design, Technik, Nachhaltigkeit und Funktionalität eingebunden. Von der Skizze bis zum zertifizierten Endprodukt."
+      },
+      {
+        "title": "Qualität & Garantie",
+        "text": "Ausschließlich CE- und RoHS-zertifizierte LED-Produkte. Volle Garantie auf jedes Produkt, das wir liefern."
+      },
+      {
+        "title": "Persönliche Beratung",
+        "text": "Stoßen Sie im Einsatz auf eine Herausforderung? Wir kommen gerne vorbei und finden gemeinsam die beste Lösung."
+      }
+    ],
+    "timeline": [
+      {
+        "year": "2014",
+        "label": "Gründung von ALRA LED Solutions"
+      },
+      {
+        "year": "2018",
+        "label": "Erste eigene LED-Produktlinie entwickelt"
+      },
+      {
+        "year": "2020",
+        "label": "50. angeschlossener Großhändler in den Niederlanden"
+      },
+      {
+        "year": "2022",
+        "label": "150. technischer Händler in NL und Belgien"
+      },
+      {
+        "year": "2024",
+        "label": "Neues Produktsortiment für Straßen- und Baustellensicherheit"
+      }
+    ],
+    "eyebrow": "Über uns",
+    "timelineTitle": "Unsere Geschichte"
+  },
+  "contact": {
+    "eyebrow": "Kontakt aufnehmen",
+    "title": "Kontakt",
+    "description": "Gibt es im Einsatz ein Problem? Sagen Sie uns Bescheid – wir kommen gerne vorbei und finden gemeinsam eine Lösung.",
+    "detailsTitle": "Daten",
+    "address": "Adresse",
+    "phone": "Telefon",
+    "email": "E-Mail",
+    "callTitle": "Lieber direkt anrufen?",
+    "callText": "Unsere Experten helfen Ihnen gerne telefonisch.",
+    "companyDetails": "Firmendaten",
+    "kvk": "Handelsregister",
+    "vat": "USt-IdNr.",
+    "successTitle": "Nachricht gesendet!",
+    "successText": "Wir melden uns so schnell wie möglich bei Ihnen.",
+    "newMessage": "Neue Nachricht",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Ihr Name",
+      "email": "E-Mail",
+      "emailPlaceholder": "ihre@email.de",
+      "subject": "Betreff",
+      "subjectPlaceholder": "Worum geht es?",
+      "message": "Nachricht",
+      "messagePlaceholder": "Wie können wir Ihnen helfen?",
+      "submit": "Nachricht senden"
+    }
+  },
+  "login": {
+    "invalidCredentials": "Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.",
+    "titlePrefix": "AN",
+    "titleHighlight": "MELDEN",
+    "subtitle": "Willkommen zurück bei ALRA LED Solutions",
+    "email": "E-Mail-Adresse",
+    "password": "Passwort",
+    "submit": "Anmelden",
+    "noAccount": "Noch kein Konto?",
+    "createAccount": "Konto erstellen →"
+  },
+  "register": {
+    "fallbackError": "Registrierung fehlgeschlagen.",
+    "titlePrefix": "REGIS",
+    "titleHighlight": "TRIEREN",
+    "subtitle": "Schließen Sie sich den Profi-Anwendern an",
+    "name": "Name",
+    "email": "E-Mail-Adresse",
+    "password": "Passwort",
+    "submit": "Konto erstellen",
+    "haveAccount": "Haben Sie bereits ein Konto?",
+    "login": "Anmelden →"
+  }
+}
