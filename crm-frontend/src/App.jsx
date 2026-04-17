@@ -18,6 +18,7 @@ import Dealers from './pages/Dealers';
 import Snelstart from './pages/Snelstart';
 import DiscountCodes from './pages/DiscountCodes';
 import PasswordWall from './components/PasswordWall';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -77,12 +78,17 @@ function AppRoutes() {
 }
 
 export default function App() {
+  const baseUrl = typeof import.meta.env.BASE_URL === 'string' ? import.meta.env.BASE_URL : '/';
+  const basename = baseUrl.trim().replace(/\/+$/, '') || '/';
+
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <PasswordWall>
-          <AppRoutes />
-        </PasswordWall>
+      <BrowserRouter basename={basename}>
+        <ErrorBoundary>
+          <PasswordWall>
+            <AppRoutes />
+          </PasswordWall>
+        </ErrorBoundary>
       </BrowserRouter>
     </AuthProvider>
   );
