@@ -20,7 +20,7 @@ export default function Register() {
     try {
       const data = await register(email, password, name);
       const target = data?.user?.role === 'ADMIN' ? '/users' : '/';
-      navigate(target, { replace: true });
+      window.location.assign(target);
     } catch (err) {
       setError(err.response?.data?.error || err.response?.data?.message || err.message || 'Registration failed');
     } finally {

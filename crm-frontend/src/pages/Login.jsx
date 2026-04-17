@@ -19,7 +19,7 @@ export default function Login() {
     try {
       const data = await login(email, password);
       const target = data?.user?.role === 'ADMIN' ? '/users' : '/';
-      navigate(target, { replace: true });
+      window.location.assign(target);
     } catch (err) {
       console.error('Login error:', err);
       const msg = err.response?.data?.error || err.response?.data?.message || err.message || 'Login failed';
