@@ -50,6 +50,7 @@ export async function register(req: Request, res: Response) {
     const role: usersRepo.Role = userCount === 0 ? 'ADMIN' : 'USER';
 
     const created = await usersRepo.createUser({ email, password, name, role });
+    if (!created) return res.status(500).json({ error: 'Registration failed' });
     const user = await usersRepo.findUserByIdWithGroup(created.id);
     if (!user) return res.status(500).json({ error: 'Registration failed' });
     const token = signToken(user);

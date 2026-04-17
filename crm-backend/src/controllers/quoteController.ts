@@ -30,15 +30,15 @@ export const createQuotePdf = async (req: AuthRequest, res: Response) => {
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const payload = quoteSchema.parse(req.body);
     const ids = payload.items.map(i => i.productId);
-    const prods = db.select().from(products).where(inArray(products.id, ids)).all();
+    const prods = await db.select().from(products).where(inArray(products.id, ids));
 
     const qtyMap = new Map(payload.items.map(i => [i.productId, i.quantity]));
-    const pricing = getPricingContextForUser(userId);
-    const lines = prods.map(p => {
+    const pricing = await getPricingContextForUser(userId);
+    const lines = await Promise.all(prods.map(async (p) => {
       const q = qtyMap.get(p.id) || 1;
-      const unit = getEffectiveUnitPrice(p.id, q, pricing.discountPercent);
+      const unit = await getEffectiveUnitPrice(p.id, q, pricing.discountPercent);
       return { name: p.name, qty: q, unit, total: q * unit };
-    });
+    }));
     const subtotal = lines.reduce((s, l) => s + l.total, 0);
     const vatRate = pricing.vatReverseCharge ? 0 : 0.21;
     const vat = subtotal * vatRate;

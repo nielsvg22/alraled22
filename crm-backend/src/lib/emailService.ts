@@ -251,18 +251,30 @@ function adminNotifyHtml(vars: {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
-function getSettings(): EmailSettings | null {
+async function getSettings(): Promise<EmailSettings | null> {
   try {
-    const raw = getContent('email_settings') as EmailSettings | null;
-    if (!raw?.host || !raw?.user || !raw?.pass) return null;
-    return raw;
+    const raw = await getContent('email_settings');
+    if (!raw || typeof raw !== 'object') return null;
+    const s = raw as Partial<EmailSettings>;
+    if (!s.host || !s.user || !s.pass) return null;
+    return {
+      host: String(s.host),
+      port: Number(s.port ?? 587),
+      secure: Boolean(s.secure ?? false),
+      user: String(s.user),
+      pass: String(s.pass),
+      fromName: String(s.fromName ?? ''),
+      fromEmail: String(s.fromEmail ?? ''),
+      adminEmail: String(s.adminEmail ?? ''),
+    };
   } catch { return null; }
 }
 
-function getTemplates(): EmailTemplates {
+async function getTemplates(): Promise<EmailTemplates> {
   try {
-    const raw = getContent('email_templates') as Partial<EmailTemplates> | null;
-    return { ...DEFAULT_TEMPLATES, ...(raw || {}) };
+    const raw = await getContent('email_templates');
+    if (!raw || typeof raw !== 'object') return DEFAULT_TEMPLATES;
+    return { ...DEFAULT_TEMPLATES, ...(raw as Partial<EmailTemplates>) };
   } catch { return DEFAULT_TEMPLATES; }
 }
 
@@ -305,13 +317,13 @@ export async function sendOrderConfirmation(order: {
   user: { name: string; email: string } | null;
   items: { product: { name: string } | null; quantity: number; price: number }[];
 }) {
-  const settings = getSettings();
+  const settings = await getSettings();
   if (!settings) return;
 
   const customerEmail = order.user?.email;
   if (!customerEmail) return;
 
-  const templates = getTemplates();
+  const templates = await getTemplates();
   const orderId = order.id.slice(0, 8).toUpperCase();
   const customerName = order.user?.name || 'Klant';
   const total = order.total.toFixed(2);
@@ -337,10 +349,10 @@ export async function sendAdminNotification(order: {
   user: { name: string; email: string } | null;
   items: { product: { name: string } | null; quantity: number; price: number }[];
 }) {
-  const settings = getSettings();
+  const settings = await getSettings();
   if (!settings?.adminEmail) return;
 
-  const templates = getTemplates();
+  const templates = await getTemplates();
   const orderId = order.id.slice(0, 8).toUpperCase();
   const customerName = order.user?.name || 'Onbekende klant';
   const customerEmail = order.user?.email || '-';
@@ -366,13 +378,13 @@ export async function sendStatusUpdate(order: {
   status: string;
   user: { name: string; email: string } | null;
 }) {
-  const settings = getSettings();
+  const settings = await getSettings();
   if (!settings) return;
 
   const customerEmail = order.user?.email;
   if (!customerEmail) return;
 
-  const templates = getTemplates();
+  const templates = await getTemplates();
   const orderId = order.id.slice(0, 8).toUpperCase();
   const customerName = order.user?.name || 'Klant';
   const statusText = STATUS_CONFIG[order.status]?.label || order.status;

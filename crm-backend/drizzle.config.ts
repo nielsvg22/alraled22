@@ -3,8 +3,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const dbUrl = process.env.DATABASE_URL ?? '';
-
 export default defineConfig({
   schema: './src/db/schema.ts',
   out: './drizzle',

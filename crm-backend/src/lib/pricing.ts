@@ -7,7 +7,7 @@ export type PricingContext = {
   vatReverseCharge: boolean;
 };
 
-export async function getPricingContextForUser(userId: string): PricingContext {
+export async function getPricingContextForUser(userId: string): Promise<PricingContext> {
   const row = await db.query.users.findFirst({
     where: eq(users.id, userId),
     with: { customerGroup: true },

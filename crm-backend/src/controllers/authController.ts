@@ -15,6 +15,10 @@ const registerSchema = z.object({
   name: z.string().optional().or(z.literal('')),
 });
 
+const updateRoleSchema = z.object({
+  role: z.enum(['USER', 'ADMIN']),
+});
+
 export const register = async (req: Request, res: Response) => {
   try {
     const { email, password, name } = registerSchema.parse(req.body);
@@ -37,6 +41,9 @@ export const register = async (req: Request, res: Response) => {
 
     const newUserResult = await db.select().from(users).where(eq(users.email, email));
     const user = newUserResult[0];
+    if (!user) {
+      return res.status(500).json({ error: 'Registration failed' });
+    }
 
     const token = jwt.sign(
       { userId: user.id, role: user.role },
@@ -108,11 +115,15 @@ export const getUsers = async (req: Request, res: Response) => {
 
 export const updateUserRole = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const { role } = req.body;
+    const id = String((req.params as any)?.id || '');
+    if (!id) return res.status(400).json({ error: 'User id is required' });
+    const { role } = updateRoleSchema.parse(req.body);
     await db.update(users).set({ role }).where(eq(users.id, id));
     res.json({ ok: true });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid data', details: error.issues });
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 };

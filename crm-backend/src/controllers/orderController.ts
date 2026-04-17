@@ -306,7 +306,7 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
     y = drawPartyBlocks(y);
 
     const cols = {
-      product: { x: left + 14, w: 280, label: 'Omschrijving' },
+      product: { x: left + 14, w: 280, label: 'Omschrijving', align: 'left' as const },
       qty: { x: left + 300, w: 60, label: 'Aantal', align: 'center' as const },
       price: { x: left + 370, w: 80, label: 'Prijs p.s.', align: 'right' as const },
       total: { x: left + 460, w: 80, label: 'Totaal', align: 'right' as const }
