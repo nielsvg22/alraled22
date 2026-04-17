@@ -11,10 +11,6 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const quickLoginEnabled = import.meta.env.VITE_QUICK_LOGIN === 'true';
-  const quickLoginEmail = import.meta.env.VITE_QUICK_LOGIN_EMAIL || 'admin@alraled.nl';
-  const quickLoginPassword = import.meta.env.VITE_QUICK_LOGIN_PASSWORD || 'admin1234';
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
@@ -26,23 +22,6 @@ export default function Login() {
       navigate(target, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
-      const msg = err.response?.data?.error || err.response?.data?.message || err.message || 'Login failed';
-      setError(msg);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleQuickLogin = async () => {
-    if (submitting) return;
-    setSubmitting(true);
-    setError('');
-    try {
-      const data = await login(quickLoginEmail, quickLoginPassword);
-      const target = data?.user?.role === 'ADMIN' ? '/users' : '/';
-      navigate(target, { replace: true });
-    } catch (err) {
-      console.error('Quick login error:', err);
       const msg = err.response?.data?.error || err.response?.data?.message || err.message || 'Login failed';
       setError(msg);
     } finally {
@@ -90,18 +69,6 @@ export default function Login() {
               {submitting ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
-          {quickLoginEnabled && (
-            <div>
-              <button
-                type="button"
-                onClick={handleQuickLogin}
-                disabled={submitting}
-                className="group relative w-full flex justify-center py-2 px-4 border border-gray-200 text-sm font-medium rounded-md text-gray-900 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                {submitting ? 'Signing in...' : 'Quick admin login'}
-              </button>
-            </div>
-          )}
           <div className="text-center text-sm">
             <Link to="/register" className="text-blue-600 hover:text-blue-500">
               Don't have an account? Register
