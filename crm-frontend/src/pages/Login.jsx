@@ -17,8 +17,9 @@ export default function Login() {
     setSubmitting(true);
     setError('');
     try {
-      await login(email, password);
-      navigate('/');
+      const data = await login(email, password);
+      const target = data?.user?.role === 'ADMIN' ? '/users' : '/';
+      navigate(target, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
       const msg = err.response?.data?.error || err.response?.data?.message || err.message || 'Login failed';

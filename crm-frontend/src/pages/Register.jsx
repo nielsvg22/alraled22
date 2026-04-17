@@ -18,8 +18,9 @@ export default function Register() {
     setSubmitting(true);
     setError('');
     try {
-      await register(email, password, name);
-      navigate('/');
+      const data = await register(email, password, name);
+      const target = data?.user?.role === 'ADMIN' ? '/users' : '/';
+      navigate(target, { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || err.response?.data?.message || err.message || 'Registration failed');
     } finally {
