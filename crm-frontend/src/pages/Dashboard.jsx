@@ -50,7 +50,12 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         const { data } = await api.get('/dashboard/stats');
-        setStats(data);
+        setStats((prev) => ({
+          ...prev,
+          ...data,
+          recentOrders: Array.isArray(data?.recentOrders) ? data.recentOrders : [],
+          revenueSeries: Array.isArray(data?.revenueSeries) ? data.revenueSeries : [],
+        }));
       } catch (fetchError) {
         setError(fetchError.response?.data?.error || 'Failed to fetch dashboard stats');
       } finally {
@@ -162,7 +167,7 @@ export default function Dashboard() {
             subtitle="Revenue trend from your latest order periods"
           />
           <CardContent className="space-y-4">
-            {stats.revenueSeries.length === 0 ? (
+            {(stats.revenueSeries || []).length === 0 ? (
               <div className="h-80 flex items-center justify-center bg-gray-50/50 rounded-2xl">
                 <div className="text-center">
                   <TrendingUp className="w-12 h-12 text-gray-200 mx-auto mb-4" />
@@ -226,7 +231,7 @@ export default function Dashboard() {
       <Card>
         <CardHeader title="Recent Orders" subtitle="Latest customer activity in the CRM" />
         <CardContent className="p-0 overflow-x-auto">
-          {stats.recentOrders.length === 0 ? (
+          {(stats.recentOrders || []).length === 0 ? (
             <div className="px-6 py-10 text-center text-gray-500">No recent orders yet.</div>
           ) : (
             <table className="w-full text-left border-collapse">
