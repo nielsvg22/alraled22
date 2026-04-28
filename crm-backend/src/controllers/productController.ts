@@ -6,6 +6,8 @@ import { productPriceTiers, productRelations, products as productsTable } from '
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import mammoth from 'mammoth';
 import fs from 'fs';
+import path from 'path';
+import { randomUUID } from 'node:crypto';
 
 const productSchema = z.object({
   name: z.string().trim().min(1),
@@ -222,12 +224,60 @@ export const importProducts = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Only .docx files are supported' });
     }
 
-    const result = await mammoth.extractRawText({ path: file.path });
+    const uploadsDir = process.env.UPLOADS_DIR
+      ? path.resolve(process.env.UPLOADS_DIR)
+      : path.join(process.cwd(), 'uploads');
+    fs.mkdirSync(uploadsDir, { recursive: true });
+
+    // Track images extracted from the docx in order
+    const savedImages: string[] = []; // urls like /uploads/uuid.png
+    const IMG_PLACEHOLDER = '\n@@IMG@@\n';
+
+    const mimeToExt: Record<string, string> = {
+      'image/png': '.png',
+      'image/jpeg': '.jpg',
+      'image/gif': '.gif',
+      'image/webp': '.webp',
+      'image/bmp': '.bmp',
+      'image/tiff': '.tiff',
+      'image/svg+xml': '.svg',
+    };
+
+    // Convert to HTML, extracting images along the way
+    const result = await mammoth.convertToHtml(
+      { path: file.path },
+      {
+        convertImage: mammoth.images.imgElement(async (image: any) => {
+          const imgExt = mimeToExt[image.contentType] || '.png';
+          const filename = `${randomUUID()}${imgExt}`;
+          const imgPath = path.join(uploadsDir, filename);
+          const buffer = await image.read();
+          fs.writeFileSync(imgPath, buffer);
+          const url = `/uploads/${filename}`;
+          savedImages.push(url);
+          return { src: `@@IMG_${savedImages.length - 1}@@` };
+        }),
+      },
+    );
     fs.unlinkSync(file.path);
 
-    const text = result.value;
+    // Strip HTML to plain text but keep image placeholders
+    let text = result.value
+      .replace(/<img[^>]*src="@@IMG_(\d+)@@"[^>]*>/gi, (_match: string, idx: string) => `${IMG_PLACEHOLDER.replace('@@IMG@@', `@@IMG_${idx}@@`)}`)
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<\/div>/gi, '\n')
+      .replace(/<\/tr>/gi, '\n')
+      .replace(/<\/li>/gi, '\n')
+      .replace(/<[^>]*>/g, '')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&#\d+;/g, '')
+      .replace(/&[a-z]+;/gi, '');
 
-    // Price line pattern: "€ 295,00 excl. btw" (with optional incl. btw part)
+    // Price line pattern: "€ 295,00 excl. btw"
     const priceLineRe = /€\s*([\d.,]+)\s*excl\.\s*btw/gi;
 
     // Find all price-line positions
@@ -245,39 +295,57 @@ export const importProducts = async (req: Request, res: Response) => {
       });
     }
 
+    // Helper: find all image placeholder indices in a text chunk
+    const findImages = (chunk: string): string[] => {
+      const urls: string[] = [];
+      const imgRe = /@@IMG_(\d+)@@/g;
+      let im: RegExpExecArray | null;
+      while ((im = imgRe.exec(chunk)) !== null) {
+        const idx = parseInt(im[1]!, 10);
+        if (savedImages[idx]) urls.push(savedImages[idx]!);
+      }
+      return urls;
+    };
+
     // Split the document into product blocks using the price lines as anchors
-    interface ProductBlock { name: string; price: number; description: string; specs: string }
+    interface ProductBlock { name: string; price: number; description: string; specs: string; imageUrl: string | null }
     const blocks: ProductBlock[] = [];
 
     for (let i = 0; i < priceHits.length; i++) {
       const hit = priceHits[i]!;
 
-      // --- Name: text between previous product's price line end and this price line ---
+      // --- Full block: from previous price line end (or start) to next price line (or end) ---
       const blockStart = i === 0 ? 0 : (text.indexOf('\n', priceHits[i - 1]!.index) + 1 || priceHits[i - 1]!.index);
+      const nextBlockEnd = i + 1 < priceHits.length ? priceHits[i + 1]!.index : text.length;
+
+      // --- Name: last non-empty, non-placeholder line before the price ---
       const beforePrice = text.slice(blockStart, hit.index);
-      // Take non-empty lines before the price as the product name
-      const nameLines = beforePrice.split('\n').map(l => l.trim()).filter(Boolean);
-      const name = nameLines[nameLines.length - 1] || '';  // last non-empty line closest to price
+      const nameLines = beforePrice.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('@@IMG_'));
+      const name = nameLines[nameLines.length - 1] || '';
 
       if (!name) continue;
 
-      // --- Body: everything after the price line until the next product ---
+      // --- Images: find in the full block (before + after price) ---
+      const fullBlock = text.slice(blockStart, nextBlockEnd);
+      const images = findImages(fullBlock);
+
+      // --- Body: everything after the price line until the next block ---
       const afterPriceStart = text.indexOf('\n', hit.index);
-      const nextBlockEnd = i + 1 < priceHits.length ? priceHits[i + 1]!.index : text.length;
-      // Find where the NEXT product's name starts (go backwards from next price to find its name)
       let bodyEnd = nextBlockEnd;
       if (i + 1 < priceHits.length) {
-        const textBeforeNext = text.slice(afterPriceStart, nextBlockEnd);
+        const textBeforeNext = text.slice(afterPriceStart >= 0 ? afterPriceStart : hit.index, nextBlockEnd);
         const linesBeforeNext = textBeforeNext.split('\n');
-        // Remove trailing non-empty lines that belong to the next product name
         let trimCount = 0;
         for (let j = linesBeforeNext.length - 1; j >= 0; j--) {
-          if (linesBeforeNext[j]!.trim()) { trimCount++; break; }
+          const line = linesBeforeNext[j]!.trim();
+          if (line && !line.startsWith('@@IMG_')) { trimCount++; break; }
         }
         bodyEnd = nextBlockEnd - (trimCount > 0 ? (linesBeforeNext[linesBeforeNext.length - 1]?.length ?? 0) + 1 : 0);
       }
 
-      const body = afterPriceStart >= 0 ? text.slice(afterPriceStart, bodyEnd).trim() : '';
+      let body = afterPriceStart >= 0 ? text.slice(afterPriceStart, bodyEnd).trim() : '';
+      // Remove image placeholders from body text
+      body = body.replace(/@@IMG_\d+@@/g, '').replace(/\n{3,}/g, '\n\n').trim();
 
       // Split body into description and specifications
       const specIdx = body.search(/Specificaties\s*\n/i);
@@ -290,7 +358,7 @@ export const importProducts = async (req: Request, res: Response) => {
         description = body;
       }
 
-      blocks.push({ name: name.trim(), price: hit.price, description, specs });
+      blocks.push({ name: name.trim(), price: hit.price, description, specs, imageUrl: images[0] || null });
     }
 
     if (blocks.length === 0) {
@@ -302,7 +370,6 @@ export const importProducts = async (req: Request, res: Response) => {
 
     for (const block of blocks) {
       try {
-        // Combine description + specs into one description field
         const fullDesc = [block.description, block.specs].filter(Boolean).join('\n\n') || null;
 
         const product = await productsRepo.createProduct({
@@ -310,6 +377,7 @@ export const importProducts = async (req: Request, res: Response) => {
           description: fullDesc,
           price: block.price,
           stock: 0,
+          imageUrl: block.imageUrl,
           category: null,
         });
         created.push(product);
