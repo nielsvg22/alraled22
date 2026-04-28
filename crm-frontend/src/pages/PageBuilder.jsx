@@ -7,6 +7,7 @@ import {
   GripVertical, Trash2, Plus, Sparkles, Loader2, Save, CheckCircle,
   ChevronDown, ChevronUp, Eye, EyeOff, Pencil, Upload, X, Image,
 } from 'lucide-react';
+import { errorText } from '../lib/errorText';
 
 const PAGES = [
   { key: 'home',    label: 'Homepagina',  icon: '🏠' },
@@ -313,7 +314,7 @@ function NewBlockModal({ onAdd, onClose }) {
       const res = await api.post('/ai/new-block', { blockType, description });
       setPreview(res.data.result);
     } catch (err) {
-      setError(err.response?.data?.error || 'Mislukt. Controleer GROQ_API_KEY.');
+      setError(errorText(err, 'Mislukt. Controleer GROQ_API_KEY.'));
     } finally { setLoading(false); }
   };
 

@@ -7,6 +7,7 @@ import {
   FileDown,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { errorText } from '../lib/errorText';
 
 const euro = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
 
@@ -262,7 +263,7 @@ export default function Orders() {
   const fetchOrders = async () => {
     setLoading(true);
     try { setError(''); const r = await api.get('/orders'); setOrders(r.data); }
-    catch { setError('Bestellingen ophalen mislukt'); }
+    catch (e) { setError(errorText(e, 'Bestellingen ophalen mislukt')); }
     finally { setLoading(false); }
   };
 
@@ -303,7 +304,7 @@ export default function Orders() {
         </button>
       </div>
 
-      {error && <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-600 text-sm font-medium">{error}</div>}
+      {error && <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-600 text-sm font-medium">{String(error)}</div>}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus } from 'lucide-react';
+import { errorText } from '../lib/errorText';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -22,7 +23,7 @@ export default function Register() {
       const target = data?.user?.role === 'ADMIN' ? '/users' : '/';
       window.location.assign(target);
     } catch (err) {
-      setError(err.response?.data?.error || err.response?.data?.message || err.message || 'Registration failed');
+      setError(errorText(err, 'Registration failed'));
     } finally {
       setSubmitting(false);
     }
@@ -36,7 +37,7 @@ export default function Register() {
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Create account</h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+          {error && <div className="text-red-500 text-sm text-center">{String(error)}</div>}
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <input

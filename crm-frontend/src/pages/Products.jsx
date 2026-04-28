@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../lib/api';
 import { Plus, Edit, Trash2, Search, Upload, X, Copy, Sparkles, Loader2, Package, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { errorText } from '../lib/errorText';
 
 const euro = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
 const emptyForm = { name: '', description: '', price: '', stock: '', category: '', imageUrl: '' };
@@ -119,7 +120,7 @@ export default function Products() {
       editing ? await api.put(`/products/${editing.id}`, data) : await api.post('/products', data);
       await fetchProducts();
       closeModal();
-    } catch (e) { setError(e.response?.data?.error || 'Opslaan mislukt'); }
+    } catch (e) { setError(errorText(e, 'Opslaan mislukt')); }
     finally { setSaving(false); }
   };
 
@@ -173,7 +174,7 @@ export default function Products() {
         )}
       </div>
 
-      {error && !modalOpen && <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-600 text-sm font-medium">{error}</div>}
+      {error && !modalOpen && <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-600 text-sm font-medium">{String(error)}</div>}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -321,7 +322,7 @@ export default function Products() {
 
             <form onSubmit={handleSubmit} className="overflow-y-auto flex-1">
               <div className="p-6 space-y-5">
-                {error && <div className="rounded-xl bg-red-50 border border-red-100 text-red-600 px-4 py-3 text-sm font-medium">{error}</div>}
+                {error && <div className="rounded-xl bg-red-50 border border-red-100 text-red-600 px-4 py-3 text-sm font-medium">{String(error)}</div>}
 
                 {/* Image upload */}
                 <div>

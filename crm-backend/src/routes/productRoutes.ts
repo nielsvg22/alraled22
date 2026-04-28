@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import multer from 'multer';
+import path from 'path';
 import {
   getProducts,
   getProductById,
@@ -10,8 +12,15 @@ import {
   setProductPriceTiers,
   addProductRelation,
   deleteProductRelation,
+  importProducts,
 } from '../controllers/productController';
 import { adminMiddleware, authMiddleware } from '../middleware/authMiddleware';
+
+const uploadsDir = process.env.UPLOADS_DIR
+  ? path.resolve(process.env.UPLOADS_DIR)
+  : path.join(process.cwd(), 'uploads');
+
+const upload = multer({ dest: uploadsDir, limits: { fileSize: 10 * 1024 * 1024 } });
 
 const router = Router();
 
@@ -25,5 +34,6 @@ router.put('/:id/price-tiers', authMiddleware, adminMiddleware, setProductPriceT
 router.post('/:id/relations', authMiddleware, adminMiddleware, addProductRelation);
 router.delete('/:id/relations/:relationId', authMiddleware, adminMiddleware, deleteProductRelation);
 router.delete('/:id', authMiddleware, adminMiddleware, deleteProduct);
+router.post('/import', authMiddleware, adminMiddleware, upload.single('file'), importProducts);
 
 export default router;

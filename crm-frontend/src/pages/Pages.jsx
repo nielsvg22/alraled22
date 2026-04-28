@@ -907,7 +907,7 @@ function SortableBlockCard({ block, active, draft, error, mountOptions, onSelect
 
           {error && (
             <div className="px-4 py-3 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-sm font-bold">
-              {error}
+              {String(error)}
             </div>
           )}
           <Field label="Data (JSON)">

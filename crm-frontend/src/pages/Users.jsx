@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import api from '../lib/api';
 import { Shield, User, Search, Users, UserCheck, UserX, RefreshCw, Mail, Calendar, Crown } from 'lucide-react';
+import { errorText } from '../lib/errorText';
 
 const euro = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
 
@@ -155,7 +156,7 @@ export default function UsersPage() {
       setUsers(uRes.data);
       setOrders(oRes.data);
     } catch (e) {
-      setError(e.response?.data?.error || 'Gebruikers ophalen mislukt');
+      setError(errorText(e, 'Gebruikers ophalen mislukt'));
     } finally {
       setLoading(false);
     }
@@ -192,7 +193,7 @@ export default function UsersPage() {
         </button>
       </div>
 
-      {error && <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-600 text-sm font-medium">{error}</div>}
+      {error && <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-600 text-sm font-medium">{String(error)}</div>}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

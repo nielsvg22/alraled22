@@ -4,6 +4,8 @@ import * as productsRepo from '../db/productsRepo';
 import { db } from '../lib/db';
 import { productPriceTiers, productRelations, products as productsTable } from '../db/schema';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import mammoth from 'mammoth';
+import fs from 'fs';
 
 const productSchema = z.object({
   name: z.string().trim().min(1),
@@ -206,6 +208,103 @@ export const getProductPriceTiers = async (req: Request, res: Response) => {
     res.json(tiers);
   } catch {
     res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const importProducts = async (req: Request, res: Response) => {
+  try {
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const ext = file.originalname.toLowerCase();
+    if (!ext.endsWith('.docx')) {
+      fs.unlinkSync(file.path);
+      return res.status(400).json({ error: 'Only .docx files are supported' });
+    }
+
+    const result = await mammoth.convertToHtml({ path: file.path });
+    fs.unlinkSync(file.path);
+
+    const html = result.value;
+
+    // Extract table rows from HTML
+    const tableMatch = html.match(/<table[^>]*>([\s\S]*?)<\/table>/);
+    if (!tableMatch) {
+      return res.status(400).json({ error: 'No table found in the document. Please use a table with columns: Name, Description, Price, Stock, Category' });
+    }
+
+    const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+    const cellRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+    const stripTags = (s: string) => s.replace(/<[^>]*>/g, '').trim();
+
+    const rows: string[][] = [];
+    let rowMatch;
+    while ((rowMatch = rowRegex.exec(tableMatch[0])) !== null) {
+      const cells: string[] = [];
+      let cellMatch;
+      while ((cellMatch = cellRegex.exec(rowMatch[1]!)) !== null) {
+        cells.push(stripTags(cellMatch[1]!));
+      }
+      if (cells.length > 0) rows.push(cells);
+    }
+
+    if (rows.length < 2) {
+      return res.status(400).json({ error: 'Table must have a header row and at least one data row' });
+    }
+
+    // Map header columns (case-insensitive)
+    const headers = rows[0]!.map(h => h.toLowerCase().trim());
+    const colIndex = {
+      name: headers.findIndex(h => h.includes('name') || h.includes('naam')),
+      description: headers.findIndex(h => h.includes('description') || h.includes('beschrijving') || h.includes('omschrijving')),
+      price: headers.findIndex(h => h.includes('price') || h.includes('prijs')),
+      stock: headers.findIndex(h => h.includes('stock') || h.includes('voorraad') || h.includes('aantal')),
+      category: headers.findIndex(h => h.includes('category') || h.includes('categorie')),
+    };
+
+    if (colIndex.name === -1) {
+      return res.status(400).json({ error: 'Could not find a "Name" column in the table header' });
+    }
+    if (colIndex.price === -1) {
+      return res.status(400).json({ error: 'Could not find a "Price" column in the table header' });
+    }
+
+    const dataRows = rows.slice(1);
+    const created: any[] = [];
+    const errors: { row: number; error: string }[] = [];
+
+    for (let i = 0; i < dataRows.length; i++) {
+      const row = dataRows[i]!;
+      try {
+        const name = (row[colIndex.name] ?? '').trim();
+        if (!name) { errors.push({ row: i + 2, error: 'Missing name' }); continue; }
+
+        const priceStr = (row[colIndex.price] ?? '').replace(/[^\d.,\-]/g, '').replace(',', '.').trim();
+        const price = parseFloat(priceStr || '0');
+        if (isNaN(price) || price < 0) { errors.push({ row: i + 2, error: `Invalid price: ${row[colIndex.price]}` }); continue; }
+
+        const stockStr = colIndex.stock !== -1 ? (row[colIndex.stock] ?? '').replace(/[^\d]/g, '').trim() : '0';
+        const stock = parseInt(stockStr || '0', 10);
+
+        const description = colIndex.description !== -1 ? ((row[colIndex.description] ?? '').trim() || null) : null;
+        const category = colIndex.category !== -1 ? ((row[colIndex.category] ?? '').trim() || null) : null;
+
+        const product = await productsRepo.createProduct({ name, description, price, stock, category });
+        created.push(product);
+      } catch (err: any) {
+        errors.push({ row: i + 2, error: err.message || 'Unknown error' });
+      }
+    }
+
+    res.json({
+      imported: created.length,
+      total: dataRows.length,
+      errors: errors.length > 0 ? errors : undefined,
+      products: created,
+    });
+  } catch (error: any) {
+    console.error('Import products error:', error);
+    res.status(500).json({ error: 'Failed to import products' });
   }
 };
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn } from 'lucide-react';
+import { errorText } from '../lib/errorText';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -22,8 +23,7 @@ export default function Login() {
       window.location.assign(target);
     } catch (err) {
       console.error('Login error:', err);
-      const msg = err.response?.data?.error || err.response?.data?.message || err.message || 'Login failed';
-      setError(msg);
+      setError(errorText(err, 'Login failed'));
     } finally {
       setSubmitting(false);
     }
@@ -37,7 +37,7 @@ export default function Login() {
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Sign in to CRM</h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+          {error && <div className="text-red-500 text-sm text-center">{String(error)}</div>}
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <input

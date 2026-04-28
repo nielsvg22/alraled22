@@ -23,6 +23,7 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
+import { errorText } from '../lib/errorText';
 
 const currencyFormatter = new Intl.NumberFormat('en-IE', {
   style: 'currency',
@@ -57,7 +58,7 @@ export default function Dashboard() {
           revenueSeries: Array.isArray(data?.revenueSeries) ? data.revenueSeries : [],
         }));
       } catch (fetchError) {
-        setError(fetchError.response?.data?.error || 'Failed to fetch dashboard stats');
+        setError(errorText(fetchError, 'Failed to fetch dashboard stats'));
       } finally {
         setLoading(false);
       }
@@ -117,7 +118,7 @@ export default function Dashboard() {
   }
 
   if (error) {
-    return <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-5 text-red-700">{error}</div>;
+    return <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-5 text-red-700">{String(error)}</div>;
   }
 
   return (

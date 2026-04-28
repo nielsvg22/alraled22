@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import api from '../lib/api';
 import { Sparkles, Send, RotateCcw, Copy, Check, Loader2, Wand2, FileText, MessageSquare, Globe, Save, CheckCircle } from 'lucide-react';
+import { errorText } from '../lib/errorText';
 
 const TOOLS = [
   {
@@ -97,7 +98,7 @@ function WebsiteBlockTool() {
       const res = await api.post('/ai/website-block', { sectionKey, description });
       setResult(res.data.result);
     } catch (err) {
-      setError(err.response?.data?.error || 'Mislukt. Controleer je GROQ_API_KEY in .env');
+      setError(errorText(err, 'Mislukt. Controleer je GROQ_API_KEY in .env'));
     } finally { setLoading(false); }
   };
 
@@ -114,7 +115,7 @@ function WebsiteBlockTool() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      setError('Opslaan mislukt: ' + (err.response?.data?.error || err.message));
+      setError('Opslaan mislukt: ' + errorText(err, err?.message));
     } finally { setSaving(false); }
   };
 
@@ -179,7 +180,7 @@ function WebsiteBlockTool() {
         </button>}
       </div>
 
-      {error && <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>}
+      {error && <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{String(error)}</p>}
 
       {loading && (
         <div className="mt-4 bg-gray-50 border border-gray-100 rounded-xl p-5 flex items-center gap-3 text-gray-400">
