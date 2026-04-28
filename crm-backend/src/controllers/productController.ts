@@ -222,83 +222,105 @@ export const importProducts = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Only .docx files are supported' });
     }
 
-    const result = await mammoth.convertToHtml({ path: file.path });
+    const result = await mammoth.extractRawText({ path: file.path });
     fs.unlinkSync(file.path);
 
-    const html = result.value;
+    const text = result.value;
 
-    // Extract table rows from HTML
-    const tableMatch = html.match(/<table[^>]*>([\s\S]*?)<\/table>/);
-    if (!tableMatch) {
-      return res.status(400).json({ error: 'No table found in the document. Please use a table with columns: Name, Description, Price, Stock, Category' });
+    // Price line pattern: "€ 295,00 excl. btw" (with optional incl. btw part)
+    const priceLineRe = /€\s*([\d.,]+)\s*excl\.\s*btw/gi;
+
+    // Find all price-line positions
+    const priceHits: { index: number; price: number }[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = priceLineRe.exec(text)) !== null) {
+      const raw = m[1]!.replace(/\./g, '').replace(',', '.');
+      const price = parseFloat(raw);
+      if (!isNaN(price)) priceHits.push({ index: m.index, price });
     }
 
-    const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-    const cellRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
-    const stripTags = (s: string) => s.replace(/<[^>]*>/g, '').trim();
+    if (priceHits.length === 0) {
+      return res.status(400).json({
+        error: 'Geen producten gevonden. Zorg dat elke productprijs in het formaat "€ XX,XX excl. btw" staat.',
+      });
+    }
 
-    const rows: string[][] = [];
-    let rowMatch;
-    while ((rowMatch = rowRegex.exec(tableMatch[0])) !== null) {
-      const cells: string[] = [];
-      let cellMatch;
-      while ((cellMatch = cellRegex.exec(rowMatch[1]!)) !== null) {
-        cells.push(stripTags(cellMatch[1]!));
+    // Split the document into product blocks using the price lines as anchors
+    interface ProductBlock { name: string; price: number; description: string; specs: string }
+    const blocks: ProductBlock[] = [];
+
+    for (let i = 0; i < priceHits.length; i++) {
+      const hit = priceHits[i]!;
+
+      // --- Name: text between previous product's price line end and this price line ---
+      const blockStart = i === 0 ? 0 : (text.indexOf('\n', priceHits[i - 1]!.index) + 1 || priceHits[i - 1]!.index);
+      const beforePrice = text.slice(blockStart, hit.index);
+      // Take non-empty lines before the price as the product name
+      const nameLines = beforePrice.split('\n').map(l => l.trim()).filter(Boolean);
+      const name = nameLines[nameLines.length - 1] || '';  // last non-empty line closest to price
+
+      if (!name) continue;
+
+      // --- Body: everything after the price line until the next product ---
+      const afterPriceStart = text.indexOf('\n', hit.index);
+      const nextBlockEnd = i + 1 < priceHits.length ? priceHits[i + 1]!.index : text.length;
+      // Find where the NEXT product's name starts (go backwards from next price to find its name)
+      let bodyEnd = nextBlockEnd;
+      if (i + 1 < priceHits.length) {
+        const textBeforeNext = text.slice(afterPriceStart, nextBlockEnd);
+        const linesBeforeNext = textBeforeNext.split('\n');
+        // Remove trailing non-empty lines that belong to the next product name
+        let trimCount = 0;
+        for (let j = linesBeforeNext.length - 1; j >= 0; j--) {
+          if (linesBeforeNext[j]!.trim()) { trimCount++; break; }
+        }
+        bodyEnd = nextBlockEnd - (trimCount > 0 ? (linesBeforeNext[linesBeforeNext.length - 1]?.length ?? 0) + 1 : 0);
       }
-      if (cells.length > 0) rows.push(cells);
+
+      const body = afterPriceStart >= 0 ? text.slice(afterPriceStart, bodyEnd).trim() : '';
+
+      // Split body into description and specifications
+      const specIdx = body.search(/Specificaties\s*\n/i);
+      let description = '';
+      let specs = '';
+      if (specIdx !== -1) {
+        description = body.slice(0, specIdx).trim();
+        specs = body.slice(specIdx).trim();
+      } else {
+        description = body;
+      }
+
+      blocks.push({ name: name.trim(), price: hit.price, description, specs });
     }
 
-    if (rows.length < 2) {
-      return res.status(400).json({ error: 'Table must have a header row and at least one data row' });
+    if (blocks.length === 0) {
+      return res.status(400).json({ error: 'Kon geen producten herkennen in het bestand.' });
     }
 
-    // Map header columns (case-insensitive)
-    const headers = rows[0]!.map(h => h.toLowerCase().trim());
-    const colIndex = {
-      name: headers.findIndex(h => h.includes('name') || h.includes('naam')),
-      description: headers.findIndex(h => h.includes('description') || h.includes('beschrijving') || h.includes('omschrijving')),
-      price: headers.findIndex(h => h.includes('price') || h.includes('prijs')),
-      stock: headers.findIndex(h => h.includes('stock') || h.includes('voorraad') || h.includes('aantal')),
-      category: headers.findIndex(h => h.includes('category') || h.includes('categorie')),
-    };
-
-    if (colIndex.name === -1) {
-      return res.status(400).json({ error: 'Could not find a "Name" column in the table header' });
-    }
-    if (colIndex.price === -1) {
-      return res.status(400).json({ error: 'Could not find a "Price" column in the table header' });
-    }
-
-    const dataRows = rows.slice(1);
     const created: any[] = [];
-    const errors: { row: number; error: string }[] = [];
+    const errors: { product: string; error: string }[] = [];
 
-    for (let i = 0; i < dataRows.length; i++) {
-      const row = dataRows[i]!;
+    for (const block of blocks) {
       try {
-        const name = (row[colIndex.name] ?? '').trim();
-        if (!name) { errors.push({ row: i + 2, error: 'Missing name' }); continue; }
+        // Combine description + specs into one description field
+        const fullDesc = [block.description, block.specs].filter(Boolean).join('\n\n') || null;
 
-        const priceStr = (row[colIndex.price] ?? '').replace(/[^\d.,\-]/g, '').replace(',', '.').trim();
-        const price = parseFloat(priceStr || '0');
-        if (isNaN(price) || price < 0) { errors.push({ row: i + 2, error: `Invalid price: ${row[colIndex.price]}` }); continue; }
-
-        const stockStr = colIndex.stock !== -1 ? (row[colIndex.stock] ?? '').replace(/[^\d]/g, '').trim() : '0';
-        const stock = parseInt(stockStr || '0', 10);
-
-        const description = colIndex.description !== -1 ? ((row[colIndex.description] ?? '').trim() || null) : null;
-        const category = colIndex.category !== -1 ? ((row[colIndex.category] ?? '').trim() || null) : null;
-
-        const product = await productsRepo.createProduct({ name, description, price, stock, category });
+        const product = await productsRepo.createProduct({
+          name: block.name,
+          description: fullDesc,
+          price: block.price,
+          stock: 0,
+          category: null,
+        });
         created.push(product);
       } catch (err: any) {
-        errors.push({ row: i + 2, error: err.message || 'Unknown error' });
+        errors.push({ product: block.name, error: err.message || 'Unknown error' });
       }
     }
 
     res.json({
       imported: created.length,
-      total: dataRows.length,
+      total: blocks.length,
       errors: errors.length > 0 ? errors : undefined,
       products: created,
     });

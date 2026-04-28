@@ -3,10 +3,12 @@ import api from '../lib/api';
 
 const AuthContext = createContext();
 
+// TODO: TEMP – bypass auth for testing. Remove this and restore the original bootstrapAuth block.
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState({ id: 'dev', name: 'Dev Admin', email: 'dev@test.local', role: 'ADMIN' });
+  const [loading, setLoading] = useState(false);
 
+  /* Original bootstrapAuth – uncomment to restore login:
   useEffect(() => {
     const bootstrapAuth = async () => {
       try {
@@ -43,6 +45,7 @@ export const AuthProvider = ({ children }) => {
 
     bootstrapAuth();
   }, []);
+  */
 
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password });

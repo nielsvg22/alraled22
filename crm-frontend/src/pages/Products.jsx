@@ -42,6 +42,9 @@ export default function Products() {
   const [relLoading, setRelLoading] = useState(false);
   const [relSearch, setRelSearch]   = useState('');
   const fileRef = useRef(null);
+  const importRef = useRef(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
   const { isAdmin } = useAuth();
 
   const fetchProducts = async () => {
@@ -137,6 +140,26 @@ export default function Products() {
     } catch { setError('Dupliceren mislukt'); }
   };
 
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportResult(null);
+    setError('');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const r = await api.post('/products/import', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setImportResult(r.data);
+      await fetchProducts();
+    } catch (err) {
+      setError(errorText(err, 'Importeren mislukt'));
+    } finally {
+      setImporting(false);
+      if (importRef.current) importRef.current.value = '';
+    }
+  };
+
   const handleAddRelation = async (relatedId) => {
     try {
       await api.post(`/products/${editing.id}/relations`, { relatedProductId: relatedId });
@@ -166,15 +189,38 @@ export default function Products() {
           <p className="text-sm text-gray-400 font-medium mt-1">{products.length} producten in de catalogus</p>
         </div>
         {isAdmin && (
-          <button onClick={() => openModal()}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black text-white transition-all active:scale-95"
-            style={{ background: 'linear-gradient(135deg,#1e40af,#3b82f6)', boxShadow: '0 4px 16px rgba(59,130,246,0.4)' }}>
-            <Plus size={16} /> Nieuw product
-          </button>
+          <div className="flex items-center gap-3">
+            <input ref={importRef} type="file" accept=".docx" className="hidden" onChange={handleImport} />
+            <button onClick={() => importRef.current?.click()} disabled={importing}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-all active:scale-95 shadow-sm">
+              {importing ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+              {importing ? 'Importeren…' : 'Importeer .docx'}
+            </button>
+            <button onClick={() => openModal()}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black text-white transition-all active:scale-95"
+              style={{ background: 'linear-gradient(135deg,#1e40af,#3b82f6)', boxShadow: '0 4px 16px rgba(59,130,246,0.4)' }}>
+              <Plus size={16} /> Nieuw product
+            </button>
+          </div>
         )}
       </div>
 
       {error && !modalOpen && <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-600 text-sm font-medium">{String(error)}</div>}
+
+      {importResult && (
+        <div className="rounded-2xl border border-green-100 bg-green-50 px-5 py-4 text-sm">
+          <div className="flex items-center gap-2 mb-1">
+            <CheckCircle size={16} className="text-green-600" />
+            <span className="font-bold text-green-800">{importResult.imported} van {importResult.total} producten ge\u00EFmporteerd</span>
+            <button onClick={() => setImportResult(null)} className="ml-auto text-green-400 hover:text-green-600"><X size={14} /></button>
+          </div>
+          {importResult.errors?.length > 0 && (
+            <div className="mt-2 text-xs text-orange-700">
+              {importResult.errors.map((e, i) => <div key={i}>Rij {e.row}: {e.error}</div>)}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
