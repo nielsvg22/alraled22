@@ -545,16 +545,15 @@ Only output the prompt text, nothing else. Start with "Professional product phot
         const originalBlob = new Blob([new Uint8Array(imageBuffer)], { type: mimeType });
 
         const imageBlob = await hfClient.imageToImage({
-          model: 'timbrooks/instruct-pix2pix',
+          model: 'black-forest-labs/FLUX.2-klein-base-9B',
           inputs: originalBlob,
           parameters: {
             prompt: imageGenPrompt,
-            negative_prompt: 'blurry, low quality, distorted, ugly, watermark',
-            num_inference_steps: 20,
-            image_guidance_scale: 1.5,
-            guidance_scale: 7,
+            num_inference_steps: 28,
+            guidance_scale: 3.5,
           } as any,
-        }) as unknown as Blob;
+          provider: 'fal-ai',
+        } as any) as unknown as Blob;
 
         const hfBuffer = Buffer.from(await imageBlob.arrayBuffer());
         if (hfBuffer.length < 1000) {
