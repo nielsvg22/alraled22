@@ -58,9 +58,9 @@ const getClient = async (): Promise<AIClient> => {
     const genAI = new GoogleGenerativeAI(key);
     
     // Select model based on Nano Banana settings
-    let modelId = 'gemini-1.5-flash-002';
+    let modelId = 'gemini-1.5-flash';
     if (settings.nanoBananaModel === 'pro' || settings.nanoBananaModel === 'thinking') {
-      modelId = 'gemini-1.5-pro-002';
+      modelId = 'gemini-1.5-pro';
     }
     
     const model = genAI.getGenerativeModel({ model: modelId });
