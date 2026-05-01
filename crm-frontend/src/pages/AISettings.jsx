@@ -311,6 +311,32 @@ export default function AISettings() {
                   ))}
                 </div>
               </Field>
+              
+              <div className="mt-6 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-100 rounded-xl p-5">
+                <h5 className="text-xs font-black text-violet-900 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" /> 💡 Tips voor betere resultaten
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] text-violet-700">
+                  <div className="space-y-2">
+                    <p className="font-bold">✅ Goede prompts:</p>
+                    <ul className="space-y-1 list-disc list-inside">
+                      <li>"Witte achtergrond, studio belichting"</li>
+                      <li>"Verwijder achtergrond, transparant"</li>
+                      <li>"Maak professionele productfoto, 4K"</li>
+                      <li>"Voeg schaduw toe, luxe uitstraling"</li>
+                    </ul>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="font-bold">🎯 Beste providers voor editing:</p>
+                    <ul className="space-y-1 list-disc list-inside">
+                      <li><strong>🎨 Stability AI</strong> - Echte img2img</li>
+                      <li><strong>🍌 Nano Banana</strong> - Gratis img2img</li>
+                      <li><strong>🔮 Replicate</strong> - Professioneel</li>
+                      <li><strong>Pollinations</strong> - Alleen generatie</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
