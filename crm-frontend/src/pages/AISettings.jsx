@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { Save, Sparkles, CheckCircle, AlertTriangle, Key } from 'lucide-react';
+import { Save, Sparkles, CheckCircle, AlertTriangle, Key, Loader2 } from 'lucide-react';
 
 const inputCls = 'w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white';
 
@@ -29,6 +29,9 @@ export default function AISettings() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+
   useEffect(() => {
     api.get('/content/ai_settings')
       .then(r => setSettings(prev => ({ ...prev, ...r.data })))
@@ -47,6 +50,21 @@ export default function AISettings() {
       alert('Opslaan mislukt');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      // Sla eerst op zodat we de nieuwste keys testen
+      await api.put('/content/ai_settings', settings);
+      const r = await api.post('/ai/test-connection');
+      setTestResult({ ok: true, msg: r.data.result });
+    } catch (err) {
+      setTestResult({ ok: false, msg: err.response?.data?.error || 'Verbinding mislukt' });
+    } finally {
+      setTesting(false);
     }
   };
 
@@ -244,7 +262,27 @@ export default function AISettings() {
           </div>
         </div>
 
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-between items-center pt-2">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleTest}
+              disabled={testing || saving}
+              className={`
+                px-6 py-3.5 rounded-xl text-sm font-black transition-all active:scale-95 flex items-center gap-2
+                ${testing ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'}
+              `}
+            >
+              {testing ? <><Loader2 className="w-4 h-4 animate-spin" /> Testen...</> : <><Sparkles size={18} /> Test AI Verbinding</>}
+            </button>
+            
+            {testResult && (
+              <div className={`text-xs font-bold px-4 py-2 rounded-lg animate-in fade-in slide-in-from-left-2 ${testResult.ok ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                {testResult.ok ? `✅ Succes: ${testResult.msg}` : `❌ Fout: ${testResult.msg}`}
+              </div>
+            )}
+          </div>
+
           <button 
             type="submit" 
             disabled={saving}

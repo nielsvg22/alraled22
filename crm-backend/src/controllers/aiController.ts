@@ -77,48 +77,102 @@ const getClient = async (): Promise<AIClient> => {
   }
 };
 
-const callBridge = async (accessToken: string, prompt: string) => {
-  // This is a simplified unofficial ChatGPT bridge. 
-  // It uses the same endpoint as the web interface.
-  const response = await fetch('https://chatgpt.com/backend-api/conversation', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    },
-    body: JSON.stringify({
-      action: 'next',
-      messages: [{
-        id: randomUUID(),
-        author: { role: 'user' },
-        content: { content_type: 'text', parts: [prompt] },
-        metadata: {}
-      }],
-      model: 'gpt-4o',
-      parent_message_id: randomUUID(),
-      timezone_offset_min: -60,
-      history_and_training_disabled: true,
-    })
-  });
-
-  if (!response.ok) {
-    const err = await response.text();
-    console.error('Bridge Error:', err);
-    throw new Error('ChatGPT Bridge faal: Je token is mogelijk verlopen.');
-  }
-
-  // The web API returns a stream of events. We need to parse the last one.
-  const text = await response.text();
-  const lines = text.split('\n').filter(l => l.startsWith('data: '));
-  const lastLine = lines[lines.length - 2]; // Usually the second to last is the final complete object
-  if (!lastLine) throw new Error('Geen antwoord van Bridge');
-  
+export const callBridge = async (accessToken: string, prompt: string) => {
   try {
-    const data = JSON.parse(lastLine.substring(6));
-    return data.message?.content?.parts?.[0] || '';
-  } catch {
-    return 'Fout bij verwerken van Bridge antwoord';
+    const response = await fetch('https://chatgpt.com/backend-api/conversation', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken.trim()}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/event-stream',
+      },
+      body: JSON.stringify({
+        action: 'next',
+        messages: [{
+          id: randomUUID(),
+          author: { role: 'user' },
+          content: { content_type: 'text', parts: [prompt] },
+          metadata: {}
+        }],
+        model: 'gpt-4o',
+        parent_message_id: randomUUID(),
+        timezone_offset_min: -60,
+        history_and_training_disabled: true,
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.error('Bridge HTTP Error:', response.status, err);
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('ChatGPT Bridge: Je Access Token is ongeldig of verlopen. Vernieuw je sessie op chatgpt.com.');
+      }
+      throw new Error(`ChatGPT Bridge Error (${response.status}): ${err.slice(0, 100)}`);
+    }
+
+    const text = await response.text();
+    if (!text) throw new Error('ChatGPT Bridge: Leeg antwoord ontvangen.');
+
+    const lines = text.split('\n');
+    let finalResult = '';
+
+    // Loop backwards to find the last valid data object
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const line = lines[i].trim();
+      if (!line.startsWith('data: ')) continue;
+      if (line.includes('[DONE]')) continue;
+
+      try {
+        const jsonStr = line.substring(6);
+        const data = JSON.parse(jsonStr);
+        const content = data.message?.content?.parts?.[0];
+        if (content) {
+          finalResult = content;
+          break;
+        }
+      } catch (e) {
+        // Skip invalid JSON lines
+        continue;
+      }
+    }
+
+    if (!finalResult) {
+      console.error('Bridge parsing failed. Raw response snippet:', text.slice(-200));
+      throw new Error('ChatGPT Bridge: Kon geen tekst extraheren uit het antwoord.');
+    }
+
+    return finalResult;
+  } catch (err: any) {
+    console.error('Bridge Fatal Error:', err);
+    throw err;
+  }
+};
+
+// -- POST /api/ai/test-connection --------------------------------
+export const testAIConnection = async (req: Request, res: Response) => {
+  try {
+    const client = await getClient();
+    const prompt = "Reageer alleen met het woord 'CONNECTIE_OK'.";
+    
+    let text = '';
+    if ((client as any).isBridge) {
+      text = await callBridge((client as any).accessToken, prompt);
+    } else if ((client as any).isGoogle) {
+      const result = await (client as any).googleModel.generateContent(prompt);
+      text = result.response.text().trim();
+    } else {
+      const completion = await client.openai.chat.completions.create({
+        model: client.model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 10,
+      });
+      text = completion.choices[0]?.message?.content?.trim() ?? '';
+    }
+
+    res.json({ ok: true, result: text });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Verbinding mislukt' });
   }
 };
 
@@ -387,6 +441,8 @@ export const generateWebsiteBlock = async (req: Request, res: Response) => {
     if ((client as any).isGoogle) {
       const result = await (client as any).googleModel.generateContent(prompt);
       raw = result.response.text().trim();
+    } else if ((client as any).isBridge) {
+      raw = await callBridge((client as any).accessToken, prompt);
     } else {
       const completion = await client.openai.chat.completions.create({
         model: client.model,

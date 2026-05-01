@@ -1,5 +1,14 @@
 import { Router } from 'express';
-import { generateProductDescription, generatePageText, chat, generateWebsiteBlock, generateNewBlock, storefrontChat, testEmail } from '../controllers/aiController';
+import { 
+  generateProductDescription, 
+  generatePageText, 
+  chat, 
+  generateWebsiteBlock, 
+  generateNewBlock, 
+  storefrontChat, 
+  testEmail,
+  testAIConnection
+} from '../controllers/aiController';
 import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = Router();
@@ -15,5 +24,6 @@ router.post('/chat',                chat);
 router.post('/website-block',       generateWebsiteBlock);
 router.post('/new-block',           generateNewBlock);
 router.post('/test-email',          testEmail);
+router.post('/test-connection',     testAIConnection);
 
 export default router;
