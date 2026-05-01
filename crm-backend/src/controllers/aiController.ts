@@ -56,13 +56,20 @@ const getClient = async (): Promise<AIClient> => {
     if (!key) throw new Error('Google / Nano Banana API Key is niet geconfigureerd in het CRM');
     
     const genAI = new GoogleGenerativeAI(key);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+    
+    // Select model based on Nano Banana settings
+    let modelId = 'gemini-1.5-flash';
+    if (settings.nanoBananaModel === 'pro' || settings.nanoBananaModel === 'thinking') {
+      modelId = 'gemini-1.5-pro';
+    }
+    
+    const model = genAI.getGenerativeModel({ model: modelId });
 
     return {
       isGoogle: true,
       googleModel: model,
       openai: null as any,
-      model: 'gemini-1.5-flash-latest'
+      model: modelId
     };
   } else {
     const key = settings.groqApiKey;
