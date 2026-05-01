@@ -525,14 +525,15 @@ export const improveImage = async (req: Request, res: Response) => {
         } catch (visionErr) {
           console.error('Vision analysis failed:', visionErr);
         }
+      } else {
+        // NO API KEY CASE: Use a more aggressive "referencing" prompt style for Pollinations
+        // We include the existing image URL in the prompt as a hint for the model
+        const publicUrl = imageUrl.startsWith('http') ? imageUrl : '';
+        contextualPrompt = `[Reference Image: ${publicUrl}] A high-quality professional product modification: ${prompt}. Maintain the product shape and details from the reference, 8k, studio lighting.`;
       }
 
       const seed = Math.floor(Math.random() * 1000000);
-      // Add the original image URL as a reference for models that support it via prompt
-      const imageRef = imageUrl.startsWith('http') ? imageUrl : '';
-      const finalPrompt = imageRef ? `[image: ${imageRef}] ${contextualPrompt}` : contextualPrompt;
-      
-      const encodedPrompt = encodeURIComponent(finalPrompt);
+      const encodedPrompt = encodeURIComponent(contextualPrompt);
       const pollinationUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
       
       console.log('Requesting Pollinations AI with prompt:', contextualPrompt.substring(0, 50) + '...');
