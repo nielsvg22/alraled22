@@ -461,6 +461,9 @@ export const improveImage = async (req: Request, res: Response) => {
     let newFilename = `${randomUUID()}.png`;
     let b64: string | undefined;
 
+    // Better prompts with product context
+    const enhancedPrompt = `Professional product photography: ${prompt}. High-end commercial lighting, studio quality, sharp focus, 8K detail, e-commerce ready. Clean background, product centered, premium finish.`;
+    
     if (provider === 'bridge' && settings.chatgptAccessToken) {
       // Gebruik de ChatGPT Plus Bridge met DALL-E 3 voor image generation
       // Eerst analyseren we de afbeelding met Gemini (als beschikbaar) voor een betere prompt
@@ -519,8 +522,6 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
 
       try {
         // Generate a new image based on the uploaded image + prompt
-        const enhancedPrompt = `Improve this product photo: ${prompt}. Make it professional, high quality, commercial photography style.`;
-        
         const result = await model.generateContent([
           enhancedPrompt,
           {
@@ -564,7 +565,7 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
       // Pollinations.ai (FREE) - We improve the prompt by analyzing the original image first
       // ONLY if a Gemini key is available. If not, we use a generic high-quality product prompt.
       
-      let contextualPrompt = `A professional high-quality product photo of ${prompt}, cinematic lighting, 8k resolution, commercial photography style, high detail.`;
+      let contextualPrompt = enhancedPrompt;
       
       const googleKey = settings?.googleApiKey;
       if (googleKey) {
@@ -588,10 +589,9 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
           console.error('Vision analysis failed:', visionErr);
         }
       } else {
-        // NO API KEY CASE: Use a more aggressive "referencing" prompt style for Pollinations
-        // We include the existing image URL in the prompt as a hint for the model
+        // NO API KEY CASE: Use enhanced prompt with reference hint
         const publicUrl = imageUrl.startsWith('http') ? imageUrl : '';
-        contextualPrompt = `[Reference Image: ${publicUrl}] A high-quality professional product modification: ${prompt}. Maintain the product shape and details from the reference, 8k, studio lighting.`;
+        contextualPrompt = `[Reference: ${publicUrl}] ${enhancedPrompt}`;
       }
 
       const seed = Math.floor(Math.random() * 1000000);
@@ -607,7 +607,7 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
       // Fallback to simpler prompt if first attempt fails
       if (!response.ok) {
         console.warn('Primary Pollinations request failed, retrying with simple prompt...');
-        const simplePrompt = encodeURIComponent(`Professional studio photo of ${prompt}, high quality`);
+        const simplePrompt = encodeURIComponent(enhancedPrompt);
         const fallbackUrl = `https://image.pollinations.ai/prompt/${simplePrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
         response = await fetch(fallbackUrl);
       }
@@ -633,9 +633,6 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
         // Convert image to base64 data URL
         const dataUrl = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
         
-        // Enhanced prompt for product photos
-        const enhancedPrompt = `professional product photo, ${prompt}, high quality, commercial photography, studio lighting, sharp focus, detailed`;
-
         // Try multiple Replicate models for img2img
         const replicateModels = [
           { owner: 'tstramer', name: 'stable-diffusion-img2img', version: 'latest' },
@@ -741,9 +738,6 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
       if (!stabilityKey) return res.status(500).json({ error: 'Stability AI API Key is niet geconfigureerd. Haal een gratis key op bij platform.stability.ai' });
 
       try {
-        // Enhanced prompt
-        const enhancedPrompt = `professional product photo, ${prompt}, high quality, commercial photography, studio lighting, 8k, sharp focus`;
-        
         // Create FormData for the API
         const formData = new FormData();
         
@@ -776,7 +770,7 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              prompt: enhancedPrompt,
+              prompt: `Product photography: ${enhancedPrompt}`,
               aspect_ratio: '1:1',
               output_format: 'png'
             })
@@ -817,7 +811,7 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
       const result = await openai.images.edit({
         model: 'gpt-image-1',
         image: imgFile,
-        prompt,
+        prompt: enhancedPrompt,
         size: '1024x1024',
         response_format: 'b64_json'
       });
