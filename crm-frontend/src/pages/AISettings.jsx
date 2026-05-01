@@ -96,8 +96,15 @@ export default function AISettings() {
               <h4 className="text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <span className="text-lg">🍌</span> Nano Banana (Google Gemini AI)
               </h4>
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+                <p className="text-xs text-blue-700 font-bold mb-1">💡 Tip: Gemini is GRATIS!</p>
+                <p className="text-[10px] text-blue-600 leading-relaxed">
+                  Je kunt gratis een API-key aanmaken via <a href="https://aistudio.google.com/" target="_blank" className="underline font-black">Google AI Studio</a>. 
+                  Kies voor de "Free of charge" tier. Hiermee kan de AI je afbeeldingen analyseren om ze beter aan te passen!
+                </p>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Google / Nano Banana API Key">
+                <Field label="Gemini / Nano Banana API Key">
                   <input 
                     type="password" 
                     value={settings.googleApiKey || ''} 

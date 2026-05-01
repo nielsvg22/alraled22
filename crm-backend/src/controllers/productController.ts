@@ -511,7 +511,7 @@ export const improveImage = async (req: Request, res: Response) => {
           const visionModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
           
           const analysisResult = await visionModel.generateContent([
-            "Describe this product in 20 words for an AI image generator. Focus on shape and color.",
+            "Analyze this image. Give me a 30-word prompt for an AI generator that would RECREATE THIS EXACT IMAGE but with these changes: " + prompt + ". Start with 'A photo of...'",
             {
               inlineData: {
                 data: imageBuffer.toString('base64'),
@@ -521,19 +521,18 @@ export const improveImage = async (req: Request, res: Response) => {
           ]);
           
           const description = analysisResult.response.text().trim();
-          contextualPrompt = `Professional product photo: ${description}. Improvements: ${prompt}. Studio lighting, clean background, 8k.`;
+          contextualPrompt = `${description} --ar 1:1 --v 6.0`;
         } catch (visionErr) {
           console.error('Vision analysis failed:', visionErr);
         }
       }
 
-      // Limit prompt length to avoid URL issues
-      if (contextualPrompt.length > 800) {
-        contextualPrompt = contextualPrompt.substring(0, 800);
-      }
-
       const seed = Math.floor(Math.random() * 1000000);
-      const encodedPrompt = encodeURIComponent(contextualPrompt);
+      // Add the original image URL as a reference for models that support it via prompt
+      const imageRef = imageUrl.startsWith('http') ? imageUrl : '';
+      const finalPrompt = imageRef ? `[image: ${imageRef}] ${contextualPrompt}` : contextualPrompt;
+      
+      const encodedPrompt = encodeURIComponent(finalPrompt);
       const pollinationUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
       
       console.log('Requesting Pollinations AI with prompt:', contextualPrompt.substring(0, 50) + '...');
