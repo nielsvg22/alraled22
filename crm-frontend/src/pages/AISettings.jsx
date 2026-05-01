@@ -21,6 +21,7 @@ export default function AISettings() {
     googleApiKey: '',
     googleProjectId: '',
     replicateApiKey: '',
+    stabilityAiKey: '',
     chatgptAccessToken: '',
     preferredProvider: 'groq',
     preferredImageProvider: 'pollinations',
@@ -133,6 +134,32 @@ export default function AISettings() {
                   value={settings.replicateApiKey || ''} 
                   onChange={e => setSettings(s => ({ ...s, replicateApiKey: e.target.value }))}
                   placeholder="r8_..."
+                  className={inputCls}
+                />
+              </Field>
+            </div>
+
+            <div className="pt-4 border-t border-gray-100">
+              <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                🎨 Stability AI (25 gratis credits)
+              </h4>
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-4">
+                <p className="text-xs text-emerald-700 font-bold mb-1">✨ Beste img2img kwaliteit!</p>
+                <p className="text-[10px] text-emerald-600 leading-relaxed">
+                  Stability AI is de maker van Stable Diffusion. 25 gratis credits voor nieuwe gebruikers.
+                  Échte image-to-image bewerking met professionele resultaten! 
+                  Maak een account aan op <a href="https://platform.stability.ai/" target="_blank" className="underline font-bold">platform.stability.ai</a>
+                </p>
+              </div>
+              <Field 
+                label="Stability AI API Key" 
+                hint="Voor professionele img2img beeldbewerking (25 gratis credits)"
+              >
+                <input 
+                  type="password" 
+                  value={settings.stabilityAiKey || ''} 
+                  onChange={e => setSettings(s => ({ ...s, stabilityAiKey: e.target.value }))}
+                  placeholder="sk-..."
                   className={inputCls}
                 />
               </Field>
@@ -259,6 +286,7 @@ export default function AISettings() {
                   {[
                     { id: 'openai', label: 'OpenAI' },
                     { id: 'google', label: 'Nano Banana' },
+                    { id: 'stabilityai', label: '🎨 Stability' },
                     { id: 'replicate', label: '🔮 Replicate' },
                     { id: 'bridge', label: 'GPT Plus' },
                     { id: 'pollinations', label: 'Pollinations' }

@@ -734,6 +734,78 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
           error: replicateError.message || 'Replicate image editing mislukt. Controleer je API key of probeer een andere provider.' 
         });
       }
+    } else if (provider === 'stabilityai') {
+      // Stability AI - 25 free credits for new users, proper img2img
+      // https://platform.stability.ai/
+      const stabilityKey = settings?.stabilityAiKey;
+      if (!stabilityKey) return res.status(500).json({ error: 'Stability AI API Key is niet geconfigureerd. Haal een gratis key op bij platform.stability.ai' });
+
+      try {
+        // Enhanced prompt
+        const enhancedPrompt = `professional product photo, ${prompt}, high quality, commercial photography, studio lighting, 8k, sharp focus`;
+        
+        // Create FormData for the API
+        const formData = new FormData();
+        
+        // Add the image as a Blob (convert Buffer to Uint8Array first)
+        const imageBlob = new Blob([new Uint8Array(imageBuffer)], { type: mimeType });
+        formData.append('image', imageBlob, 'image.png');
+        formData.append('prompt', enhancedPrompt);
+        formData.append('strength', '0.75');
+        formData.append('steps', '50');
+        formData.append('cfg_scale', '7.5');
+        
+        const stabilityResponse = await fetch('https://api.stability.ai/v2beta/stable-image/control/sketch', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${stabilityKey}`,
+            'Accept': 'application/json',
+          },
+          body: formData
+        });
+
+        if (!stabilityResponse.ok) {
+          const errorData = await stabilityResponse.json() as any;
+          console.error('Stability AI Error:', stabilityResponse.status, errorData);
+          
+          // Try fallback to ultra endpoint
+          const fallbackResponse = await fetch('https://api.stability.ai/v2beta/stable-image/generate/ultra', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${stabilityKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              prompt: enhancedPrompt,
+              aspect_ratio: '1:1',
+              output_format: 'png'
+            })
+          });
+          
+          if (!fallbackResponse.ok) {
+            throw new Error(`Stability AI error: ${errorData.message || stabilityResponse.status}`);
+          }
+          
+          const fallbackData = await fallbackResponse.json() as any;
+          if (fallbackData.image) {
+            b64 = fallbackData.image;
+          } else {
+            throw new Error('Geen afbeelding ontvangen van Stability AI');
+          }
+        } else {
+          const data = await stabilityResponse.json() as any;
+          if (data.image) {
+            b64 = data.image;
+          } else {
+            throw new Error('Geen afbeelding ontvangen van Stability AI');
+          }
+        }
+      } catch (stabilityError: any) {
+        console.error('Stability AI failed:', stabilityError);
+        return res.status(500).json({ 
+          error: stabilityError.message || 'Stability AI image editing mislukt. Probeer een andere provider.' 
+        });
+      }
     } else {
       // Default to OpenAI
       const apiKey = settings?.openaiApiKey;

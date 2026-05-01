@@ -13,6 +13,7 @@ interface AISettings {
   groqApiKey?: string;
   googleApiKey?: string;
   replicateApiKey?: string;
+  stabilityAiKey?: string;
   chatgptAccessToken?: string;
   preferredProvider?: string;
   preferredImageProvider?: string;
