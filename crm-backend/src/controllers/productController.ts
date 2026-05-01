@@ -685,16 +685,32 @@ Only output the prompt text, nothing else. Start with "Professional product phot
       try {
         // Create FormData for the API
         const formData = new FormData();
-        
-        // Add the image as a Blob (convert Buffer to Uint8Array first)
         const imageBlob = new Blob([new Uint8Array(imageBuffer)], { type: mimeType });
-        formData.append('image', imageBlob, 'image.png');
+        formData.append('image', imageBlob, 'product.png');
         formData.append('prompt', enhancedPrompt);
-        formData.append('strength', '0.75');
-        formData.append('steps', '50');
-        formData.append('cfg_scale', '7.5');
+        formData.append('strength', '0.65');
+        formData.append('output_format', 'png');
+
+        // Gebruik Gemini voor een betere prompt als key beschikbaar is
+        let stabilityPrompt = enhancedPrompt;
+        const googleKey = settings?.googleApiKey;
+        if (googleKey) {
+          try {
+            const genAI = new GoogleGenerativeAI(googleKey);
+            const visionModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+            const analysisResult = await visionModel.generateContent([
+              `You are an expert product photographer. Analyze this image and write a 60-word prompt for Stable Diffusion that recreates the product but applies: "${prompt}". Be specific about lighting, background, and product details. Start with "Professional product photo of..."`,
+              { inlineData: { data: imageBuffer.toString('base64'), mimeType } }
+            ]);
+            stabilityPrompt = analysisResult.response.text().trim();
+            console.log('[StabilityAI] Gemini prompt:', stabilityPrompt.slice(0, 80));
+            formData.set('prompt', stabilityPrompt);
+          } catch (e) {
+            console.error('Gemini analysis failed, using base prompt:', e);
+          }
+        }
         
-        const stabilityResponse = await fetch('https://api.stability.ai/v2beta/stable-image/control/sketch', {
+        const stabilityResponse = await fetch('https://api.stability.ai/v2beta/stable-image/edit/image-to-image', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${stabilityKey}`,
@@ -704,40 +720,16 @@ Only output the prompt text, nothing else. Start with "Professional product phot
         });
 
         if (!stabilityResponse.ok) {
-          const errorData = await stabilityResponse.json() as any;
-          console.error('Stability AI Error:', stabilityResponse.status, errorData);
-          
-          // Try fallback to ultra endpoint
-          const fallbackResponse = await fetch('https://api.stability.ai/v2beta/stable-image/generate/ultra', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${stabilityKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              prompt: `Product photography: ${enhancedPrompt}`,
-              aspect_ratio: '1:1',
-              output_format: 'png'
-            })
-          });
-          
-          if (!fallbackResponse.ok) {
-            throw new Error(`Stability AI error: ${errorData.message || stabilityResponse.status}`);
-          }
-          
-          const fallbackData = await fallbackResponse.json() as any;
-          if (fallbackData.image) {
-            b64 = fallbackData.image;
-          } else {
-            throw new Error('Geen afbeelding ontvangen van Stability AI');
-          }
+          const errorText = await stabilityResponse.text();
+          console.error('Stability AI img2img Error:', stabilityResponse.status, errorText.slice(0, 300));
+          throw new Error(`Stability AI fout (${stabilityResponse.status}): ${errorText.slice(0, 150)}`);
+        }
+
+        const data = await stabilityResponse.json() as any;
+        if (data.image) {
+          b64 = data.image;
         } else {
-          const data = await stabilityResponse.json() as any;
-          if (data.image) {
-            b64 = data.image;
-          } else {
-            throw new Error('Geen afbeelding ontvangen van Stability AI');
-          }
+          throw new Error('Geen afbeelding ontvangen van Stability AI');
         }
       } catch (stabilityError: any) {
         console.error('Stability AI failed:', stabilityError);
