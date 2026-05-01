@@ -560,68 +560,6 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
       }
       b64 = buffer.toString('base64');
 
-    } else if (provider === 'pollinations') {
-      // Pollinations.ai (FREE) - We improve the prompt by analyzing the original image first
-      // ONLY if a Gemini key is available. If not, we use a generic high-quality product prompt.
-      
-      let contextualPrompt = enhancedPrompt;
-      
-      const googleKey = settings?.googleApiKey;
-      if (googleKey) {
-        try {
-          const genAI = new GoogleGenerativeAI(googleKey);
-          const visionModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-          
-          const analysisResult = await visionModel.generateContent([
-            "Analyze this image. Give me a 30-word prompt for an AI generator that would RECREATE THIS EXACT IMAGE but with these changes: " + prompt + ". Start with 'A photo of...'",
-            {
-              inlineData: {
-                data: imageBuffer.toString('base64'),
-                mimeType
-              }
-            },
-          ]);
-          
-          const description = analysisResult.response.text().trim();
-          contextualPrompt = `${description} --ar 1:1 --v 6.0`;
-        } catch (visionErr) {
-          console.error('Vision analysis failed:', visionErr);
-        }
-      } else {
-        // NO API KEY CASE: Use enhanced prompt with reference hint
-        const publicUrl = imageUrl.startsWith('http') ? imageUrl : '';
-        contextualPrompt = `[Reference: ${publicUrl}] ${enhancedPrompt}`;
-      }
-
-      const seed = Math.floor(Math.random() * 1000000);
-      const encodedPrompt = encodeURIComponent(contextualPrompt);
-      const pollinationUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
-      
-      console.log('Requesting Pollinations AI with prompt:', contextualPrompt.substring(0, 50) + '...');
-      
-      let response = await fetch(pollinationUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
-      });
-
-      // Fallback to simpler prompt if first attempt fails
-      if (!response.ok) {
-        console.warn('Primary Pollinations request failed, retrying with simple prompt...');
-        const simplePrompt = encodeURIComponent(enhancedPrompt);
-        const fallbackUrl = `https://image.pollinations.ai/prompt/${simplePrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
-        response = await fetch(fallbackUrl);
-      }
-
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error('Pollinations Error:', response.status, errorBody);
-        return res.status(500).json({ error: `Gratis AI is momenteel druk. Probeer het over een moment opnieuw.` });
-      }
-      
-      const buffer = Buffer.from(await response.arrayBuffer());
-      if (buffer.length < 1000) { 
-        return res.status(500).json({ error: 'Gratis AI retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
-      }
-      b64 = buffer.toString('base64');
     } else if (provider === 'replicate') {
       // Replicate API - $5 free credits, proper img2img support
       // Uses models like stability-ai/stable-diffusion-img2img

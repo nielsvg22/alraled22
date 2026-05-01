@@ -302,8 +302,7 @@ export default function AISettings() {
                     { id: 'google', label: 'Nano Banana' },
                     { id: 'stabilityai', label: '🎨 Stability' },
                     { id: 'replicate', label: '🔮 Replicate' },
-                    { id: 'bridge', label: 'GPT Plus' },
-                    { id: 'pollinations', label: 'Pollinations' }
+                    { id: 'bridge', label: 'GPT Plus' }
                   ].map(p => (
                     <label key={p.id} className="flex-1 cursor-pointer group">
                       <input 
@@ -346,7 +345,6 @@ export default function AISettings() {
                       <li><strong>🎨 Stability AI</strong> - Echte img2img</li>
                       <li><strong>🍌 Nano Banana</strong> - Gratis img2img</li>
                       <li><strong>🔮 Replicate</strong> - Professioneel</li>
-                      <li><strong>Pollinations</strong> - Alleen generatie</li>
                     </ul>
                   </div>
                 </div>
