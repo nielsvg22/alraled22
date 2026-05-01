@@ -472,7 +472,7 @@ export const improveImage = async (req: Request, res: Response) => {
       if (googleKey) {
         try {
           const genAI = new GoogleGenerativeAI(googleKey);
-          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
           const visionResult = await model.generateContent([
             "Beschrijf deze afbeelding in detail zodat een AI generator een verbeterde versie kan maken. Focus op product, belichting en achtergrond.",
             { inlineData: { data: imageBuffer.toString('base64'), mimeType } }
@@ -507,9 +507,9 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
       const genAI = new GoogleGenerativeAI(googleKey);
       
       // Select model based on Nano Banana settings
-      let modelId = 'gemini-1.5-flash';
-      if (settings?.nanoBananaModel === 'pro') modelId = 'gemini-1.5-pro';
-      else if (settings?.nanoBananaModel === 'thinking') modelId = 'gemini-1.5-pro'; // Pro is better for "thinking"
+      let modelId = 'gemini-1.5-flash-latest';
+      if (settings?.nanoBananaModel === 'pro') modelId = 'gemini-1.5-pro-latest';
+      else if (settings?.nanoBananaModel === 'thinking') modelId = 'gemini-1.5-pro-latest'; // Pro is better for "thinking"
       
       const model = genAI.getGenerativeModel({ model: modelId });
 
@@ -547,7 +547,7 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
       if (googleKey) {
         try {
           const genAI = new GoogleGenerativeAI(googleKey);
-          const visionModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const visionModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
           
           const analysisResult = await visionModel.generateContent([
             "Analyze this image. Give me a 30-word prompt for an AI generator that would RECREATE THIS EXACT IMAGE but with these changes: " + prompt + ". Start with 'A photo of...'",
