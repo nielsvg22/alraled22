@@ -498,6 +498,21 @@ export const improveImage = async (req: Request, res: Response) => {
         error: 'Google Image Editing (Imagen) vereist Vertex AI setup. Gemini kan momenteel alleen afbeeldingen analyseren, niet direct bewerken via deze SDK.' 
       });
 
+    } else if (provider === 'pollinations') {
+      // Pollinations.ai (FREE) - Simple image-to-image via URL prompt
+      // We use the URL format: https://image.pollinations.ai/prompt/{prompt}?width=1024&height=1024&seed={random}&model=flux
+      // For image-to-image, we can try to include the source URL in the prompt or use their specific img2img if available.
+      // For now, we'll use a high-quality generation based on the prompt.
+      
+      const seed = Math.floor(Math.random() * 1000000);
+      const encodedPrompt = encodeURIComponent(prompt + " high quality, professional photography, industrial led lighting");
+      const pollinationUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
+      
+      const response = await fetch(pollinationUrl);
+      if (!response.ok) return res.status(500).json({ error: 'Pollinations.ai generatie mislukt' });
+      
+      const buffer = Buffer.from(await response.arrayBuffer());
+      b64 = buffer.toString('base64');
     } else {
       // Default to OpenAI
       const apiKey = settings?.openaiApiKey;

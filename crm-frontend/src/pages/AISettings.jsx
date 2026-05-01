@@ -174,22 +174,26 @@ export default function AISettings() {
 
               <Field label="Voorkeurs Image Provider">
                 <div className="flex gap-4">
-                  {['openai', 'google'].map(p => (
-                    <label key={p} className="flex-1 cursor-pointer group">
+                  {[
+                    { id: 'openai', label: 'OpenAI' },
+                    { id: 'google', label: 'Nano Banana' },
+                    { id: 'pollinations', label: 'Gratis AI' }
+                  ].map(p => (
+                    <label key={p.id} className="flex-1 cursor-pointer group">
                       <input 
                         type="radio" 
                         name="imageProvider" 
                         className="hidden" 
-                        checked={settings.preferredImageProvider === p}
-                        onChange={() => setSettings(s => ({ ...s, preferredImageProvider: p }))}
+                        checked={settings.preferredImageProvider === p.id}
+                        onChange={() => setSettings(s => ({ ...s, preferredImageProvider: p.id }))}
                       />
                       <div className={`
                         p-4 rounded-xl border-2 text-center transition-all
-                        ${settings.preferredImageProvider === p 
+                        ${settings.preferredImageProvider === p.id 
                           ? 'border-violet-500 bg-violet-50 text-violet-600 shadow-sm' 
                           : 'border-gray-100 bg-gray-50 text-gray-400 group-hover:border-gray-200'}
                       `}>
-                        <span className="text-sm font-black uppercase tracking-widest">{p}</span>
+                        <span className="text-sm font-black uppercase tracking-widest">{p.label}</span>
                       </div>
                     </label>
                   ))}
