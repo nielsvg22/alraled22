@@ -20,8 +20,8 @@ export default function AISettings() {
     groqApiKey: '',
     googleApiKey: '',
     googleProjectId: '',
-    preferredProvider: 'openai',
-    preferredImageProvider: 'openai',
+    preferredProvider: 'groq', // Groq has a very generous free tier
+    preferredImageProvider: 'pollinations', // Default to the free provider
     nanoBananaModel: 'fast' // Default to fast
   });
   const [saving, setSaving] = useState(false);

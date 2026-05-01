@@ -500,11 +500,11 @@ export const improveImage = async (req: Request, res: Response) => {
 
     } else if (provider === 'pollinations') {
       // Pollinations.ai (FREE) - We improve the prompt by analyzing the original image first
-      // if a Gemini key is available, to maintain context.
+      // ONLY if a Gemini key is available. If not, we use a generic high-quality product prompt.
       
-      let contextualPrompt = prompt;
+      let contextualPrompt = `A professional high-quality product photo: ${prompt}. Cinematic lighting, 8k resolution, commercial photography style.`;
       
-      const googleKey = settings?.googleApiKey || process.env.GOOGLE_API_KEY;
+      const googleKey = settings?.googleApiKey;
       if (googleKey) {
         try {
           const genAI = new GoogleGenerativeAI(googleKey);
