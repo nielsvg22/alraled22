@@ -42,6 +42,7 @@ export default function Products() {
   const importRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
   const { isAdmin } = useAuth();
 
   const fetchProducts = async () => {
