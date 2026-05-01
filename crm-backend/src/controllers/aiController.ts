@@ -119,11 +119,8 @@ export const callBridge = async (accessToken: string, prompt: string) => {
 
     if (!response.ok) {
       const err = await response.text();
-      console.error('Bridge HTTP Error:', response.status, err);
-      if (response.status === 401 || response.status === 403) {
-        throw new Error('ChatGPT Bridge: Je Access Token is ongeldig of verlopen. Vernieuw je sessie op chatgpt.com.');
-      }
-      throw new Error(`ChatGPT Bridge Error (${response.status}): ${err.slice(0, 100)}`);
+      console.error('Bridge HTTP Error:', response.status, err.slice(0, 500));
+      throw new Error(`ChatGPT Bridge HTTP ${response.status}: ${err.slice(0, 200)}`);
     }
 
     const text = await response.text();
