@@ -506,37 +506,59 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
 
       const genAI = new GoogleGenerativeAI(googleKey);
       
-      // Select model based on Nano Banana settings
-      // Using Gemini 2.5 models (current generation)
-      let modelId = 'gemini-2.5-flash';
-      if (settings?.nanoBananaModel === 'pro') modelId = 'gemini-2.5-pro';
-      else if (settings?.nanoBananaModel === 'thinking') modelId = 'gemini-2.5-pro'; // Pro is better for "thinking"
+      // Use Gemini 2.0 Flash with image generation capability
+      // This model supports native image generation and editing
+      const modelId = 'gemini-2.0-flash-exp-image-generation';
       
-      const model = genAI.getGenerativeModel({ model: modelId });
-
-      // Google Gemini 1.5 can't directly "edit" like OpenAI, 
-      // so we use it to analyze and then we would ideally use Imagen.
-      // For now, we'll implement a placeholder or a Gemini-based enhancement description if Imagen isn't ready.
-      // However, the user asked for "Google Images AI", so let's try to use the Gemini vision-to-image flow if possible.
-      
-      const result = await model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            data: imageBuffer.toString('base64'),
-            mimeType
-          }
-        },
-      ]);
-      
-      const text = result.response.text();
-      // Since Gemini is text-only for output in most cases (without Vertex AI Imagen),
-      // we'll return an error or a message explaining that Imagen setup is required for full image-to-image.
-      // BUT, we want to be proactive. Let's assume they might want Gemini's analysis.
-      
-      return res.status(400).json({ 
-        error: 'Google Image Editing (Imagen) vereist Vertex AI setup. Gemini kan momenteel alleen afbeeldingen analyseren, niet direct bewerken via deze SDK.' 
+      const model = genAI.getGenerativeModel({ 
+        model: modelId,
+        generationConfig: {
+          responseModalities: ['TEXT', 'IMAGE']
+        } as any
       });
+
+      try {
+        // Generate a new image based on the uploaded image + prompt
+        const enhancedPrompt = `Improve this product photo: ${prompt}. Make it professional, high quality, commercial photography style.`;
+        
+        const result = await model.generateContent([
+          enhancedPrompt,
+          {
+            inlineData: {
+              data: imageBuffer.toString('base64'),
+              mimeType
+            }
+          },
+        ]);
+        
+        // Extract generated image from response
+        const response = result.response as any;
+        const candidates = response.candidates;
+        
+        if (candidates && candidates.length > 0 && candidates[0].content?.parts) {
+          const parts = candidates[0].content.parts;
+          
+          // Look for image parts in the response
+          for (const part of parts) {
+            if (part.inlineData?.data) {
+              // Found generated image
+              b64 = part.inlineData.data;
+              break;
+            }
+          }
+          
+          if (!b64) {
+            return res.status(500).json({ error: 'Geen afbeelding gegenereerd door Gemini. Probeer een andere provider.' });
+          }
+        } else {
+          return res.status(500).json({ error: 'Geen response van Gemini image generation.' });
+        }
+      } catch (geminiError: any) {
+        console.error('Gemini image generation failed:', geminiError);
+        return res.status(500).json({ 
+          error: `Gemini image generation mislukt: ${geminiError.message}. Probeer Nano Banana of een andere provider.` 
+        });
+      }
 
     } else if (provider === 'pollinations') {
       // Pollinations.ai (FREE) - We improve the prompt by analyzing the original image first
