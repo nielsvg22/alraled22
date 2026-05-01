@@ -160,122 +160,150 @@ export const callBridge = async (accessToken: string, prompt: string) => {
 };
 
 // New function to generate images via ChatGPT Plus (DALL-E 3)
-export const callBridgeImage = async (accessToken: string, prompt: string): Promise<string> => {
-  try {
-    const response = await fetch('https://chatgpt.com/backend-api/conversation', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken.trim()}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/event-stream',
-      },
-      body: JSON.stringify({
-        action: 'next',
-        messages: [{
-          id: randomUUID(),
-          author: { role: 'user' },
-          content: { content_type: 'text', parts: [prompt] },
-          metadata: {}
-        }],
-        model: 'gpt-4o',
-        parent_message_id: randomUUID(),
-        timezone_offset_min: -60,
-        history_and_training_disabled: true,
-      })
-    });
-
-    if (!response.ok) {
-      const err = await response.text();
-      console.error('Bridge Image HTTP Error:', response.status, err);
-      if (response.status === 401 || response.status === 403) {
-        throw new Error('ChatGPT Bridge: Je Access Token is ongeldig of verlopen. Vernieuw je sessie op chatgpt.com.');
+// This uses the ChatGPT web API with your Plus subscription
+export const callBridgeImage = async (accessToken: string, prompt: string, maxRetries = 2): Promise<string> => {
+  let lastError: any;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        console.log(`🔄 ChatGPT Bridge retry attempt ${attempt}/${maxRetries}...`);
+        await new Promise(resolve => setTimeout(resolve, 2000 * attempt)); // Wait longer between retries
       }
-      throw new Error(`ChatGPT Bridge Error (${response.status}): ${err.slice(0, 100)}`);
-    }
 
-    const text = await response.text();
-    if (!text) throw new Error('ChatGPT Bridge: Leeg antwoord ontvangen.');
+      // Better prompt that specifically requests DALL-E 3 image generation
+      const dallePrompt = `[System: Use DALL-E 3 to generate an image] ${prompt}`;
 
-    const lines = text.split('\n');
-    let imageUrl: string | null = null;
-
-    // Look for image generation in the SSE response
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const line = lines[i]!.trim();
-      if (!line.startsWith('data: ')) continue;
-      if (line.includes('[DONE]')) continue;
-
-      try {
-        const jsonStr = line.substring(6);
-        const data = JSON.parse(jsonStr);
-        
-        // Check for image content in the message
-        const message = data.message;
-        if (message && message.content) {
-          // Check for image parts (DALL-E 3 generates images as content parts)
-          const parts = message.content.parts || [];
-          for (const part of parts) {
-            if (typeof part === 'object' && part.content_type === 'image_asset_pointer') {
-              // Found an image reference
-              imageUrl = part.asset_pointer || null;
-              if (imageUrl) break;
+      const response = await fetch('https://chatgpt.com/backend-api/conversation', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken.trim()}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/event-stream',
+          'Origin': 'https://chatgpt.com',
+          'Referer': 'https://chatgpt.com/',
+        },
+        body: JSON.stringify({
+          action: 'next',
+          messages: [{
+            id: randomUUID(),
+            author: { role: 'user' },
+            content: { content_type: 'text', parts: [dallePrompt] },
+            metadata: {
+              request_dalle_3: true, // Hint to use DALL-E 3
             }
-          }
+          }],
+          model: 'gpt-4o',
+          parent_message_id: randomUUID(),
+          timezone_offset_min: -60,
+          history_and_training_disabled: true,
+          conversation_mode: { kind: 'primary_assistant' },
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        console.error('Bridge Image HTTP Error:', response.status, err);
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('ChatGPT Bridge: Je Access Token is ongeldig of verlopen. Vernieuw je sessie op chatgpt.com.');
+        }
+        throw new Error(`ChatGPT Bridge Error (${response.status}): ${err.slice(0, 100)}`);
+      }
+
+      const text = await response.text();
+      if (!text) throw new Error('ChatGPT Bridge: Leeg antwoord ontvangen.');
+
+      const lines = text.split('\n');
+      let imageUrl: string | null = null;
+
+      // Look for image generation in the SSE response
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const line = lines[i]!.trim();
+        if (!line.startsWith('data: ')) continue;
+        if (line.includes('[DONE]')) continue;
+
+        try {
+          const jsonStr = line.substring(6);
+          const data = JSON.parse(jsonStr);
           
-          // Also check for attachments (alternative format)
-          if (!imageUrl && message.attachments) {
-            for (const attachment of message.attachments) {
-              if (attachment.name && (attachment.name.endsWith('.png') || attachment.name.endsWith('.jpg'))) {
-                imageUrl = attachment.url || attachment.asset_pointer || null;
+          // Check for image content in the message
+          const message = data.message;
+          if (message && message.content) {
+            // Check for image parts (DALL-E 3 generates images as content parts)
+            const parts = message.content.parts || [];
+            for (const part of parts) {
+              if (typeof part === 'object' && part.content_type === 'image_asset_pointer') {
+                // Found an image reference
+                imageUrl = part.asset_pointer || null;
                 if (imageUrl) break;
               }
             }
+            
+            // Also check for attachments (alternative format)
+            if (!imageUrl && message.attachments) {
+              for (const attachment of message.attachments) {
+                if (attachment.name && (attachment.name.endsWith('.png') || attachment.name.endsWith('.jpg'))) {
+                  imageUrl = attachment.url || attachment.asset_pointer || null;
+                  if (imageUrl) break;
+                }
+              }
+            }
           }
+          
+          // Check metadata for image info
+          if (!imageUrl && data.generation_metadata?.image) {
+            imageUrl = data.generation_metadata.image.url || null;
+          }
+          
+          if (imageUrl) break;
+        } catch (e) {
+          continue;
         }
-        
-        // Check metadata for image info
-        if (!imageUrl && data.generation_metadata?.image) {
-          imageUrl = data.generation_metadata.image.url || null;
+      }
+
+      if (!imageUrl) {
+        console.error('Bridge image parsing failed. Raw response snippet:', text.slice(-500));
+        throw new Error('ChatGPT Bridge: Geen afbeelding gevonden in het antwoord. Zorg dat je Plus abonnement actief is en DALL-E 3 beschikbaar is.');
+      }
+
+      // The asset_pointer might need to be resolved to a full URL
+      if (imageUrl.startsWith('file-service://') || imageUrl.startsWith('sandbox://')) {
+        const fileId = imageUrl.replace('file-service://', '').replace('sandbox://', '');
+        imageUrl = `https://chatgpt.com/backend-api/files/${fileId}/download`;
+      }
+
+      // Download the image
+      const imageResponse = await fetch(imageUrl, {
+        headers: {
+          'Authorization': `Bearer ${accessToken.trim()}`,
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
-        
-        if (imageUrl) break;
-      } catch (e) {
-        continue;
+      });
+
+      if (!imageResponse.ok) {
+        throw new Error(`Kon de gegenereerde afbeelding niet downloaden: ${imageResponse.status}`);
       }
-    }
 
-    if (!imageUrl) {
-      console.error('Bridge image parsing failed. Raw response snippet:', text.slice(-500));
-      throw new Error('ChatGPT Bridge: Geen afbeelding gevonden in het antwoord. Zorg dat je Plus abonnement actief is en DALL-E 3 beschikbaar is.');
-    }
-
-    // The asset_pointer might need to be resolved to a full URL
-    // Sometimes it's a relative path or needs the ChatGPT file service
-    if (imageUrl.startsWith('file-service://') || imageUrl.startsWith('sandbox://')) {
-      // Convert to ChatGPT file service URL
-      const fileId = imageUrl.replace('file-service://', '').replace('sandbox://', '');
-      imageUrl = `https://chatgpt.com/backend-api/files/${fileId}/download`;
-    }
-
-    // Download the image
-    const imageResponse = await fetch(imageUrl, {
-      headers: {
-        'Authorization': `Bearer ${accessToken.trim()}`,
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+      return imageBuffer.toString('base64');
+      
+    } catch (err: any) {
+      lastError = err;
+      console.error(`Bridge Image attempt ${attempt + 1} failed:`, err.message);
+      
+      // Don't retry on auth errors
+      if (err.message?.includes('ongeldig') || err.message?.includes('verlopen')) {
+        throw err;
       }
-    });
-
-    if (!imageResponse.ok) {
-      throw new Error(`Kon de gegenereerde afbeelding niet downloaden: ${imageResponse.status}`);
+      
+      // Continue to next retry
+      continue;
     }
-
-    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
-    return imageBuffer.toString('base64');
-  } catch (err: any) {
-    console.error('Bridge Image Fatal Error:', err);
-    throw err;
   }
+  
+  // All retries failed
+  throw lastError || new Error('ChatGPT Bridge: Alle pogingen mislukt');
 };
 
 // -- POST /api/ai/test-connection --------------------------------
