@@ -11,6 +11,7 @@ import { randomUUID } from 'node:crypto';
 import OpenAI, { toFile } from 'openai';
 import { getContent } from '../db/contentRepo';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { InferenceClient } from '@huggingface/inference';
 
 const productSchema = z.object({
   name: z.string().trim().min(1),
@@ -531,50 +532,30 @@ Only output the prompt text, nothing else. Start with "Professional product phot
         console.error('Gemini vision analysis failed, using fallback prompt:', visionErr);
       }
 
-      // Stap 2: Genereer de afbeelding via Hugging Face FLUX.1
+      // Stap 2: Genereer de afbeelding via Hugging Face FLUX.1 (via officiële SDK)
       const hfKey = settings?.huggingfaceApiKey;
       if (!hfKey) return res.status(500).json({ error: 'Hugging Face API Key is niet geconfigureerd. Maak gratis een account aan op huggingface.co en voeg je token toe in AI Instellingen.' });
 
-      const hfUrl = 'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell';
-      console.log('[NanoBanana] Requesting FLUX.1 image generation...');
-
-      const hfHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${hfKey}`,
-      };
-
-      let hfResponse = await fetch(hfUrl, {
-        method: 'POST',
-        headers: hfHeaders,
-        body: JSON.stringify({
+      console.log('[NanoBanana] Requesting FLUX.1-schnell via HF InferenceClient...');
+      try {
+        const hfClient = new InferenceClient(hfKey);
+        const imageBlob = await hfClient.textToImage({
+          model: 'black-forest-labs/FLUX.1-schnell',
           inputs: imageGenPrompt,
-          parameters: { width: 1024, height: 1024, num_inference_steps: 4 }
-        })
-      });
-
-      // Als model laadt, wacht en probeer opnieuw
-      if (hfResponse.status === 503) {
-        console.log('[NanoBanana] Model loading, waiting 15s...');
-        await new Promise(r => setTimeout(r, 15000));
-        hfResponse = await fetch(hfUrl, {
-          method: 'POST',
-          headers: hfHeaders,
-          body: JSON.stringify({ inputs: imageGenPrompt, parameters: { width: 1024, height: 1024, num_inference_steps: 4 } })
+          parameters: { width: 1024, height: 1024, num_inference_steps: 4 } as any,
         });
+        const hfBuffer = Buffer.from(await imageBlob.arrayBuffer());
+        if (hfBuffer.length < 1000) {
+          return res.status(500).json({ error: 'Nano Banana retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
+        }
+        b64 = hfBuffer.toString('base64');
+      } catch (hfErr: any) {
+        console.error('HuggingFace FLUX.1 error:', hfErr?.message);
+        if (hfErr?.message?.includes('401') || hfErr?.message?.includes('Unauthorized')) {
+          return res.status(500).json({ error: 'Hugging Face token is ongeldig. Controleer je token in AI Instellingen.' });
+        }
+        return res.status(500).json({ error: `Nano Banana image generation mislukt: ${hfErr?.message || 'onbekende fout'}` });
       }
-
-      if (!hfResponse.ok) {
-        const errText = await hfResponse.text();
-        console.error('HuggingFace FLUX.1 error:', hfResponse.status, errText.slice(0, 200));
-        if (hfResponse.status === 401) return res.status(500).json({ error: 'Hugging Face token is ongeldig. Controleer je token in AI Instellingen.' });
-        return res.status(500).json({ error: `Nano Banana image generation mislukt (${hfResponse.status}). Probeer het opnieuw.` });
-      }
-
-      const hfBuffer = Buffer.from(await hfResponse.arrayBuffer());
-      if (hfBuffer.length < 1000) {
-        return res.status(500).json({ error: 'Nano Banana retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
-      }
-      b64 = hfBuffer.toString('base64');
 
     } else if (provider === 'replicate') {
       // Replicate API - $5 free credits, proper img2img support
