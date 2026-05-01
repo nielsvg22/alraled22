@@ -502,7 +502,7 @@ export const improveImage = async (req: Request, res: Response) => {
       // Pollinations.ai (FREE) - We improve the prompt by analyzing the original image first
       // ONLY if a Gemini key is available. If not, we use a generic high-quality product prompt.
       
-      let contextualPrompt = `A professional high-quality product photo: ${prompt}. Cinematic lighting, 8k resolution, commercial photography style.`;
+      let contextualPrompt = `A professional high-quality product photo of ${prompt}, cinematic lighting, 8k resolution, commercial photography style, high detail.`;
       
       const googleKey = settings?.googleApiKey;
       if (googleKey) {
@@ -511,7 +511,7 @@ export const improveImage = async (req: Request, res: Response) => {
           const visionModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
           
           const analysisResult = await visionModel.generateContent([
-            "Describe this product image in extreme detail for an AI image generator. Focus on the product, materials, lighting and background. Keep it to one paragraph.",
+            "Describe this product in 20 words for an AI image generator. Focus on shape and color.",
             {
               inlineData: {
                 data: imageBuffer.toString('base64'),
@@ -520,21 +520,46 @@ export const improveImage = async (req: Request, res: Response) => {
             },
           ]);
           
-          const description = analysisResult.response.text();
-          contextualPrompt = `A professional high-quality photo based on this description: ${description}. With these improvements: ${prompt}. Cinematic lighting, 8k resolution, commercial photography style.`;
+          const description = analysisResult.response.text().trim();
+          contextualPrompt = `Professional product photo: ${description}. Improvements: ${prompt}. Studio lighting, clean background, 8k.`;
         } catch (visionErr) {
-          console.error('Vision analysis failed, falling back to simple prompt:', visionErr);
+          console.error('Vision analysis failed:', visionErr);
         }
+      }
+
+      // Limit prompt length to avoid URL issues
+      if (contextualPrompt.length > 800) {
+        contextualPrompt = contextualPrompt.substring(0, 800);
       }
 
       const seed = Math.floor(Math.random() * 1000000);
       const encodedPrompt = encodeURIComponent(contextualPrompt);
       const pollinationUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
       
-      const response = await fetch(pollinationUrl);
-      if (!response.ok) return res.status(500).json({ error: 'Pollinations.ai generatie mislukt' });
+      console.log('Requesting Pollinations AI with prompt:', contextualPrompt.substring(0, 50) + '...');
+      
+      let response = await fetch(pollinationUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
+      });
+
+      // Fallback to simpler prompt if first attempt fails
+      if (!response.ok) {
+        console.warn('Primary Pollinations request failed, retrying with simple prompt...');
+        const simplePrompt = encodeURIComponent(`Professional studio photo of ${prompt}, high quality`);
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${simplePrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
+        response = await fetch(fallbackUrl);
+      }
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error('Pollinations Error:', response.status, errorBody);
+        return res.status(500).json({ error: `Gratis AI is momenteel druk. Probeer het over een moment opnieuw.` });
+      }
       
       const buffer = Buffer.from(await response.arrayBuffer());
+      if (buffer.length < 1000) { 
+        return res.status(500).json({ error: 'Gratis AI retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
+      }
       b64 = buffer.toString('base64');
     } else {
       // Default to OpenAI
