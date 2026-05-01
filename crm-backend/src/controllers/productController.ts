@@ -10,6 +10,7 @@ import path from 'path';
 import { randomUUID } from 'node:crypto';
 import OpenAI, { toFile } from 'openai';
 import { getContent } from '../db/contentRepo';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const productSchema = z.object({
   name: z.string().trim().min(1),
@@ -433,54 +434,95 @@ export const improveImage = async (req: Request, res: Response) => {
 
     // Try to get API key from DB settings first, then fall back to env
     const settings = await getContent('ai_settings');
-    const apiKey = settings?.openaiApiKey || process.env.OPENAI_API_KEY;
+    const provider = settings?.preferredImageProvider || 'openai';
     
-    if (!apiKey) return res.status(500).json({ error: 'OpenAI API Key is niet geconfigureerd' });
-
     const uploadsDir = process.env.UPLOADS_DIR
       ? path.resolve(process.env.UPLOADS_DIR)
       : path.join(process.cwd(), 'uploads');
 
     // Read the source image
     let imageBuffer: Buffer;
+    let mimeType = 'image/png';
+
     if (imageUrl.startsWith('/uploads/')) {
       const localPath = path.join(uploadsDir, path.basename(imageUrl));
       if (!fs.existsSync(localPath)) return res.status(404).json({ error: 'Image file not found' });
       imageBuffer = fs.readFileSync(localPath);
+      const ext = path.extname(localPath).toLowerCase();
+      mimeType = ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' : ext === '.webp' ? 'image/webp' : 'image/png';
     } else {
       const response = await fetch(imageUrl);
       if (!response.ok) return res.status(400).json({ error: 'Could not download image' });
       imageBuffer = Buffer.from(await response.arrayBuffer());
+      mimeType = response.headers.get('content-type') || 'image/png';
     }
 
-    const openai = new OpenAI({ apiKey });
+    let newFilename = `${randomUUID()}.png`;
+    let b64: string | undefined;
 
-    const imgFile = await toFile(imageBuffer, 'image.png', { type: 'image/png' });
+    if (provider === 'google') {
+      const googleKey = settings?.googleApiKey || process.env.GOOGLE_API_KEY;
+      if (!googleKey) return res.status(500).json({ error: 'Google API Key is niet geconfigureerd' });
 
-    const result = await openai.images.edit({
-      model: 'gpt-image-1',
-      image: imgFile,
-      prompt,
-      size: '1024x1024',
-    });
+      const genAI = new GoogleGenerativeAI(googleKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    const b64 = result.data?.[0]?.b64_json;
-    if (!b64) return res.status(500).json({ error: 'No image returned from AI' });
+      // Google Gemini 1.5 can't directly "edit" like OpenAI, 
+      // so we use it to analyze and then we would ideally use Imagen.
+      // For now, we'll implement a placeholder or a Gemini-based enhancement description if Imagen isn't ready.
+      // However, the user asked for "Google Images AI", so let's try to use the Gemini vision-to-image flow if possible.
+      
+      const result = await model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: imageBuffer.toString('base64'),
+            mimeType
+          }
+        },
+      ]);
+      
+      const text = result.response.text();
+      // Since Gemini is text-only for output in most cases (without Vertex AI Imagen),
+      // we'll return an error or a message explaining that Imagen setup is required for full image-to-image.
+      // BUT, we want to be proactive. Let's assume they might want Gemini's analysis.
+      
+      return res.status(400).json({ 
+        error: 'Google Image Editing (Imagen) vereist Vertex AI setup. Gemini kan momenteel alleen afbeeldingen analyseren, niet direct bewerken via deze SDK.' 
+      });
 
-    // Save the new image
-    const newFilename = `${randomUUID()}.png`;
-    const newPath = path.join(uploadsDir, newFilename);
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    fs.writeFileSync(newPath, Buffer.from(b64, 'base64'));
+    } else {
+      // Default to OpenAI
+      const apiKey = settings?.openaiApiKey || process.env.OPENAI_API_KEY;
+      if (!apiKey) return res.status(500).json({ error: 'OpenAI API Key is niet geconfigureerd' });
 
-    const newUrlRelative = `/uploads/${newFilename}`;
-    
-    // Return absolute URL so frontend doesn't have to guess the host
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
-    const host = req.get('host');
-    const url = `${protocol}://${host}${newUrlRelative}`;
-    
-    res.json({ url });
+      const openai = new OpenAI({ apiKey });
+      const imgFile = await toFile(imageBuffer, 'image.png', { type: mimeType as any });
+
+      const result = await openai.images.edit({
+        model: 'gpt-image-1',
+        image: imgFile,
+        prompt,
+        size: '1024x1024',
+        response_format: 'b64_json'
+      });
+
+      b64 = (result.data?.[0] as any)?.b64_json;
+      if (!b64) return res.status(500).json({ error: 'Geen afbeelding geretourneerd door AI' });
+    }
+
+    if (b64) {
+      const newPath = path.join(uploadsDir, newFilename);
+      fs.mkdirSync(uploadsDir, { recursive: true });
+      fs.writeFileSync(newPath, Buffer.from(b64, 'base64'));
+
+      const newUrlRelative = `/uploads/${newFilename}`;
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+      const host = req.get('host');
+      const url = `${protocol}://${host}${newUrlRelative}`;
+      
+      return res.json({ url });
+    }
   } catch (error: any) {
     console.error('Improve image error:', error);
     const msg = error?.message || 'Afbeelding verbeteren mislukt';
