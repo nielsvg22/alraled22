@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'node:crypto';
 import OpenAI, { toFile } from 'openai';
+import { getContent } from '../db/contentRepo';
 
 const productSchema = z.object({
   name: z.string().trim().min(1),
@@ -430,8 +431,11 @@ export const improveImage = async (req: Request, res: Response) => {
     if (!imageUrl) return res.status(400).json({ error: 'imageUrl is required' });
     if (!prompt) return res.status(400).json({ error: 'prompt is required' });
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: 'OPENAI_API_KEY is not configured' });
+    // Try to get API key from DB settings first, then fall back to env
+    const settings = await getContent('ai_settings');
+    const apiKey = settings?.openaiApiKey || process.env.OPENAI_API_KEY;
+    
+    if (!apiKey) return res.status(500).json({ error: 'OpenAI API Key is niet geconfigureerd' });
 
     const uploadsDir = process.env.UPLOADS_DIR
       ? path.resolve(process.env.UPLOADS_DIR)

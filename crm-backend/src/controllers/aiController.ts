@@ -1,17 +1,38 @@
 import { Request, Response } from 'express';
 import OpenAI from 'openai';
 import { listProducts } from '../db/productsRepo';
+import { getContent } from '../db/contentRepo';
 import nodemailer from 'nodemailer';
 
-const AI_MODEL = process.env.AI_MODEL || 'llama-3.3-70b-versatile';
+const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 
-const getClient = () => {
-  const key = process.env.GROQ_API_KEY;
-  if (!key) throw new Error('GROQ_API_KEY is not configured in .env');
-  return new OpenAI({
-    baseURL: 'https://api.groq.com/openai/v1',
-    apiKey: key,
-  });
+const getAISettings = async () => {
+  const settings = await getContent('ai_settings');
+  return settings || {};
+};
+
+const getClient = async () => {
+  const settings = await getAISettings();
+  const provider = settings.preferredProvider || 'groq';
+
+  if (provider === 'openai') {
+    const key = settings.openaiApiKey || process.env.OPENAI_API_KEY;
+    if (!key) throw new Error('OpenAI API Key is niet geconfigureerd');
+    return {
+      openai: new OpenAI({ apiKey: key }),
+      model: 'gpt-4o-mini' // Default cheap/fast model for OpenAI
+    };
+  } else {
+    const key = settings.groqApiKey || process.env.GROQ_API_KEY;
+    if (!key) throw new Error('Groq API Key is niet geconfigureerd');
+    return {
+      openai: new OpenAI({
+        baseURL: 'https://api.groq.com/openai/v1',
+        apiKey: key,
+      }),
+      model: process.env.AI_MODEL || DEFAULT_MODEL
+    };
+  }
 };
 
 // ── POST /api/ai/product-description ────────────────────────────
@@ -20,7 +41,7 @@ export const generateProductDescription = async (req: Request, res: Response) =>
     const { name, category, keywords } = req.body;
     if (!name) return res.status(400).json({ error: 'Product naam is verplicht' });
 
-    const openai = getClient();
+    const { openai, model } = await getClient();
     const prompt = [
       `Schrijf een professionele productomschrijving in het Nederlands voor een B2B LED-verlichtingsbedrijf (ALRA LED Solutions).`,
       `Productnaam: ${name}`,
@@ -34,7 +55,7 @@ export const generateProductDescription = async (req: Request, res: Response) =>
     ].filter(Boolean).join('\n');
 
     const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
+      model: model,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 200,
       temperature: 0.7,
@@ -54,7 +75,7 @@ export const generatePageText = async (req: Request, res: Response) => {
     const { section, context, tone, length } = req.body;
     if (!section) return res.status(400).json({ error: 'Sectie is verplicht' });
 
-    const openai = getClient();
+    const { openai, model } = await getClient();
     const wordCount = length === 'kort' ? '20-40' : length === 'lang' ? '80-120' : '40-70';
     const prompt = [
       `Schrijf webtekst in het Nederlands voor ALRA LED Solutions, een B2B LED-verlichtingsspecialist.`,
@@ -66,7 +87,7 @@ export const generatePageText = async (req: Request, res: Response) => {
     ].filter(Boolean).join('\n');
 
     const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
+      model: model,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 300,
       temperature: 0.75,
@@ -87,9 +108,9 @@ export const chat = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Messages array is verplicht' });
     }
 
-    const openai = getClient();
+    const { openai, model } = await getClient();
     const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
+      model: model,
       messages: [
         {
           role: 'system',
@@ -102,14 +123,14 @@ export const chat = async (req: Request, res: Response) => {
         },
         ...messages,
       ],
-      max_tokens: 600,
+      max_tokens: 1000,
       temperature: 0.7,
     });
 
-    const reply = completion.choices[0]?.message?.content?.trim() ?? '';
-    res.json({ result: reply });
+    const text = completion.choices[0]?.message?.content?.trim() ?? '';
+    res.json({ result: text });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || 'AI generatie mislukt' });
+    res.status(500).json({ error: err?.message || 'Chat mislukt' });
   }
 };
 
@@ -304,7 +325,7 @@ export const testEmail = async (req: Request, res: Response) => {
     await transport.sendMail({
       from: `"${settings.fromName || 'ALRA LED Solutions'}" <${settings.fromEmail || settings.user}>`,
       to,
-      subject: 'Test email � ALRA LED Solutions CRM',
+      subject: 'Test email � ALRA LED Solutions CRM',
       text: 'Dit is een test email vanuit het ALRA LED CRM systeem. Als u dit ontvangt, werkt de configuratie correct!',
     });
     res.json({ ok: true });

@@ -44,6 +44,7 @@ export default function DashboardLayout() {
     navigation.push({ name: 'Verkooppunten', href: '/dealers', icon: MapPin });
     navigation.push({ name: 'Thema & Kleuren', href: '/theme', icon: Palette });
     navigation.push({ name: 'AI Assistent', href: '/ai', icon: Sparkles });
+    navigation.push({ name: 'AI Instellingen', href: '/ai-settings', icon: Sparkles });
     navigation.push({ name: 'Email Instellingen', href: '/email', icon: Mail });
     navigation.push({ name: 'Snelstart', href: '/snelstart', icon: Link2 });
     navigation.push({ name: 'Kortingscodes', href: '/discounts', icon: Ticket });

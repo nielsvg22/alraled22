@@ -14,6 +14,7 @@ import Theme from './pages/Theme';
 import AIAssistant from './pages/AIAssistant';
 import PageBuilder from './pages/PageBuilder';
 import EmailSettings from './pages/EmailSettings';
+import AISettings from './pages/AISettings';
 import Dealers from './pages/Dealers';
 import Snelstart from './pages/Snelstart';
 import DiscountCodes from './pages/DiscountCodes';
@@ -60,6 +61,7 @@ function AppRoutes() {
         <Route path="dealers" element={<AdminRoute><Dealers /></AdminRoute>} />
         <Route path="theme" element={<AdminRoute><Theme /></AdminRoute>} />
         <Route path="ai" element={<AdminRoute><AIAssistant /></AdminRoute>} />
+        <Route path="ai-settings" element={<AdminRoute><AISettings /></AdminRoute>} />
         <Route path="builder" element={<AdminRoute><PageBuilder /></AdminRoute>} />
         <Route path="email" element={<AdminRoute><EmailSettings /></AdminRoute>} />
         <Route path="snelstart" element={<AdminRoute><Snelstart /></AdminRoute>} />
