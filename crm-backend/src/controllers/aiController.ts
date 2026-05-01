@@ -158,6 +158,7 @@ export const callBridge = async (accessToken: string, prompt: string) => {
 
 // -- POST /api/ai/test-connection --------------------------------
 export const testAIConnection = async (req: Request, res: Response) => {
+  console.log('[aiController] Testing AI connection...');
   try {
     const client = await getClient();
     const prompt = "Reageer alleen met het woord 'CONNECTIE_OK'.";

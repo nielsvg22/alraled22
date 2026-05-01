@@ -15,6 +15,7 @@ const router = Router();
 
 // Public
 router.post('/storefront-chat', storefrontChat);
+router.post('/test-connection', testAIConnection);
 
 // Protected
 router.use(authMiddleware);
@@ -24,6 +25,5 @@ router.post('/chat',                chat);
 router.post('/website-block',       generateWebsiteBlock);
 router.post('/new-block',           generateNewBlock);
 router.post('/test-email',          testEmail);
-router.post('/test-connection',     testAIConnection);
 
 export default router;
