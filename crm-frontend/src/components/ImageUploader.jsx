@@ -9,10 +9,17 @@ export default function ImageUploader({ value, onChange, label = 'Afbeelding', h
   const [aiLoading, setAiLoading] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [error, setError] = useState('');
+  const [provider, setProvider] = useState('AI');
   const fileRef = useRef(null);
 
   useEffect(() => {
     setImgPreview(value ? getMediaUrl(value) : null);
+    // Fetch settings to know which provider is used
+    api.get('/content/ai_settings').then(r => {
+      if (r.data?.preferredImageProvider) {
+        setProvider(r.data.preferredImageProvider === 'openai' ? 'ChatGPT' : 'Nano Banana');
+      }
+    }).catch(() => {});
   }, [value]);
 
   const handleFileChange = async (file) => {
@@ -130,7 +137,7 @@ export default function ImageUploader({ value, onChange, label = 'Afbeelding', h
               type="text"
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
-              placeholder="Schrijf een prompt om de afbeelding te verbeteren..."
+              placeholder={`Verbeter met ${provider}...`}
               className="w-full pl-4 pr-12 py-2.5 bg-violet-50 border border-violet-100 rounded-xl text-sm focus:outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100 transition-all placeholder:text-violet-300"
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAiImprove())}
             />
@@ -139,7 +146,7 @@ export default function ImageUploader({ value, onChange, label = 'Afbeelding', h
               onClick={handleAiImprove}
               disabled={!aiPrompt.trim()}
               className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-violet-500 text-white flex items-center justify-center hover:bg-violet-600 disabled:bg-violet-200 transition-colors"
-              title="Verbeter met AI"
+              title={`Verbeter met ${provider}`}
             >
               <Wand2 size={14} />
             </button>

@@ -18,7 +18,11 @@ export default function AISettings() {
   const [settings, setSettings] = useState({
     openaiApiKey: '',
     groqApiKey: '',
-    preferredProvider: 'openai'
+    googleApiKey: '',
+    googleProjectId: '',
+    preferredProvider: 'openai',
+    preferredImageProvider: 'openai',
+    nanoBananaModel: 'fast' // Default to fast
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -88,29 +92,110 @@ export default function AISettings() {
               />
             </Field>
 
-            <Field label="Voorkeurs Provider">
-              <div className="flex gap-4">
-                {['openai', 'groq'].map(p => (
-                  <label key={p} className="flex-1 cursor-pointer group">
-                    <input 
-                      type="radio" 
-                      name="provider" 
-                      className="hidden" 
-                      checked={settings.preferredProvider === p}
-                      onChange={() => setSettings(s => ({ ...s, preferredProvider: p }))}
-                    />
-                    <div className={`
-                      p-4 rounded-xl border-2 text-center transition-all
-                      ${settings.preferredProvider === p 
-                        ? 'border-blue-500 bg-blue-50 text-blue-600 shadow-sm' 
-                        : 'border-gray-100 bg-gray-50 text-gray-400 group-hover:border-gray-200'}
-                    `}>
-                      <span className="text-sm font-black uppercase tracking-widest">{p}</span>
-                    </div>
-                  </label>
-                ))}
+            <div className="pt-4 border-t border-gray-100">
+              <h4 className="text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <span className="text-lg">🍌</span> Nano Banana (Google Gemini AI)
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label="Google / Nano Banana API Key">
+                  <input 
+                    type="password" 
+                    value={settings.googleApiKey || ''} 
+                    onChange={e => setSettings(s => ({ ...s, googleApiKey: e.target.value }))}
+                    placeholder="AIza..."
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Google Project ID">
+                  <input 
+                    type="text" 
+                    value={settings.googleProjectId || ''} 
+                    onChange={e => setSettings(s => ({ ...s, googleProjectId: e.target.value }))}
+                    placeholder="my-project-123"
+                    className={inputCls}
+                  />
+                </Field>
               </div>
-            </Field>
+
+              <div className="mt-4">
+                <Field label="Nano Banana Model Modus">
+                  <div className="flex gap-2">
+                    {[
+                      { id: 'fast', label: 'Snel', desc: 'Direct resultaat' },
+                      { id: 'thinking', label: 'Denken', desc: 'Betere kwaliteit' },
+                      { id: 'pro', label: 'Pro', desc: 'Hoogste precisie' }
+                    ].map(m => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setSettings(s => ({ ...s, nanoBananaModel: m.id }))}
+                        className={`
+                          flex-1 p-3 rounded-xl border-2 text-left transition-all
+                          ${settings.nanoBananaModel === m.id 
+                            ? 'border-yellow-500 bg-yellow-50 shadow-sm' 
+                            : 'border-gray-100 bg-white hover:border-gray-200'}
+                        `}
+                      >
+                        <p className={`text-xs font-black uppercase tracking-wider ${settings.nanoBananaModel === m.id ? 'text-yellow-700' : 'text-gray-400'}`}>
+                          {m.label}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{m.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+              <Field label="Voorkeurs Tekst Provider">
+                <div className="flex gap-4">
+                  {['openai', 'groq', 'google'].map(p => (
+                    <label key={p} className="flex-1 cursor-pointer group">
+                      <input 
+                        type="radio" 
+                        name="provider" 
+                        className="hidden" 
+                        checked={settings.preferredProvider === p}
+                        onChange={() => setSettings(s => ({ ...s, preferredProvider: p }))}
+                      />
+                      <div className={`
+                        p-4 rounded-xl border-2 text-center transition-all
+                        ${settings.preferredProvider === p 
+                          ? 'border-blue-500 bg-blue-50 text-blue-600 shadow-sm' 
+                          : 'border-gray-100 bg-gray-50 text-gray-400 group-hover:border-gray-200'}
+                      `}>
+                        <span className="text-sm font-black uppercase tracking-widest">{p}</span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </Field>
+
+              <Field label="Voorkeurs Image Provider">
+                <div className="flex gap-4">
+                  {['openai', 'google'].map(p => (
+                    <label key={p} className="flex-1 cursor-pointer group">
+                      <input 
+                        type="radio" 
+                        name="imageProvider" 
+                        className="hidden" 
+                        checked={settings.preferredImageProvider === p}
+                        onChange={() => setSettings(s => ({ ...s, preferredImageProvider: p }))}
+                      />
+                      <div className={`
+                        p-4 rounded-xl border-2 text-center transition-all
+                        ${settings.preferredImageProvider === p 
+                          ? 'border-violet-500 bg-violet-50 text-violet-600 shadow-sm' 
+                          : 'border-gray-100 bg-gray-50 text-gray-400 group-hover:border-gray-200'}
+                      `}>
+                        <span className="text-sm font-black uppercase tracking-widest">{p}</span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </Field>
+            </div>
           </div>
         </div>
 
