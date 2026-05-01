@@ -532,40 +532,47 @@ Only output the prompt text, nothing else. Start with "Professional product phot
         console.error('Gemini vision analysis failed, using fallback prompt:', visionErr);
       }
 
-      // Stap 2: Genereer de afbeelding via Hugging Face FLUX.1 (via officiële SDK)
-      const hfKey = settings?.huggingfaceApiKey;
-      if (!hfKey) return res.status(500).json({ error: 'Hugging Face API Key is niet geconfigureerd. Maak gratis een account aan op huggingface.co en voeg je token toe in AI Instellingen.' });
+      // Stap 2: Segmind SDXL img2img — originele foto als base64 input
+      const segmindKey = settings?.segmindApiKey;
+      if (!segmindKey) return res.status(500).json({ error: 'Segmind API Key is niet geconfigureerd. Maak gratis een account aan op segmind.com en voeg je key toe in AI Instellingen.' });
 
-      // Stap 2b: Echte img2img via HF — originele foto als input
-      console.log('[NanoBanana] Requesting img2img via HF InferenceClient...');
+      console.log('[NanoBanana] Requesting Segmind SDXL img2img...');
       try {
-        const hfClient = new InferenceClient(hfKey);
-
-        // Maak een Blob van de originele afbeelding om mee te sturen
-        const originalBlob = new Blob([new Uint8Array(imageBuffer)], { type: mimeType });
-
-        const imageBlob = await hfClient.imageToImage({
-          model: 'black-forest-labs/FLUX.2-klein-base-9B',
-          inputs: originalBlob,
-          parameters: {
+        const segmindResponse = await fetch('https://api.segmind.com/v1/sdxl-img2img', {
+          method: 'POST',
+          headers: {
+            'x-api-key': segmindKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            image: `data:${mimeType};base64,${imageBuffer.toString('base64')}`,
             prompt: imageGenPrompt,
-            num_inference_steps: 28,
-            guidance_scale: 3.5,
-          } as any,
-          provider: 'fal-ai',
-        } as any) as unknown as Blob;
+            negative_prompt: 'blurry, low quality, distorted, watermark, text, ugly',
+            samples: 1,
+            num_inference_steps: 30,
+            guidance_scale: 6.5,
+            strength: 0.65,
+            base64: true,
+          })
+        });
 
-        const hfBuffer = Buffer.from(await imageBlob.arrayBuffer());
-        if (hfBuffer.length < 1000) {
-          return res.status(500).json({ error: 'Nano Banana retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
+        if (!segmindResponse.ok) {
+          const errText = await segmindResponse.text();
+          console.error('Segmind error:', segmindResponse.status, errText.slice(0, 200));
+          if (segmindResponse.status === 401) return res.status(500).json({ error: 'Segmind API key is ongeldig. Controleer je key in AI Instellingen.' });
+          if (segmindResponse.status === 402) return res.status(500).json({ error: 'Segmind credits op. Maak gratis een nieuw account aan op segmind.com.' });
+          throw new Error(`Segmind fout (${segmindResponse.status})`);
         }
-        b64 = hfBuffer.toString('base64');
-      } catch (hfErr: any) {
-        console.error('HuggingFace img2img error:', hfErr?.message);
-        if (hfErr?.message?.includes('401') || hfErr?.message?.includes('Unauthorized')) {
-          return res.status(500).json({ error: 'Hugging Face token is ongeldig. Controleer je token in AI Instellingen.' });
+
+        const segmindData = await segmindResponse.arrayBuffer();
+        const segmindBuffer = Buffer.from(segmindData);
+        if (segmindBuffer.length < 1000) {
+          return res.status(500).json({ error: 'Segmind retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
         }
-        return res.status(500).json({ error: `Nano Banana image generation mislukt: ${hfErr?.message || 'onbekende fout'}` });
+        b64 = segmindBuffer.toString('base64');
+      } catch (segErr: any) {
+        console.error('Segmind img2img error:', segErr?.message);
+        return res.status(500).json({ error: `Nano Banana (Segmind) mislukt: ${segErr?.message || 'onbekende fout'}` });
       }
 
     } else if (provider === 'replicate') {

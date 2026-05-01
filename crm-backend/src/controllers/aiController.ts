@@ -13,6 +13,7 @@ interface AISettings {
   groqApiKey?: string;
   googleApiKey?: string;
   huggingfaceApiKey?: string;
+  segmindApiKey?: string;
   replicateApiKey?: string;
   stabilityAiKey?: string;
   chatgptAccessToken?: string;

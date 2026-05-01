@@ -170,14 +170,14 @@ export default function AISettings() {
                 <span className="text-lg">🍌</span> Nano Banana (Google Gemini AI)
               </h4>
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
-                <p className="text-xs text-blue-700 font-bold mb-1">💡 Tip: Gemini is GRATIS!</p>
+                <p className="text-xs text-blue-700 font-bold mb-1">💡 Twee gratis keys nodig</p>
                 <p className="text-[10px] text-blue-600 leading-relaxed">
-                  Je kunt gratis een API-key aanmaken via <a href="https://aistudio.google.com/" target="_blank" className="underline font-black">Google AI Studio</a>. 
-                  Kies voor de "Free of charge" tier. Gemini analyzeert je afbeeldingen en <strong>FLUX.1 via Hugging Face</strong> genereert de verbeterde versie. Beide gratis! Haal je HF token op via <a href="https://huggingface.co/settings/tokens" target="_blank" className="underline font-black">huggingface.co/settings/tokens</a>.
+                  <strong>1.</strong> Gemini analyseert je foto (gratis via <a href="https://aistudio.google.com/" target="_blank" className="underline font-black">Google AI Studio</a>).<br/>
+                  <strong>2.</strong> Segmind genereert de verbeterde versie (gratis credits via <a href="https://www.segmind.com/" target="_blank" className="underline font-black">segmind.com</a> → Sign up → API Keys).
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Gemini / Nano Banana API Key" hint="Voor afbeeldingsanalyse — gratis via aistudio.google.com">
+                <Field label="Gemini API Key" hint="Voor afbeeldingsanalyse — gratis via aistudio.google.com">
                   <input 
                     type="password" 
                     value={settings.googleApiKey || ''} 
@@ -186,12 +186,12 @@ export default function AISettings() {
                     className={inputCls}
                   />
                 </Field>
-                <Field label="Hugging Face Token" hint="Voor FLUX.1 image generatie — gratis via huggingface.co/settings/tokens">
+                <Field label="Segmind API Key" hint="Voor img2img generatie — gratis credits via segmind.com">
                   <input 
                     type="password" 
-                    value={settings.huggingfaceApiKey || ''} 
-                    onChange={e => setSettings(s => ({ ...s, huggingfaceApiKey: e.target.value }))}
-                    placeholder="hf_..."
+                    value={settings.segmindApiKey || ''} 
+                    onChange={e => setSettings(s => ({ ...s, segmindApiKey: e.target.value }))}
+                    placeholder="SG_..."
                     className={inputCls}
                   />
                 </Field>
