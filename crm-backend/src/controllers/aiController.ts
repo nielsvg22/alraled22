@@ -89,10 +89,12 @@ const getClient = async (): Promise<AIClient> => {
 
 export const callBridge = async (accessToken: string, prompt: string) => {
   try {
+    const cleanToken = accessToken.replace(/\s+/g, '');
+    console.log(`[Bridge] Token length: ${cleanToken.length}, starts: ${cleanToken.slice(0, 10)}...`);
     const response = await fetch('https://chatgpt.com/backend-api/conversation', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken.trim()}`,
+        'Authorization': `Bearer ${cleanToken}`,
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'Accept': 'text/event-stream',
