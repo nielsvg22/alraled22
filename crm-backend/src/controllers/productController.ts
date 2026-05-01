@@ -504,62 +504,61 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
     }
 
     if (provider === 'google') {
+      // Google Gemini kan geen afbeeldingen genereren via de API
+      // Fallback naar Pollinations (gratis) voor image generation
+      console.log('Google provider selected but Gemini has no image generation API. Falling back to Pollinations...');
+      
+      let contextualPrompt = enhancedPrompt;
       const googleKey = settings?.googleApiKey;
-      if (!googleKey) return res.status(500).json({ error: 'Google / Nano Banana API Key is niet geconfigureerd in het CRM' });
+      
+      if (googleKey) {
+        try {
+          const genAI = new GoogleGenerativeAI(googleKey);
+          const visionModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+          
+          const analysisResult = await visionModel.generateContent([
+            "Analyze this image. Give me a 30-word prompt for an AI generator that would RECREATE THIS EXACT IMAGE but with these changes: " + prompt + ". Start with 'A photo of...'",
+            {
+              inlineData: {
+                data: imageBuffer.toString('base64'),
+                mimeType
+              }
+            },
+          ]);
+          
+          const description = analysisResult.response.text().trim();
+          contextualPrompt = `${description} --ar 1:1 --v 6.0`;
+        } catch (visionErr) {
+          console.error('Vision analysis failed:', visionErr);
+        }
+      }
 
-      const genAI = new GoogleGenerativeAI(googleKey);
+      const seed = Math.floor(Math.random() * 1000000);
+      const encodedPrompt = encodeURIComponent(contextualPrompt);
+      const pollinationUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
       
-      // Use Gemini 2.0 Flash with image generation capability
-      // This model supports native image generation and editing
-      const modelId = 'gemini-2.0-flash-exp-image-generation';
-      
-      const model = genAI.getGenerativeModel({ 
-        model: modelId,
-        generationConfig: {
-          responseModalities: ['TEXT', 'IMAGE']
-        } as any
+      let response = await fetch(pollinationUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
       });
 
-      try {
-        // Generate a new image based on the uploaded image + prompt
-        const result = await model.generateContent([
-          enhancedPrompt,
-          {
-            inlineData: {
-              data: imageBuffer.toString('base64'),
-              mimeType
-            }
-          },
-        ]);
-        
-        // Extract generated image from response
-        const response = result.response as any;
-        const candidates = response.candidates;
-        
-        if (candidates && candidates.length > 0 && candidates[0].content?.parts) {
-          const parts = candidates[0].content.parts;
-          
-          // Look for image parts in the response
-          for (const part of parts) {
-            if (part.inlineData?.data) {
-              // Found generated image
-              b64 = part.inlineData.data;
-              break;
-            }
-          }
-          
-          if (!b64) {
-            return res.status(500).json({ error: 'Geen afbeelding gegenereerd door Gemini. Probeer een andere provider.' });
-          }
-        } else {
-          return res.status(500).json({ error: 'Geen response van Gemini image generation.' });
-        }
-      } catch (geminiError: any) {
-        console.error('Gemini image generation failed:', geminiError);
-        return res.status(500).json({ 
-          error: `Gemini image generation mislukt: ${geminiError.message}. Probeer Nano Banana of een andere provider.` 
-        });
+      if (!response.ok) {
+        console.warn('Primary Pollinations request failed, retrying with simple prompt...');
+        const simplePrompt = encodeURIComponent(enhancedPrompt);
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${simplePrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
+        response = await fetch(fallbackUrl);
       }
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error('Pollinations Error:', response.status, errorBody);
+        return res.status(500).json({ error: `Gratis AI is momenteel druk. Probeer het over een moment opnieuw.` });
+      }
+      
+      const buffer = Buffer.from(await response.arrayBuffer());
+      if (buffer.length < 1000) { 
+        return res.status(500).json({ error: 'Gratis AI retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
+      }
+      b64 = buffer.toString('base64');
 
     } else if (provider === 'pollinations') {
       // Pollinations.ai (FREE) - We improve the prompt by analyzing the original image first

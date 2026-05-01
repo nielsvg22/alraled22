@@ -173,7 +173,7 @@ export default function AISettings() {
                 <p className="text-xs text-blue-700 font-bold mb-1">💡 Tip: Gemini is GRATIS!</p>
                 <p className="text-[10px] text-blue-600 leading-relaxed">
                   Je kunt gratis een API-key aanmaken via <a href="https://aistudio.google.com/" target="_blank" className="underline font-black">Google AI Studio</a>. 
-                  Kies voor de "Free of charge" tier. Hiermee kan de AI je afbeeldingen analyseren om ze beter aan te passen!
+                  Kies voor de "Free of charge" tier. Gemini analyzeert je afbeeldingen en Pollinations genereert de verbeterde versie (beide gratis!).
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
