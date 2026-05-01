@@ -43,6 +43,7 @@ export default function Products() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const { isAdmin } = useAuth();
 
   const fetchProducts = async () => {
