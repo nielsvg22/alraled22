@@ -536,21 +536,33 @@ Only output the prompt text, nothing else. Start with "Professional product phot
       const hfKey = settings?.huggingfaceApiKey;
       if (!hfKey) return res.status(500).json({ error: 'Hugging Face API Key is niet geconfigureerd. Maak gratis een account aan op huggingface.co en voeg je token toe in AI Instellingen.' });
 
-      console.log('[NanoBanana] Requesting FLUX.1-schnell via HF InferenceClient...');
+      // Stap 2b: Echte img2img via HF — originele foto als input
+      console.log('[NanoBanana] Requesting img2img via HF InferenceClient...');
       try {
         const hfClient = new InferenceClient(hfKey);
-        const imageBlob = await hfClient.textToImage({
-          model: 'black-forest-labs/FLUX.1-schnell',
-          inputs: imageGenPrompt,
-          parameters: { width: 1024, height: 1024, num_inference_steps: 4 } as any,
+
+        // Maak een Blob van de originele afbeelding om mee te sturen
+        const originalBlob = new Blob([new Uint8Array(imageBuffer)], { type: mimeType });
+
+        const imageBlob = await hfClient.imageToImage({
+          model: 'timbrooks/instruct-pix2pix',
+          inputs: originalBlob,
+          parameters: {
+            prompt: imageGenPrompt,
+            negative_prompt: 'blurry, low quality, distorted, ugly, watermark',
+            num_inference_steps: 20,
+            image_guidance_scale: 1.5,
+            guidance_scale: 7,
+          } as any,
         }) as unknown as Blob;
+
         const hfBuffer = Buffer.from(await imageBlob.arrayBuffer());
         if (hfBuffer.length < 1000) {
           return res.status(500).json({ error: 'Nano Banana retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
         }
         b64 = hfBuffer.toString('base64');
       } catch (hfErr: any) {
-        console.error('HuggingFace FLUX.1 error:', hfErr?.message);
+        console.error('HuggingFace img2img error:', hfErr?.message);
         if (hfErr?.message?.includes('401') || hfErr?.message?.includes('Unauthorized')) {
           return res.status(500).json({ error: 'Hugging Face token is ongeldig. Controleer je token in AI Instellingen.' });
         }
