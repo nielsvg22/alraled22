@@ -543,7 +543,7 @@ Only output the prompt text, nothing else. Start with "Professional product phot
           model: 'black-forest-labs/FLUX.1-schnell',
           inputs: imageGenPrompt,
           parameters: { width: 1024, height: 1024, num_inference_steps: 4 } as any,
-        });
+        }) as unknown as Blob;
         const hfBuffer = Buffer.from(await imageBlob.arrayBuffer());
         if (hfBuffer.length < 1000) {
           return res.status(500).json({ error: 'Nano Banana retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
