@@ -7,12 +7,28 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 
-const getAISettings = async () => {
+interface AISettings {
+  openaiApiKey?: string;
+  groqApiKey?: string;
+  googleApiKey?: string;
+  preferredProvider?: string;
+  preferredImageProvider?: string;
+  nanoBananaModel?: string;
+}
+
+const getAISettings = async (): Promise<AISettings> => {
   const settings = await getContent('ai_settings');
-  return settings || {};
+  return (settings || {}) as AISettings;
 };
 
-const getClient = async () => {
+interface AIClient {
+  openai: OpenAI;
+  model: string;
+  isGoogle?: boolean;
+  googleModel?: any;
+}
+
+const getClient = async (): Promise<AIClient> => {
   const settings = await getAISettings();
   const provider = settings.preferredProvider || 'groq';
 
@@ -347,7 +363,7 @@ export const generateNewBlock = async (req: Request, res: Response) => {
     const schema = BLOCK_SCHEMAS[blockType];
     if (!schema) return res.status(400).json({ error: `Onbekend bloktype: ${blockType}` });
 
-    const openai = getClient();
+    const client = await getClient();
     const prompt = [
       `Je genereert website-content in JSON voor ALRA LED Solutions, een B2B LED-verlichtingsbedrijf.`,
       `Bloktype: ${schema.label}`,
@@ -356,14 +372,20 @@ export const generateNewBlock = async (req: Request, res: Response) => {
       `Verplicht formaat (vul alle velden in passend bij de opdracht): ${JSON.stringify(schema.example)}`,
     ].join('\n');
 
-    const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 700,
-      temperature: 0.7,
-    });
+    let raw = '';
+    if (client.isGoogle) {
+      const result = await client.googleModel.generateContent(prompt);
+      raw = result.response.text().trim();
+    } else {
+      const completion = await client.openai.chat.completions.create({
+        model: client.model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 700,
+        temperature: 0.7,
+      });
+      raw = completion.choices[0]?.message?.content?.trim() ?? '';
+    }
 
-    const raw = completion.choices[0]?.message?.content?.trim() ?? '';
     const cleaned = raw.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
 
     let parsed: unknown;

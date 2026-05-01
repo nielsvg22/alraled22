@@ -433,7 +433,8 @@ export const improveImage = async (req: Request, res: Response) => {
     if (!prompt) return res.status(400).json({ error: 'prompt is required' });
 
     // Try to get API key from DB settings first, then fall back to env
-    const settings = await getContent('ai_settings');
+    const settingsRaw = await getContent('ai_settings');
+    const settings = (settingsRaw || {}) as any;
     const provider = settings?.preferredImageProvider || 'openai';
     
     const uploadsDir = process.env.UPLOADS_DIR

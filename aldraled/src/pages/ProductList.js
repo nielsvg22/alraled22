@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
-import { getMediaUrl } from '../lib/api';
+import { getMediaUrl, API_URL } from '../lib/api';
 
 const CATEGORIES = ['Alle', 'Bedrijfswagens', 'Bouwverlichting', 'Werkplaats', 'Accessoires'];
 
