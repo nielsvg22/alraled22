@@ -468,9 +468,9 @@ export const improveImage = async (req: Request, res: Response) => {
       const genAI = new GoogleGenerativeAI(googleKey);
       
       // Select model based on Nano Banana settings
-      let modelId = 'gemini-1.5-flash';
-      if (settings?.nanoBananaModel === 'pro') modelId = 'gemini-1.5-pro';
-      else if (settings?.nanoBananaModel === 'thinking') modelId = 'gemini-1.5-pro'; // Pro is better for "thinking"
+      let modelId = 'gemini-1.5-flash-latest';
+      if (settings?.nanoBananaModel === 'pro') modelId = 'gemini-1.5-pro-latest';
+      else if (settings?.nanoBananaModel === 'thinking') modelId = 'gemini-1.5-pro-latest'; // Pro is better for "thinking"
       
       const model = genAI.getGenerativeModel({ model: modelId });
 
