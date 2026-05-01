@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { listProducts } from '../db/productsRepo';
 import { getContent } from '../db/contentRepo';
 import nodemailer from 'nodemailer';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 
@@ -21,6 +22,20 @@ const getClient = async () => {
     return {
       openai: new OpenAI({ apiKey: key }),
       model: 'gpt-4o-mini' // Default cheap/fast model for OpenAI
+    };
+  } else if (provider === 'google') {
+    const key = settings.googleApiKey || process.env.GOOGLE_API_KEY;
+    if (!key) throw new Error('Google API Key is niet geconfigureerd');
+    
+    const genAI = new GoogleGenerativeAI(key);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    // We wrapper gemini here to match the OpenAI-like interface used in the routes
+    return {
+      isGoogle: true,
+      googleModel: model,
+      openai: null as any,
+      model: 'gemini-1.5-flash'
     };
   } else {
     const key = settings.groqApiKey || process.env.GROQ_API_KEY;
@@ -41,7 +56,7 @@ export const generateProductDescription = async (req: Request, res: Response) =>
     const { name, category, keywords } = req.body;
     if (!name) return res.status(400).json({ error: 'Product naam is verplicht' });
 
-    const { openai, model } = await getClient();
+    const client = await getClient();
     const prompt = [
       `Schrijf een professionele productomschrijving in het Nederlands voor een B2B LED-verlichtingsbedrijf (ALRA LED Solutions).`,
       `Productnaam: ${name}`,
@@ -54,14 +69,20 @@ export const generateProductDescription = async (req: Request, res: Response) =>
       `- Geen markdown, gewone tekst`,
     ].filter(Boolean).join('\n');
 
-    const completion = await openai.chat.completions.create({
-      model: model,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 200,
-      temperature: 0.7,
-    });
+    let text = '';
+    if ((client as any).isGoogle) {
+      const result = await (client as any).googleModel.generateContent(prompt);
+      text = result.response.text().trim();
+    } else {
+      const completion = await client.openai.chat.completions.create({
+        model: client.model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 200,
+        temperature: 0.7,
+      });
+      text = completion.choices[0]?.message?.content?.trim() ?? '';
+    }
 
-    const text = completion.choices[0]?.message?.content?.trim() ?? '';
     res.json({ result: text });
   } catch (err: any) {
     const msg = err?.message || 'AI generatie mislukt';
@@ -75,7 +96,7 @@ export const generatePageText = async (req: Request, res: Response) => {
     const { section, context, tone, length } = req.body;
     if (!section) return res.status(400).json({ error: 'Sectie is verplicht' });
 
-    const { openai, model } = await getClient();
+    const client = await getClient();
     const wordCount = length === 'kort' ? '20-40' : length === 'lang' ? '80-120' : '40-70';
     const prompt = [
       `Schrijf webtekst in het Nederlands voor ALRA LED Solutions, een B2B LED-verlichtingsspecialist.`,
@@ -86,14 +107,20 @@ export const generatePageText = async (req: Request, res: Response) => {
       `Geen markdown, geen aanhalingstekens, gewone lopende tekst.`,
     ].filter(Boolean).join('\n');
 
-    const completion = await openai.chat.completions.create({
-      model: model,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 300,
-      temperature: 0.75,
-    });
+    let text = '';
+    if ((client as any).isGoogle) {
+      const result = await (client as any).googleModel.generateContent(prompt);
+      text = result.response.text().trim();
+    } else {
+      const completion = await client.openai.chat.completions.create({
+        model: client.model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 300,
+        temperature: 0.75,
+      });
+      text = completion.choices[0]?.message?.content?.trim() ?? '';
+    }
 
-    const text = completion.choices[0]?.message?.content?.trim() ?? '';
     res.json({ result: text });
   } catch (err: any) {
     res.status(500).json({ error: err?.message || 'AI generatie mislukt' });
@@ -108,26 +135,43 @@ export const chat = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Messages array is verplicht' });
     }
 
-    const { openai, model } = await getClient();
-    const completion = await openai.chat.completions.create({
-      model: model,
-      messages: [
-        {
-          role: 'system',
-          content: [
-            'Je bent een behulpzame AI-assistent voor ALRA LED Solutions, een B2B LED-verlichtingsbedrijf.',
-            'Je helpt bij het schrijven van teksten, productomschrijvingen, e-mails en marketingcontent.',
-            'Antwoord altijd in het Nederlands, tenzij de gebruiker een andere taal gebruikt.',
-            'Houd antwoorden beknopt en praktisch bruikbaar.',
-          ].join(' '),
-        },
-        ...messages,
-      ],
-      max_tokens: 1000,
-      temperature: 0.7,
-    });
+    const client = await getClient();
+    let text = '';
 
-    const text = completion.choices[0]?.message?.content?.trim() ?? '';
+    if ((client as any).isGoogle) {
+      const history = messages.slice(0, -1).map((m: any) => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      }));
+      const lastMsg = messages[messages.length - 1].content;
+      
+      const chat = (client as any).googleModel.startChat({
+        history,
+        generationConfig: { maxOutputTokens: 1000 }
+      });
+      const result = await chat.sendMessage(lastMsg);
+      text = result.response.text().trim();
+    } else {
+      const completion = await client.openai.chat.completions.create({
+        model: client.model,
+        messages: [
+          {
+            role: 'system',
+            content: [
+              'Je bent een behulpzame AI-assistent voor ALRA LED Solutions, een B2B LED-verlichtingsbedrijf.',
+              'Je helpt bij het schrijven van teksten, productomschrijvingen, e-mails en marketingcontent.',
+              'Antwoord altijd in het Nederlands, tenzij de gebruiker een andere taal gebruikt.',
+              'Houd antwoorden beknopt en praktisch bruikbaar.',
+            ].join(' '),
+          },
+          ...messages,
+        ],
+        max_tokens: 1000,
+        temperature: 0.7,
+      });
+      text = completion.choices[0]?.message?.content?.trim() ?? '';
+    }
+
     res.json({ result: text });
   } catch (err: any) {
     res.status(500).json({ error: err?.message || 'Chat mislukt' });
