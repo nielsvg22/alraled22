@@ -461,8 +461,8 @@ export const improveImage = async (req: Request, res: Response) => {
     let b64: string | undefined;
 
     if (provider === 'google') {
-      const googleKey = settings?.googleApiKey || process.env.GOOGLE_API_KEY;
-      if (!googleKey) return res.status(500).json({ error: 'Google API Key is niet geconfigureerd' });
+      const googleKey = settings?.googleApiKey;
+      if (!googleKey) return res.status(500).json({ error: 'Google / Nano Banana API Key is niet geconfigureerd in het CRM' });
 
       const genAI = new GoogleGenerativeAI(googleKey);
       
@@ -499,8 +499,8 @@ export const improveImage = async (req: Request, res: Response) => {
 
     } else {
       // Default to OpenAI
-      const apiKey = settings?.openaiApiKey || process.env.OPENAI_API_KEY;
-      if (!apiKey) return res.status(500).json({ error: 'OpenAI API Key is niet geconfigureerd' });
+      const apiKey = settings?.openaiApiKey;
+      if (!apiKey) return res.status(500).json({ error: 'OpenAI API Key is niet geconfigureerd in het CRM' });
 
       const openai = new OpenAI({ apiKey });
       const imgFile = await toFile(imageBuffer, 'image.png', { type: mimeType as any });

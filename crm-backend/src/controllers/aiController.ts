@@ -17,20 +17,19 @@ const getClient = async () => {
   const provider = settings.preferredProvider || 'groq';
 
   if (provider === 'openai') {
-    const key = settings.openaiApiKey || process.env.OPENAI_API_KEY;
-    if (!key) throw new Error('OpenAI API Key is niet geconfigureerd');
+    const key = settings.openaiApiKey;
+    if (!key) throw new Error('OpenAI API Key is niet geconfigureerd in het CRM');
     return {
       openai: new OpenAI({ apiKey: key }),
-      model: 'gpt-4o-mini' // Default cheap/fast model for OpenAI
+      model: 'gpt-4o-mini'
     };
   } else if (provider === 'google') {
-    const key = settings.googleApiKey || process.env.GOOGLE_API_KEY;
-    if (!key) throw new Error('Google API Key is niet geconfigureerd');
+    const key = settings.googleApiKey;
+    if (!key) throw new Error('Google / Nano Banana API Key is niet geconfigureerd in het CRM');
     
     const genAI = new GoogleGenerativeAI(key);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    // We wrapper gemini here to match the OpenAI-like interface used in the routes
     return {
       isGoogle: true,
       googleModel: model,
@@ -38,8 +37,8 @@ const getClient = async () => {
       model: 'gemini-1.5-flash'
     };
   } else {
-    const key = settings.groqApiKey || process.env.GROQ_API_KEY;
-    if (!key) throw new Error('Groq API Key is niet geconfigureerd');
+    const key = settings.groqApiKey;
+    if (!key) throw new Error('Groq API Key is niet geconfigureerd in het CRM');
     return {
       openai: new OpenAI({
         baseURL: 'https://api.groq.com/openai/v1',
@@ -199,28 +198,46 @@ export const storefrontChat = async (req: Request, res: Response) => {
       }
     } catch { /* voorraad ophalen mislukt, ga verder zonder */ }
 
-    const openai = getClient();
-    const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: [
-            'Je bent een vriendelijke verkoopassistent voor ALRA LED Solutions, specialist in professionele LED-verlichting voor bedrijfswagens, bouwplaatsen en werkplaatsen.',
-            'Je helpt bezoekers met productvragen, technische specs, levertijden en offertes.',
-            'Houd antwoorden kort (max 3 zinnen), professioneel en in het Nederlands.',
-            'Als je het antwoord niet weet, verwijs je vriendelijk naar contact@alraled.nl of tel. voor een offerte.',
-            'Nooit prijzen noemen tenzij de klant er specifiek naar vraagt.',
-            'Je hebt toegang tot de actuele productcatalogus inclusief voorraadstatus. Gebruik deze informatie om voorraadvragen correct te beantwoorden.',
-            stockContext,
-          ].filter(Boolean).join(' '),
-        },
-        ...messages.slice(-8),
-      ],
-      max_tokens: 300,
-      temperature: 0.6,
-    });
-    const reply = completion.choices[0]?.message?.content?.trim() ?? '';
+    const client = await getClient();
+    let reply = '';
+
+    const systemPrompt = [
+      'Je bent een vriendelijke verkoopassistent voor ALRA LED Solutions, specialist in professionele LED-verlichting voor bedrijfswagens, bouwplaatsen en werkplaatsen.',
+      'Je helpt bezoekers met productvragen, technische specs, levertijden en offertes.',
+      'Houd antwoorden kort (max 3 zinnen), professioneel en in het Nederlands.',
+      'Als je het antwoord niet weet, verwijs je vriendelijk naar contact@alraled.nl of tel. voor een offerte.',
+      'Nooit prijzen noemen tenzij de klant er specifiek naar vraagt.',
+      'Je hebt toegang tot de actuele productcatalogus inclusief voorraadstatus. Gebruik deze informatie om voorraadvragen correct te beantwoorden.',
+      stockContext,
+    ].filter(Boolean).join(' ');
+
+    if ((client as any).isGoogle) {
+      const history = messages.slice(0, -1).map((m: any) => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      }));
+      const lastMsg = messages[messages.length - 1].content;
+      
+      const chat = (client as any).googleModel.startChat({
+        history,
+        generationConfig: { maxOutputTokens: 500 },
+        systemInstruction: systemPrompt
+      });
+      const result = await chat.sendMessage(lastMsg);
+      reply = result.response.text().trim();
+    } else {
+      const completion = await client.openai.chat.completions.create({
+        model: client.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages.slice(-8),
+        ],
+        max_tokens: 300,
+        temperature: 0.6,
+      });
+      reply = completion.choices[0]?.message?.content?.trim() ?? '';
+    }
+
     res.json({ result: reply });
   } catch (err: any) {
     res.status(500).json({ error: err?.message || 'AI tijdelijk niet beschikbaar' });
@@ -275,7 +292,7 @@ export const generateWebsiteBlock = async (req: Request, res: Response) => {
     const schema = SECTION_SCHEMAS[sectionKey];
     if (!schema) return res.status(400).json({ error: `Onbekende sectie: ${sectionKey}` });
 
-    const openai = getClient();
+    const client = await getClient();
     const prompt = [
       `Je genereert website-content in JSON voor ALRA LED Solutions, een B2B LED-verlichtingsbedrijf.`,
       `Sectie: ${schema.label}`,
@@ -285,14 +302,20 @@ export const generateWebsiteBlock = async (req: Request, res: Response) => {
       `Voorbeeld formaat: ${schema.example}`,
     ].join('\n');
 
-    const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 600,
-      temperature: 0.7,
-    });
+    let raw = '';
+    if ((client as any).isGoogle) {
+      const result = await (client as any).googleModel.generateContent(prompt);
+      raw = result.response.text().trim();
+    } else {
+      const completion = await client.openai.chat.completions.create({
+        model: client.model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 600,
+        temperature: 0.7,
+      });
+      raw = completion.choices[0]?.message?.content?.trim() ?? '';
+    }
 
-    const raw = completion.choices[0]?.message?.content?.trim() ?? '';
     const cleaned = raw.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
 
     let parsed: unknown;
