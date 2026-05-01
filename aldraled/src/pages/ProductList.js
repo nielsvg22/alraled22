@@ -2,13 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
+import { getMediaUrl } from '../lib/api';
 
-const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
 const CATEGORIES = ['Alle', 'Bedrijfswagens', 'Bouwverlichting', 'Werkplaats', 'Accessoires'];
 
 const getImageSrc = (url) => {
-  if (!url) return 'https://via.placeholder.com/400';
-  return url.startsWith('/uploads') ? `${API_URL}${url}` : url;
+  return getMediaUrl(url) || 'https://via.placeholder.com/400';
 };
 
 /* ── QUICK-VIEW MODAL ─────────────────────────── */

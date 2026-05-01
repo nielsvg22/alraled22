@@ -13,6 +13,7 @@ import {
   addProductRelation,
   deleteProductRelation,
   importProducts,
+  improveImage,
 } from '../controllers/productController';
 import { adminMiddleware, authMiddleware } from '../middleware/authMiddleware';
 
@@ -35,5 +36,6 @@ router.post('/:id/relations', authMiddleware, adminMiddleware, addProductRelatio
 router.delete('/:id/relations/:relationId', authMiddleware, adminMiddleware, deleteProductRelation);
 router.delete('/:id', authMiddleware, adminMiddleware, deleteProduct);
 router.post('/import', authMiddleware, adminMiddleware, upload.single('file'), importProducts);
+router.post('/improve-image', authMiddleware, adminMiddleware, improveImage);
 
 export default router;

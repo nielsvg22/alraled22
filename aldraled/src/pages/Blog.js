@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import { getMediaUrl, API_URL } from '../lib/api';
 
 function readTime(text = '') {
   return Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 200));
@@ -22,7 +21,7 @@ function GridPost({ block, index }) {
       {/* Image */}
       {image ? (
         <div className="relative h-48 overflow-hidden shrink-0 bg-gray-100">
-          <img src={image} alt={title}
+          <img src={getMediaUrl(image)} alt={title}
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-600" />
           <div className="absolute bottom-0 left-0 h-0.5 w-0 group-hover:w-full transition-all duration-500"
             style={{ background: 'rgb(var(--color-primary))' }} />

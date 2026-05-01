@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { getMediaUrl } from '../lib/api';
 
 /* ─────────────────────────────────────────────────────────
    Shared high-end block renderer — used by Home, About,
@@ -108,7 +109,7 @@ function ImageTextBlock({ data }) {
         {data.imageUrl && (
           <div className="flex-1 w-full">
             <div className="relative rounded-3xl overflow-hidden shadow-2xl group">
-              <img src={data.imageUrl} alt={data.heading}
+              <img src={getMediaUrl(data.imageUrl)} alt={data.heading}
                 className="w-full h-72 md:h-96 object-cover group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>
@@ -209,7 +210,7 @@ function BlogPostBlock({ data }) {
     <article className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
       {data.imageUrl && (
         <div className="relative h-52 overflow-hidden">
-          <img src={data.imageUrl} alt={data.title}
+          <img src={getMediaUrl(data.imageUrl)} alt={data.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         </div>
@@ -313,7 +314,7 @@ function LayoutBuilderBlock({ data }) {
                         }}
                       >
                         <img
-                          src={e.url}
+                          src={getMediaUrl(e.url)}
                           alt={e.alt || ''}
                           className="w-full h-full"
                           style={{ objectFit: e.fit === 'contain' ? 'contain' : 'cover' }}

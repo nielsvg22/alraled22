@@ -5,8 +5,8 @@ import { useCart } from '../lib/CartContext';
 import { useTheme } from '../lib/ThemeContext';
 import axios from 'axios';
 import { useTranslation, Trans } from 'react-i18next';
+import { getMediaUrl, API_URL } from '../lib/api';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const DEFAULT_GENERAL = {
   tagline: '',
   footerPhone: '085-0021 606',
@@ -49,8 +49,7 @@ function LiveSearch() {
   }, []);
 
   const getImg = (url) => {
-    if (!url) return null;
-    return url.startsWith('/uploads') ? `${API_URL}${url}` : url;
+    return getMediaUrl(url);
   };
 
   return (

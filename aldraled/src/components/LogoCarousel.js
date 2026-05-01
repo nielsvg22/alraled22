@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import { getMediaUrl } from '../lib/api';
 
 export default function LogoCarousel() {
   const [logos, setLogos] = useState([]);
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/content/logos`)
+    // API_URL should be imported from lib/api or kept local if needed, 
+    // but getMediaUrl uses the centralized one.
+    const url = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
+    axios.get(`${url}/api/content/logos`)
       .then(r => setLogos(Array.isArray(r.data) ? r.data : []))
       .catch(() => setLogos([]));
   }, []);
@@ -25,7 +27,7 @@ export default function LogoCarousel() {
             <div key={i} className="flex items-center justify-center h-16 px-6">
               {logo.imageUrl ? (
                 <img
-                  src={logo.imageUrl}
+                  src={getMediaUrl(logo.imageUrl)}
                   alt={logo.name || 'Partner'}
                   className="max-h-14 max-w-[160px] object-contain"
                   style={{ filter: 'brightness(0) saturate(100%)' }}

@@ -8,6 +8,7 @@ import mammoth from 'mammoth';
 import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'node:crypto';
+import OpenAI, { toFile } from 'openai';
 
 const productSchema = z.object({
   name: z.string().trim().min(1),
@@ -420,5 +421,59 @@ export const setProductPriceTiers = async (req: Request, res: Response) => {
   } catch (error: any) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.issues });
     res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const improveImage = async (req: Request, res: Response) => {
+  try {
+    const { imageUrl, prompt } = req.body;
+    if (!imageUrl) return res.status(400).json({ error: 'imageUrl is required' });
+    if (!prompt) return res.status(400).json({ error: 'prompt is required' });
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'OPENAI_API_KEY is not configured' });
+
+    const uploadsDir = process.env.UPLOADS_DIR
+      ? path.resolve(process.env.UPLOADS_DIR)
+      : path.join(process.cwd(), 'uploads');
+
+    // Read the source image
+    let imageBuffer: Buffer;
+    if (imageUrl.startsWith('/uploads/')) {
+      const localPath = path.join(uploadsDir, path.basename(imageUrl));
+      if (!fs.existsSync(localPath)) return res.status(404).json({ error: 'Image file not found' });
+      imageBuffer = fs.readFileSync(localPath);
+    } else {
+      const response = await fetch(imageUrl);
+      if (!response.ok) return res.status(400).json({ error: 'Could not download image' });
+      imageBuffer = Buffer.from(await response.arrayBuffer());
+    }
+
+    const openai = new OpenAI({ apiKey });
+
+    const imgFile = await toFile(imageBuffer, 'image.png', { type: 'image/png' });
+
+    const result = await openai.images.edit({
+      model: 'gpt-image-1',
+      image: imgFile,
+      prompt,
+      size: '1024x1024',
+    });
+
+    const b64 = result.data?.[0]?.b64_json;
+    if (!b64) return res.status(500).json({ error: 'No image returned from AI' });
+
+    // Save the new image
+    const newFilename = `${randomUUID()}.png`;
+    const newPath = path.join(uploadsDir, newFilename);
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    fs.writeFileSync(newPath, Buffer.from(b64, 'base64'));
+
+    const newUrl = `/uploads/${newFilename}`;
+    res.json({ url: newUrl });
+  } catch (error: any) {
+    console.error('Improve image error:', error);
+    const msg = error?.message || 'Afbeelding verbeteren mislukt';
+    res.status(500).json({ error: msg });
   }
 };

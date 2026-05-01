@@ -30,6 +30,16 @@ const api = axios.create({
   baseURL: API_BASE,
 });
 
+export const getMediaUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http') || url.startsWith('//') || url.startsWith('data:')) {
+    return url;
+  }
+  // Ensure we use the API_URL (not API_BASE) as the root for /uploads
+  const root = API_URL.replace(/\/api$/, '');
+  return `${root}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {

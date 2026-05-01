@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import api from '../lib/api';
-import { Plus, Edit, Trash2, Search, Upload, X, Copy, Sparkles, Loader2, Package, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
+import api, { getMediaUrl } from '../lib/api';
+import { Plus, Edit, Trash2, Search, Upload, X, Copy, Sparkles, Loader2, Package, TrendingUp, AlertTriangle, CheckCircle, Wand2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { errorText } from '../lib/errorText';
 
@@ -45,6 +45,8 @@ export default function Products() {
   const importRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
+  const [aiImgPrompt, setAiImgPrompt] = useState('');
+  const [aiImgLoading, setAiImgLoading] = useState(false);
   const { isAdmin } = useAuth();
 
   const fetchProducts = async () => {
@@ -72,7 +74,7 @@ export default function Products() {
   const openModal = async (product = null) => {
     setEditing(product);
     setFormData(product ? { name: product.name, description: product.description||'', price: String(product.price), stock: String(product.stock), category: product.category||'', imageUrl: product.imageUrl||'' } : emptyForm);
-    setImgPreview(product?.imageUrl || null);
+    setImgPreview(product?.imageUrl ? getMediaUrl(product.imageUrl) : null);
     setError('');
     setModalOpen(true);
     
@@ -157,6 +159,22 @@ export default function Products() {
     } finally {
       setImporting(false);
       if (importRef.current) importRef.current.value = '';
+    }
+  };
+
+  const handleAiImage = async () => {
+    if (!formData.imageUrl || !aiImgPrompt.trim()) return;
+    setAiImgLoading(true);
+    setError('');
+    try {
+      const r = await api.post('/products/improve-image', { imageUrl: formData.imageUrl, prompt: aiImgPrompt.trim() });
+      setFormData(f => ({ ...f, imageUrl: r.data.url }));
+      setImgPreview(getMediaUrl(r.data.url));
+      setAiImgPrompt('');
+    } catch (err) {
+      setError(errorText(err, 'Afbeelding verbeteren mislukt'));
+    } finally {
+      setAiImgLoading(false);
     }
   };
 
@@ -274,7 +292,7 @@ export default function Products() {
               {/* Image */}
               <div className="relative h-44 bg-gray-50 overflow-hidden">
                 {product.imageUrl ? (
-                  <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <img src={getMediaUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-2">
                     <Package size={32} className="text-gray-200" />
@@ -403,6 +421,24 @@ export default function Products() {
                     </div>
                   )}
                   <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => handleImage(e.target.files?.[0])} />
+                  {/* AI Image Improve */}
+                  {formData.imageUrl && (
+                    <div className="mt-3 flex gap-2">
+                      <input
+                        className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        placeholder="Beschrijf hoe de afbeelding verbeterd moet worden…"
+                        value={aiImgPrompt}
+                        onChange={e => setAiImgPrompt(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAiImage(); } }}
+                        disabled={aiImgLoading}
+                      />
+                      <button type="button" onClick={handleAiImage} disabled={aiImgLoading || !aiImgPrompt.trim()}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-white transition-all disabled:opacity-40 active:scale-95 shrink-0"
+                        style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', boxShadow: '0 4px 12px rgba(124,58,237,0.35)' }}>
+                        {aiImgLoading ? <><Loader2 size={13} className="animate-spin" /> Bezig…</> : <><Wand2 size={13} /> Verbeter</>}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Name */}
@@ -463,7 +499,7 @@ export default function Products() {
                         <div key={rel.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 group">
                           <div className="flex items-center gap-3">
                             {rel.relatedProduct.imageUrl && (
-                              <img src={rel.relatedProduct.imageUrl} className="w-8 h-8 rounded-lg object-cover" />
+                              <img src={getMediaUrl(rel.relatedProduct.imageUrl)} className="w-8 h-8 rounded-lg object-cover" />
                             )}
                             <div>
                               <p className="text-xs font-black text-gray-900 line-clamp-1">{rel.relatedProduct.name}</p>
@@ -498,7 +534,7 @@ export default function Products() {
                                 onClick={() => { handleAddRelation(p.id); setRelSearch(''); }}
                                 className="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center gap-3 border-b border-gray-50 last:border-0"
                               >
-                                {p.imageUrl && <img src={p.imageUrl} className="w-6 h-6 rounded-lg object-cover" />}
+                                {p.imageUrl && <img src={getMediaUrl(p.imageUrl)} className="w-6 h-6 rounded-lg object-cover" />}
                                 <div className="flex-1">
                                   <p className="text-xs font-black text-gray-900">{p.name}</p>
                                   <p className="text-[10px] text-gray-400 font-bold">{euro.format(p.price)}</p>

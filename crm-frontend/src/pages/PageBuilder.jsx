@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../lib/api';
+import api, { getMediaUrl } from '../lib/api';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -105,7 +105,7 @@ function ImageUpload({ value, onChange }) {
     <div className="space-y-2">
       {value && (
         <div className="relative w-full h-36 rounded-xl overflow-hidden border border-gray-200 group">
-          <img src={value} alt="" className="w-full h-full object-cover" />
+          <img src={getMediaUrl(value)} alt="" className="w-full h-full object-cover" />
           <button onClick={() => onChange('')}
             className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <X className="w-3 h-3" />

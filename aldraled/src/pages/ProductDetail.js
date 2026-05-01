@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
-
-const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
+import { getMediaUrl, API_URL } from '../lib/api';
 
 const SPECS = [
   { label: "Lichtopbrengst", value: "12.000 Lumen" },
@@ -19,8 +18,7 @@ const TRUST = [
 ];
 
 const getImageSrc = (url) => {
-  if (!url) return 'https://via.placeholder.com/800';
-  return url.startsWith('/uploads') ? `${API_URL}${url}` : url;
+  return getMediaUrl(url) || 'https://via.placeholder.com/800';
 };
 
 const ProductDetail = () => {

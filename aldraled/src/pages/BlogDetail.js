@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import { getMediaUrl, API_URL } from '../lib/api';
 
 function readTime(text = '') {
   return Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 200));
@@ -97,7 +96,7 @@ export default function BlogDetail() {
         {/* Hero image */}
         {image && (
           <div className="rounded-2xl overflow-hidden shadow-lg mb-10">
-            <img src={image} alt={title} className="w-full max-h-[500px] object-cover" />
+            <img src={getMediaUrl(image)} alt={title} className="w-full max-h-[500px] object-cover" />
           </div>
         )}
 
@@ -166,7 +165,7 @@ export default function BlogDetail() {
                     className="group flex flex-col gap-3 rounded-xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300 bg-white">
                     {d.imageUrl && (
                       <div className="h-36 overflow-hidden">
-                        <img src={d.imageUrl} alt={t}
+                        <img src={getMediaUrl(d.imageUrl)} alt={t}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       </div>
                     )}

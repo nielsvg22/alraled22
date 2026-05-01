@@ -34,7 +34,13 @@ router.post('/', authMiddleware, adminMiddleware, upload.single('image'), (req: 
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
-  res.json({ url: `/uploads/${req.file.filename}` });
+  
+  // Return absolute URL so frontend doesn't have to guess the host
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const host = req.get('host');
+  const url = `${protocol}://${host}/uploads/${req.file.filename}`;
+  
+  res.json({ url });
 });
 
 export default router;

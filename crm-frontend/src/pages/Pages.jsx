@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../lib/api';
+import api, { getMediaUrl } from '../lib/api';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -61,10 +61,10 @@ function Section({ title, icon: Icon, children, defaultOpen = true, accent, drag
 }
 
 function ImageField({ value, onChange, height = 36 }) {
-  const [preview, setPreview] = useState(value || null);
+  const [preview, setPreview] = useState(value ? getMediaUrl(value) : null);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef(null);
-  useEffect(() => { setPreview(value || null); }, [value]);
+  useEffect(() => { setPreview(value ? getMediaUrl(value) : null); }, [value]);
 
   const handleFile = async (file) => {
     if (!file) return;
