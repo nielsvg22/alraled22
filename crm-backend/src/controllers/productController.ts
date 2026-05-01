@@ -606,73 +606,71 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
       const hfKey = settings?.huggingfaceApiKey;
       if (!hfKey) return res.status(500).json({ error: 'Hugging Face API Key is niet geconfigureerd in het CRM' });
 
-      // Default model for image-to-image: runwayml/stable-diffusion-v1-5 or stabilityai/stable-diffusion-xl-base-1.0
-      const modelId = 'stabilityai/stable-diffusion-xl-base-1.0';
-      const hfUrl = `https://api-inference.huggingface.co/models/${modelId}`;
-
-      // Convert image to base64
-      const base64Image = imageBuffer.toString('base64');
+      // Try multiple models in order of preference - using working img2img models
+      const models = [
+        'stabilityai/stable-diffusion-2',  // SD 2.0 base model
+        'runwayml/stable-diffusion-v1-5',   // Popular v1.5
+        'prompthero/openjourney',          // Alternative model
+      ];
 
       // Build the prompt - combine user prompt with quality boosters
       const enhancedPrompt = `professional product photo, ${prompt}, high quality, commercial photography, studio lighting, 8k, sharp focus`;
 
-      try {
-        const hfResponse = await fetch(hfUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${hfKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            inputs: {
-              image: base64Image,
-              prompt: enhancedPrompt,
-              strength: 0.75, // How much to change the image (0.0 = original, 1.0 = completely new)
-              num_inference_steps: 50,
-              guidance_scale: 7.5,
-            }
-          })
-        });
-
-        if (!hfResponse.ok) {
-          const errorText = await hfResponse.text();
-          console.error('Hugging Face Error:', hfResponse.status, errorText);
+      let lastError = '';
+      
+      for (const modelId of models) {
+        try {
+          const hfUrl = `https://api-inference.huggingface.co/models/${modelId}`;
           
-          // If model is loading, try fallback to a simpler model
-          if (hfResponse.status === 503) {
-            // Try a lighter model
-            const fallbackUrl = 'https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5';
-            const fallbackResponse = await fetch(fallbackUrl, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${hfKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                inputs: {
-                  image: base64Image,
-                  prompt: enhancedPrompt,
-                  strength: 0.75,
-                }
-              })
-            });
-            
-            if (fallbackResponse.ok) {
-              const resultBuffer = Buffer.from(await fallbackResponse.arrayBuffer());
-              b64 = resultBuffer.toString('base64');
-            } else {
-              throw new Error('Hugging Face model is loading. Probeer over een minuut opnieuw.');
-            }
+          // Hugging Face expects the image as a data URL in the inputs array for img2img
+          // Format: data:image/png;base64,...
+          const dataUrl = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+
+          const hfResponse = await fetch(hfUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${hfKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              inputs: dataUrl,  // For img2img, send the image data URL
+              parameters: {
+                prompt: enhancedPrompt,
+                strength: 0.75,
+                num_inference_steps: 50,
+                guidance_scale: 7.5,
+              }
+            })
+          });
+
+          if (hfResponse.ok) {
+            const resultBuffer = Buffer.from(await hfResponse.arrayBuffer());
+            b64 = resultBuffer.toString('base64');
+            break; // Success, exit the loop
           } else {
-            throw new Error(`Hugging Face API error: ${hfResponse.status}`);
+            const errorText = await hfResponse.text();
+            lastError = `${modelId}: ${hfResponse.status} - ${errorText}`;
+            console.error(`Hugging Face ${modelId} failed:`, hfResponse.status, errorText);
+            
+            // If 503 (model loading), wait a bit and continue to next model
+            if (hfResponse.status === 503) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              continue;
+            }
+            // For 404 or other errors, try next model
+            continue;
           }
-        } else {
-          const resultBuffer = Buffer.from(await hfResponse.arrayBuffer());
-          b64 = resultBuffer.toString('base64');
+        } catch (modelError: any) {
+          lastError = modelError.message;
+          console.error(`Hugging Face ${modelId} error:`, modelError);
+          continue;
         }
-      } catch (hfError: any) {
-        console.error('Hugging Face img2img failed:', hfError);
-        return res.status(500).json({ error: hfError.message || 'Hugging Face image editing mislukt' });
+      }
+
+      if (!b64) {
+        return res.status(500).json({ 
+          error: `Hugging Face: Alle modellen faalden. Laatste fout: ${lastError}. Probeer een gratis Google Gemini key als alternatief.` 
+        });
       }
     } else {
       // Default to OpenAI
