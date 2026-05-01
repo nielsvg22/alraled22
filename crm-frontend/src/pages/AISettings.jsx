@@ -20,6 +20,7 @@ export default function AISettings() {
     groqApiKey: '',
     googleApiKey: '',
     googleProjectId: '',
+    huggingfaceApiKey: '',
     chatgptAccessToken: '',
     preferredProvider: 'groq',
     preferredImageProvider: 'pollinations',
@@ -110,6 +111,32 @@ export default function AISettings() {
                 className={inputCls}
               />
             </Field>
+
+            <div className="pt-4 border-t border-gray-100">
+              <h4 className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                🤗 Hugging Face (GRATIS img2img)
+              </h4>
+              <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-4">
+                <p className="text-xs text-orange-700 font-bold mb-1">🎨 Gratis beeldbewerking!</p>
+                <p className="text-[10px] text-orange-600 leading-relaxed">
+                  Hugging Face biedt 1,000 gratis requests/maand voor Stable Diffusion img2img. 
+                  Hiermee kun je je productfoto's écht bewerken (niet alleen genereren). 
+                  Maak een gratis account aan op <a href="https://huggingface.co/settings/tokens" target="_blank" className="underline font-bold">huggingface.co/settings/tokens</a>
+                </p>
+              </div>
+              <Field 
+                label="Hugging Face API Key" 
+                hint="Voor gratis Stable Diffusion img2img beeldbewerking (1,000 calls/maand gratis)"
+              >
+                <input 
+                  type="password" 
+                  value={settings.huggingfaceApiKey || ''} 
+                  onChange={e => setSettings(s => ({ ...s, huggingfaceApiKey: e.target.value }))}
+                  placeholder="hf_..."
+                  className={inputCls}
+                />
+              </Field>
+            </div>
 
             <div className="pt-4 border-t border-gray-100">
               <h4 className="text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -228,11 +255,13 @@ export default function AISettings() {
               </Field>
 
               <Field label="Voorkeurs Image Provider">
-                <div className="flex gap-4">
+                <div className="flex gap-2 flex-wrap">
                   {[
                     { id: 'openai', label: 'OpenAI' },
                     { id: 'google', label: 'Nano Banana' },
-                    { id: 'bridge', label: 'GPT Plus Bridge' }
+                    { id: 'huggingface', label: '🤗 Hugging Face' },
+                    { id: 'bridge', label: 'GPT Plus' },
+                    { id: 'pollinations', label: 'Pollinations' }
                   ].map(p => (
                     <label key={p.id} className="flex-1 cursor-pointer group">
                       <input 

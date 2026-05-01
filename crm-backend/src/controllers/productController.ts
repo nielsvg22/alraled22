@@ -600,6 +600,80 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
         return res.status(500).json({ error: 'Gratis AI retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
       }
       b64 = buffer.toString('base64');
+    } else if (provider === 'huggingface') {
+      // Hugging Face Inference API (FREE tier: 1,000 requests/month)
+      // Uses Stable Diffusion img2img for proper image-to-image editing
+      const hfKey = settings?.huggingfaceApiKey;
+      if (!hfKey) return res.status(500).json({ error: 'Hugging Face API Key is niet geconfigureerd in het CRM' });
+
+      // Default model for image-to-image: runwayml/stable-diffusion-v1-5 or stabilityai/stable-diffusion-xl-base-1.0
+      const modelId = 'stabilityai/stable-diffusion-xl-base-1.0';
+      const hfUrl = `https://api-inference.huggingface.co/models/${modelId}`;
+
+      // Convert image to base64
+      const base64Image = imageBuffer.toString('base64');
+
+      // Build the prompt - combine user prompt with quality boosters
+      const enhancedPrompt = `professional product photo, ${prompt}, high quality, commercial photography, studio lighting, 8k, sharp focus`;
+
+      try {
+        const hfResponse = await fetch(hfUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${hfKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputs: {
+              image: base64Image,
+              prompt: enhancedPrompt,
+              strength: 0.75, // How much to change the image (0.0 = original, 1.0 = completely new)
+              num_inference_steps: 50,
+              guidance_scale: 7.5,
+            }
+          })
+        });
+
+        if (!hfResponse.ok) {
+          const errorText = await hfResponse.text();
+          console.error('Hugging Face Error:', hfResponse.status, errorText);
+          
+          // If model is loading, try fallback to a simpler model
+          if (hfResponse.status === 503) {
+            // Try a lighter model
+            const fallbackUrl = 'https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5';
+            const fallbackResponse = await fetch(fallbackUrl, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${hfKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                inputs: {
+                  image: base64Image,
+                  prompt: enhancedPrompt,
+                  strength: 0.75,
+                }
+              })
+            });
+            
+            if (fallbackResponse.ok) {
+              const resultBuffer = Buffer.from(await fallbackResponse.arrayBuffer());
+              b64 = resultBuffer.toString('base64');
+            } else {
+              throw new Error('Hugging Face model is loading. Probeer over een minuut opnieuw.');
+            }
+          } else {
+            throw new Error(`Hugging Face API error: ${hfResponse.status}`);
+          }
+        } else {
+          const resultBuffer = Buffer.from(await hfResponse.arrayBuffer());
+          b64 = resultBuffer.toString('base64');
+        }
+      } catch (hfError: any) {
+        console.error('Hugging Face img2img failed:', hfError);
+        return res.status(500).json({ error: hfError.message || 'Hugging Face image editing mislukt' });
+      }
     } else {
       // Default to OpenAI
       const apiKey = settings?.openaiApiKey;
