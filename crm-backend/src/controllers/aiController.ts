@@ -4,6 +4,7 @@ import { listProducts } from '../db/productsRepo';
 import { getContent } from '../db/contentRepo';
 import nodemailer from 'nodemailer';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { randomUUID } from 'node:crypto';
 
 const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 
