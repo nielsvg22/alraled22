@@ -58,9 +58,9 @@ const getClient = async (): Promise<AIClient> => {
     const genAI = new GoogleGenerativeAI(key);
     
     // Select model based on Nano Banana settings
-    let modelId = 'gemini-1.5-flash';
+    let modelId = 'gemini-1.5-flash-002';
     if (settings.nanoBananaModel === 'pro' || settings.nanoBananaModel === 'thinking') {
-      modelId = 'gemini-1.5-pro';
+      modelId = 'gemini-1.5-pro-002';
     }
     
     const model = genAI.getGenerativeModel({ model: modelId });
@@ -126,7 +126,7 @@ export const callBridge = async (accessToken: string, prompt: string) => {
 
     // Loop backwards to find the last valid data object
     for (let i = lines.length - 1; i >= 0; i--) {
-      const line = lines[i].trim();
+      const line = lines[i]!.trim();
       if (!line.startsWith('data: ')) continue;
       if (line.includes('[DONE]')) continue;
 
