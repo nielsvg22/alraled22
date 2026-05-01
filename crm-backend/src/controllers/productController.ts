@@ -462,9 +462,8 @@ export const improveImage = async (req: Request, res: Response) => {
     let b64: string | undefined;
 
     if (provider === 'bridge' && settings.chatgptAccessToken) {
-      // Gebruik de bridge om de prompt te verfijnen (Vision-to-Prompt)
-      // Omdat we geen afbeeldingen kunnen uploaden naar de bridge zonder complexere logica,
-      // gebruiken we Gemini (als beschikbaar) of een slimme tekst-bridge-call om de afbeelding te beschrijven.
+      // Gebruik de ChatGPT Plus Bridge met DALL-E 3 voor image generation
+      // Eerst analyseren we de afbeelding met Gemini (als beschikbaar) voor een betere prompt
       
       let description = "Een professionele productfoto van verlichting.";
       
@@ -484,27 +483,21 @@ export const improveImage = async (req: Request, res: Response) => {
         }
       }
 
-      // Nu de bridge gebruiken om de uiteindelijke prompt te maken
-      const bridgePrompt = `Ik heb een afbeelding met deze beschrijving: "${description}". De gebruiker wil dit aanpassen: "${prompt}". Schrijf een zeer gedetailleerde Engelse prompt voor een image generator (zoals DALL-E 3) om deze afbeelding te verbeteren. Behoud het product maar verbeter de kwaliteit, belichting en setting. Geef alleen de prompt terug.`;
-      
-      // We moeten callBridge importeren of direct aanroepen. 
-      // Aangezien het in aiController zit, is het beter om de logica daar centraal te houden.
-      // Maar voor nu dupliceren we de callBridge aanroep even of we refactoren.
-      // Laten we de Pollinations fallback gebruiken met de bridge-enhanced prompt.
-      
-      const { callBridge } = require('./aiController');
-      const enhancedPrompt = await callBridge(settings.chatgptAccessToken, bridgePrompt);
+      // Vraag ChatGPT Plus (DALL-E 3) om een verbeterde versie van de afbeelding
+      const imagePrompt = `Ik heb een afbeelding met deze beschrijving: "${description}". 
 
-      const finalUrl = `https://pollinations.ai/p/${encodeURIComponent(enhancedPrompt)}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}&model=flux`;
+De gebruiker wil dit aanpassen: "${prompt}".
+
+Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het product maar verbeter de kwaliteit, belichting en setting. Maak een fotorealistische studio-opname.`;
       
-      // Download en sla op
-      const pollRes = await fetch(finalUrl);
-      if (pollRes.ok) {
-        const buffer = Buffer.from(await pollRes.arrayBuffer());
-        const filename = `${randomUUID()}.png`;
-        fs.writeFileSync(path.join(uploadsDir, filename), buffer);
-        return res.json({ url: `/uploads/${filename}` });
-      }
+      const { callBridgeImage } = require('./aiController');
+      const imageBase64 = await callBridgeImage(settings.chatgptAccessToken, imagePrompt);
+
+      // Sla de gegenereerde afbeelding op
+      const buffer = Buffer.from(imageBase64, 'base64');
+      const filename = `${randomUUID()}.png`;
+      fs.writeFileSync(path.join(uploadsDir, filename), buffer);
+      return res.json({ url: `/uploads/${filename}` });
     }
 
     if (provider === 'google') {

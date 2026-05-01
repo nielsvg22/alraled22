@@ -177,9 +177,16 @@ export default function AISettings() {
               <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">
                 🟢 ChatGPT Plus Bridge (Persoonlijk Abonnement)
               </h4>
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-4">
+                <p className="text-xs text-emerald-700 font-bold mb-1">🎨 DALL-E 3 Image Generation</p>
+                <p className="text-[10px] text-emerald-600 leading-relaxed">
+                  Met je ChatGPT Plus abonnement kun je nu ook afbeeldingen verbeteren via DALL-E 3! 
+                  Zorg dat je een actief Plus abonnement hebt. De bridge gebruikt je eigen account voor AI tekst én beelden.
+                </p>
+              </div>
               <Field 
                 label="ChatGPT Access Token" 
-                hint="Hiermee gebruik je jouw eigen Plus abonnement. Haal deze uit de browser session info."
+                hint={<>Haal je Access Token uit je browser op chatgpt.com (DevTools → Application → Cookies → __Secure-next-auth.session-token of uit de Authorization header in netwerkverzoeken). <a href="https://github.com/acheong08/ChatGPT-to-API/blob/main/README.md" target="_blank" className="underline font-bold text-blue-500">Hulp nodig?</a></>}
               >
                 <textarea 
                   value={settings.chatgptAccessToken || ''} 
