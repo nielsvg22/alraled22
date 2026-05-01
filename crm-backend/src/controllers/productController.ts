@@ -600,76 +600,90 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
         return res.status(500).json({ error: 'Gratis AI retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
       }
       b64 = buffer.toString('base64');
-    } else if (provider === 'huggingface') {
-      // Hugging Face Inference API (FREE tier: 1,000 requests/month)
-      // Uses Stable Diffusion img2img for proper image-to-image editing
-      const hfKey = settings?.huggingfaceApiKey;
-      if (!hfKey) return res.status(500).json({ error: 'Hugging Face API Key is niet geconfigureerd in het CRM' });
+    } else if (provider === 'replicate') {
+      // Replicate API - $5 free credits, proper img2img support
+      // Uses models like stability-ai/stable-diffusion-img2img
+      const replicateKey = settings?.replicateApiKey;
+      if (!replicateKey) return res.status(500).json({ error: 'Replicate API Key is niet geconfigureerd in het CRM. Haal een gratis key op bij replicate.com/account/api-tokens' });
 
-      // Try multiple models in order of preference - using working img2img models
-      const models = [
-        'stabilityai/stable-diffusion-2',  // SD 2.0 base model
-        'runwayml/stable-diffusion-v1-5',   // Popular v1.5
-        'prompthero/openjourney',          // Alternative model
-      ];
+      try {
+        // Convert image to base64 data URL
+        const dataUrl = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+        
+        // Enhanced prompt for product photos
+        const enhancedPrompt = `professional product photo, ${prompt}, high quality, commercial photography, studio lighting, sharp focus, detailed`;
 
-      // Build the prompt - combine user prompt with quality boosters
-      const enhancedPrompt = `professional product photo, ${prompt}, high quality, commercial photography, studio lighting, 8k, sharp focus`;
+        // Start the prediction
+        const startResponse = await fetch('https://api.replicate.com/v1/predictions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Token ${replicateKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            version: 'a07a00d27a4f014fbe3fcbe770dc24e8b7bdbe847222a59b421244842f727fd3', // stability-ai/stable-diffusion-img2img
+            input: {
+              image: dataUrl,
+              prompt: enhancedPrompt,
+              strength: 0.75,
+              num_inference_steps: 50,
+              guidance_scale: 7.5,
+            }
+          })
+        });
 
-      let lastError = '';
-      
-      for (const modelId of models) {
-        try {
-          const hfUrl = `https://api-inference.huggingface.co/models/${modelId}`;
+        if (!startResponse.ok) {
+          const errorData = await startResponse.json() as any;
+          throw new Error(`Replicate error: ${errorData.detail || startResponse.status}`);
+        }
+
+        const prediction = await startResponse.json() as any;
+        const predictionId = prediction.id;
+
+        // Poll for result (max 60 seconds)
+        let result: any = null;
+        let attempts = 0;
+        const maxAttempts = 30;
+
+        while (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
           
-          // Hugging Face expects the image as a data URL in the inputs array for img2img
-          // Format: data:image/png;base64,...
-          const dataUrl = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
-
-          const hfResponse = await fetch(hfUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${hfKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              inputs: dataUrl,  // For img2img, send the image data URL
-              parameters: {
-                prompt: enhancedPrompt,
-                strength: 0.75,
-                num_inference_steps: 50,
-                guidance_scale: 7.5,
-              }
-            })
+          const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
+            headers: { 'Authorization': `Token ${replicateKey}` }
           });
 
-          if (hfResponse.ok) {
-            const resultBuffer = Buffer.from(await hfResponse.arrayBuffer());
-            b64 = resultBuffer.toString('base64');
-            break; // Success, exit the loop
-          } else {
-            const errorText = await hfResponse.text();
-            lastError = `${modelId}: ${hfResponse.status} - ${errorText}`;
-            console.error(`Hugging Face ${modelId} failed:`, hfResponse.status, errorText);
-            
-            // If 503 (model loading), wait a bit and continue to next model
-            if (hfResponse.status === 503) {
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              continue;
-            }
-            // For 404 or other errors, try next model
-            continue;
-          }
-        } catch (modelError: any) {
-          lastError = modelError.message;
-          console.error(`Hugging Face ${modelId} error:`, modelError);
-          continue;
-        }
-      }
+          if (!pollResponse.ok) continue;
 
-      if (!b64) {
+          result = await pollResponse.json() as any;
+          
+          if (result.status === 'succeeded') {
+            break;
+          } else if (result.status === 'failed') {
+            throw new Error('Replicate image generation failed');
+          }
+          
+          attempts++;
+        }
+
+        if (!result || result.status !== 'succeeded') {
+          throw new Error('Replicate timeout - image generation took too long');
+        }
+
+        // Download the generated image
+        const imageUrl = result.output[0];
+        const imageResponse = await fetch(imageUrl);
+        
+        if (!imageResponse.ok) {
+          throw new Error('Failed to download generated image');
+        }
+
+        const resultBuffer = Buffer.from(await imageResponse.arrayBuffer());
+        b64 = resultBuffer.toString('base64');
+        
+      } catch (replicateError: any) {
+        console.error('Replicate img2img failed:', replicateError);
         return res.status(500).json({ 
-          error: `Hugging Face: Alle modellen faalden. Laatste fout: ${lastError}. Probeer een gratis Google Gemini key als alternatief.` 
+          error: replicateError.message || 'Replicate image editing mislukt. Controleer je API key of probeer een andere provider.' 
         });
       }
     } else {
