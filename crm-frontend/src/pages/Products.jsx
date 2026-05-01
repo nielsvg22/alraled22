@@ -3,6 +3,7 @@ import api, { getMediaUrl } from '../lib/api';
 import { Plus, Edit, Trash2, Search, Upload, X, Copy, Sparkles, Loader2, Package, TrendingUp, AlertTriangle, CheckCircle, Wand2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { errorText } from '../lib/errorText';
+import ImageUploader from '../components/ImageUploader';
 
 const euro = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
 const emptyForm = { name: '', description: '', price: '', stock: '', category: '', imageUrl: '' };
@@ -34,19 +35,13 @@ export default function Products() {
   const [saving, setSaving]         = useState(false);
   const [error, setError]           = useState('');
   const [formData, setFormData]     = useState(emptyForm);
-  const [imgPreview, setImgPreview] = useState(null);
-  const [uploading, setUploading]   = useState(false);
-  const [aiLoading, setAiLoading]   = useState(false);
   const [deleteId, setDeleteId]     = useState(null);
   const [relations, setRelations]   = useState([]);
   const [relLoading, setRelLoading] = useState(false);
   const [relSearch, setRelSearch]   = useState('');
-  const fileRef = useRef(null);
   const importRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
-  const [aiImgPrompt, setAiImgPrompt] = useState('');
-  const [aiImgLoading, setAiImgLoading] = useState(false);
   const { isAdmin } = useAuth();
 
   const fetchProducts = async () => {
@@ -74,7 +69,6 @@ export default function Products() {
   const openModal = async (product = null) => {
     setEditing(product);
     setFormData(product ? { name: product.name, description: product.description||'', price: String(product.price), stock: String(product.stock), category: product.category||'', imageUrl: product.imageUrl||'' } : emptyForm);
-    setImgPreview(product?.imageUrl ? getMediaUrl(product.imageUrl) : null);
     setError('');
     setModalOpen(true);
     
@@ -93,19 +87,7 @@ export default function Products() {
     }
   };
 
-  const closeModal = () => { setModalOpen(false); setError(''); setImgPreview(null); };
-
-  const handleImage = async (file) => {
-    if (!file) return;
-    setImgPreview(URL.createObjectURL(file));
-    setUploading(true);
-    try {
-      const fd = new FormData(); fd.append('image', file);
-      const r = await api.post('/uploads', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setFormData(f => ({ ...f, imageUrl: r.data.url }));
-    } catch { setError('Afbeelding uploaden mislukt'); setImgPreview(null); }
-    finally { setUploading(false); }
-  };
+  const closeModal = () => { setModalOpen(false); setError(''); };
 
   const handleAI = async () => {
     if (!formData.name) return;
@@ -159,22 +141,6 @@ export default function Products() {
     } finally {
       setImporting(false);
       if (importRef.current) importRef.current.value = '';
-    }
-  };
-
-  const handleAiImage = async () => {
-    if (!formData.imageUrl || !aiImgPrompt.trim()) return;
-    setAiImgLoading(true);
-    setError('');
-    try {
-      const r = await api.post('/products/improve-image', { imageUrl: formData.imageUrl, prompt: aiImgPrompt.trim() });
-      setFormData(f => ({ ...f, imageUrl: r.data.url }));
-      setImgPreview(getMediaUrl(r.data.url));
-      setAiImgPrompt('');
-    } catch (err) {
-      setError(errorText(err, 'Afbeelding verbeteren mislukt'));
-    } finally {
-      setAiImgLoading(false);
     }
   };
 
@@ -389,57 +355,11 @@ export default function Products() {
                 {error && <div className="rounded-xl bg-red-50 border border-red-100 text-red-600 px-4 py-3 text-sm font-medium">{String(error)}</div>}
 
                 {/* Image upload */}
-                <div>
-                  <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">Afbeelding</label>
-                  {imgPreview ? (
-                    <div className="relative w-full h-44 rounded-2xl overflow-hidden" style={{ border: '1px solid #f1f5f9' }}>
-                      <img src={imgPreview} alt="preview" className="w-full h-full object-cover" />
-                      {uploading && (
-                        <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(4px)' }}>
-                          <div className="flex items-center gap-2 text-sm font-bold text-gray-600">
-                            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                            Uploaden…
-                          </div>
-                        </div>
-                      )}
-                      {!uploading && (
-                        <button type="button" onClick={() => { setImgPreview(null); setFormData(f => ({ ...f, imageUrl: '' })); }}
-                          className="absolute top-2 right-2 w-8 h-8 rounded-xl bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors">
-                          <X size={14} />
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <div onClick={() => fileRef.current?.click()} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); handleImage(e.dataTransfer.files[0]); }}
-                      className="w-full h-36 rounded-2xl border-2 border-dashed border-gray-200 hover:border-blue-400 transition-colors flex flex-col items-center justify-center gap-2 cursor-pointer"
-                      style={{ background: '#fafafa' }}>
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                        <Upload size={18} className="text-blue-400" />
-                      </div>
-                      <p className="text-sm font-semibold text-gray-500">Klik of sleep een afbeelding</p>
-                      <p className="text-xs text-gray-300">PNG, JPG, WEBP — max 5 MB</p>
-                    </div>
-                  )}
-                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => handleImage(e.target.files?.[0])} />
-                  {/* AI Image Improve */}
-                  {formData.imageUrl && (
-                    <div className="mt-3 flex gap-2">
-                      <input
-                        className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Beschrijf hoe de afbeelding verbeterd moet worden…"
-                        value={aiImgPrompt}
-                        onChange={e => setAiImgPrompt(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAiImage(); } }}
-                        disabled={aiImgLoading}
-                      />
-                      <button type="button" onClick={handleAiImage} disabled={aiImgLoading || !aiImgPrompt.trim()}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-white transition-all disabled:opacity-40 active:scale-95 shrink-0"
-                        style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', boxShadow: '0 4px 12px rgba(124,58,237,0.35)' }}>
-                        {aiImgLoading ? <><Loader2 size={13} className="animate-spin" /> Bezig…</> : <><Wand2 size={13} /> Verbeter</>}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <ImageUploader 
+                  value={formData.imageUrl} 
+                  onChange={(val) => setFormData(f => ({ ...f, imageUrl: val }))}
+                  label="Afbeelding"
+                />
 
                 {/* Name */}
                 <div>

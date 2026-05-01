@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api, { getMediaUrl } from '../lib/api';
+import ImageUploader from '../components/ImageUploader';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -61,59 +62,7 @@ function Section({ title, icon: Icon, children, defaultOpen = true, accent, drag
 }
 
 function ImageField({ value, onChange, height = 36 }) {
-  const [preview, setPreview] = useState(value ? getMediaUrl(value) : null);
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef(null);
-  useEffect(() => { setPreview(value ? getMediaUrl(value) : null); }, [value]);
-
-  const handleFile = async (file) => {
-    if (!file) return;
-    setPreview(URL.createObjectURL(file));
-    setUploading(true);
-    try {
-      const fd = new FormData(); fd.append('image', file);
-      const r = await api.post('/uploads', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      onChange(r.data.url);
-    } catch { setPreview(value || null); }
-    finally { setUploading(false); }
-  };
-
-  return (
-    <div>
-      {preview ? (
-        <div className={`relative w-full rounded-2xl overflow-hidden`} style={{ height: `${height * 4}px`, border: '1px solid #f1f5f9' }}>
-          <img src={preview} alt="" className="w-full h-full object-cover" />
-          {uploading && (
-            <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)' }}>
-              <div className="flex items-center gap-2 text-sm font-bold text-gray-600">
-                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                Uploaden…
-              </div>
-            </div>
-          )}
-          {!uploading && (
-            <button type="button" onClick={() => { setPreview(null); onChange(''); }}
-              className="absolute top-2 right-2 w-8 h-8 rounded-xl bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors">
-              <X size={14} />
-            </button>
-          )}
-        </div>
-      ) : (
-        <div onClick={() => fileRef.current?.click()}
-          onDragOver={e => e.preventDefault()}
-          onDrop={e => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); }}
-          className="w-full rounded-2xl border-2 border-dashed border-gray-200 hover:border-blue-400 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all hover:bg-blue-50/30"
-          style={{ height: `${height * 4}px`, background: '#fafafa' }}>
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-            <Upload size={16} className="text-blue-400" />
-          </div>
-          <p className="text-xs font-semibold text-gray-400">Klik of sleep een afbeelding</p>
-          <p className="text-[10px] text-gray-300">PNG, JPG, WEBP</p>
-        </div>
-      )}
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => handleFile(e.target.files?.[0])} />
-    </div>
-  );
+  return <ImageUploader value={value} onChange={onChange} label={null} height={`h-[${height * 4}px]`} />;
 }
 
 function SaveButton({ onSave, saving, saved }) {

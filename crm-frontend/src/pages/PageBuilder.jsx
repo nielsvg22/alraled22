@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api, { getMediaUrl } from '../lib/api';
+import ImageUploader from '../components/ImageUploader';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -84,51 +85,11 @@ const SCHEMAS = {
   ],
 };
 
-// ── Image upload field ────────────────────────────────────
-function ImageUpload({ value, onChange }) {
-  const [uploading, setUploading] = useState(false);
-  const ref = useRef();
-
-  const handleFile = async (file) => {
-    if (!file) return;
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append('image', file);
-      const res = await api.post('/uploads', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      onChange(res.data.url);
-    } catch { alert('Upload mislukt'); }
-    finally { setUploading(false); }
-  };
-
-  return (
-    <div className="space-y-2">
-      {value && (
-        <div className="relative w-full h-36 rounded-xl overflow-hidden border border-gray-200 group">
-          <img src={getMediaUrl(value)} alt="" className="w-full h-full object-cover" />
-          <button onClick={() => onChange('')}
-            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <X className="w-3 h-3" />
-          </button>
-        </div>
-      )}
-      <button type="button" onClick={() => ref.current?.click()}
-        disabled={uploading}
-        className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:border-violet-400 hover:text-violet-600 transition-colors w-full justify-center">
-        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-        {uploading ? 'Uploaden...' : value ? 'Andere afbeelding kiezen' : 'Afbeelding uploaden'}
-      </button>
-      <input ref={ref} type="file" accept="image/*" className="hidden"
-        onChange={e => handleFile(e.target.files?.[0])} />
-    </div>
-  );
-}
-
 // ── Generic field renderer ────────────────────────────────
 function FieldInput({ field, value, onChange }) {
   const cls = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors bg-white';
 
-  if (field.type === 'image') return <ImageUpload value={value || ''} onChange={onChange} />;
+  if (field.type === 'image') return <ImageUploader value={value || ''} onChange={onChange} label={null} height="h-36" />;
   if (field.type === 'color') return (
     <div className="flex items-center gap-3">
       <input type="color" value={value || '#0c4684'} onChange={e => onChange(e.target.value)}

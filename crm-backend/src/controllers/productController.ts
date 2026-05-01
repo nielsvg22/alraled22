@@ -469,8 +469,14 @@ export const improveImage = async (req: Request, res: Response) => {
     fs.mkdirSync(uploadsDir, { recursive: true });
     fs.writeFileSync(newPath, Buffer.from(b64, 'base64'));
 
-    const newUrl = `/uploads/${newFilename}`;
-    res.json({ url: newUrl });
+    const newUrlRelative = `/uploads/${newFilename}`;
+    
+    // Return absolute URL so frontend doesn't have to guess the host
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.get('host');
+    const url = `${protocol}://${host}${newUrlRelative}`;
+    
+    res.json({ url });
   } catch (error: any) {
     console.error('Improve image error:', error);
     const msg = error?.message || 'Afbeelding verbeteren mislukt';
