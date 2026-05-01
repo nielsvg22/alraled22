@@ -173,11 +173,11 @@ export default function AISettings() {
                 <p className="text-xs text-blue-700 font-bold mb-1">💡 Tip: Gemini is GRATIS!</p>
                 <p className="text-[10px] text-blue-600 leading-relaxed">
                   Je kunt gratis een API-key aanmaken via <a href="https://aistudio.google.com/" target="_blank" className="underline font-black">Google AI Studio</a>. 
-                  Kies voor de "Free of charge" tier. Gemini analyzeert je afbeeldingen en Pollinations genereert de verbeterde versie (beide gratis!).
+                  Kies voor de "Free of charge" tier. Gemini analyzeert je afbeeldingen en <strong>FLUX.1 via Hugging Face</strong> genereert de verbeterde versie. Beide gratis! Haal je HF token op via <a href="https://huggingface.co/settings/tokens" target="_blank" className="underline font-black">huggingface.co/settings/tokens</a>.
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Gemini / Nano Banana API Key">
+                <Field label="Gemini / Nano Banana API Key" hint="Voor afbeeldingsanalyse — gratis via aistudio.google.com">
                   <input 
                     type="password" 
                     value={settings.googleApiKey || ''} 
@@ -186,12 +186,12 @@ export default function AISettings() {
                     className={inputCls}
                   />
                 </Field>
-                <Field label="Google Project ID">
+                <Field label="Hugging Face Token" hint="Voor FLUX.1 image generatie — gratis via huggingface.co/settings/tokens">
                   <input 
-                    type="text" 
-                    value={settings.googleProjectId || ''} 
-                    onChange={e => setSettings(s => ({ ...s, googleProjectId: e.target.value }))}
-                    placeholder="my-project-123"
+                    type="password" 
+                    value={settings.huggingfaceApiKey || ''} 
+                    onChange={e => setSettings(s => ({ ...s, huggingfaceApiKey: e.target.value }))}
+                    placeholder="hf_..."
                     className={inputCls}
                   />
                 </Field>

@@ -531,13 +531,21 @@ Only output the prompt text, nothing else. Start with "Professional product phot
         console.error('Gemini vision analysis failed, using fallback prompt:', visionErr);
       }
 
-      // Stap 2: Genereer de afbeelding via Hugging Face FLUX.1 (gratis, geen key nodig)
+      // Stap 2: Genereer de afbeelding via Hugging Face FLUX.1
+      const hfKey = settings?.huggingfaceApiKey;
+      if (!hfKey) return res.status(500).json({ error: 'Hugging Face API Key is niet geconfigureerd. Maak gratis een account aan op huggingface.co en voeg je token toe in AI Instellingen.' });
+
       const hfUrl = 'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell';
       console.log('[NanoBanana] Requesting FLUX.1 image generation...');
 
+      const hfHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${hfKey}`,
+      };
+
       let hfResponse = await fetch(hfUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: hfHeaders,
         body: JSON.stringify({
           inputs: imageGenPrompt,
           parameters: { width: 1024, height: 1024, num_inference_steps: 4 }
@@ -546,11 +554,11 @@ Only output the prompt text, nothing else. Start with "Professional product phot
 
       // Als model laadt, wacht en probeer opnieuw
       if (hfResponse.status === 503) {
-        console.log('[NanoBanana] Model loading, waiting 10s...');
-        await new Promise(r => setTimeout(r, 10000));
+        console.log('[NanoBanana] Model loading, waiting 15s...');
+        await new Promise(r => setTimeout(r, 15000));
         hfResponse = await fetch(hfUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: hfHeaders,
           body: JSON.stringify({ inputs: imageGenPrompt, parameters: { width: 1024, height: 1024, num_inference_steps: 4 } })
         });
       }
@@ -558,6 +566,7 @@ Only output the prompt text, nothing else. Start with "Professional product phot
       if (!hfResponse.ok) {
         const errText = await hfResponse.text();
         console.error('HuggingFace FLUX.1 error:', hfResponse.status, errText.slice(0, 200));
+        if (hfResponse.status === 401) return res.status(500).json({ error: 'Hugging Face token is ongeldig. Controleer je token in AI Instellingen.' });
         return res.status(500).json({ error: `Nano Banana image generation mislukt (${hfResponse.status}). Probeer het opnieuw.` });
       }
 
