@@ -20,9 +20,10 @@ export default function AISettings() {
     groqApiKey: '',
     googleApiKey: '',
     googleProjectId: '',
-    preferredProvider: 'groq', // Groq has a very generous free tier
-    preferredImageProvider: 'pollinations', // Default to the free provider
-    nanoBananaModel: 'fast' // Default to fast
+    chatgptAccessToken: '',
+    preferredProvider: 'groq',
+    preferredImageProvider: 'pollinations',
+    nanoBananaModel: 'fast'
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -154,25 +155,47 @@ export default function AISettings() {
               </div>
             </div>
 
+            <div className="pt-4 border-t border-gray-100">
+              <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                🟢 ChatGPT Plus Bridge (Persoonlijk Abonnement)
+              </h4>
+              <Field 
+                label="ChatGPT Access Token" 
+                hint="Hiermee gebruik je jouw eigen Plus abonnement. Haal deze uit de browser session info."
+              >
+                <textarea 
+                  value={settings.chatgptAccessToken || ''} 
+                  onChange={e => setSettings(s => ({ ...s, chatgptAccessToken: e.target.value }))}
+                  placeholder="eyJhbGci..."
+                  className={`${inputCls} h-24 font-mono text-[10px]`}
+                />
+              </Field>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
               <Field label="Voorkeurs Tekst Provider">
                 <div className="flex gap-4">
-                  {['openai', 'groq', 'google'].map(p => (
-                    <label key={p} className="flex-1 cursor-pointer group">
+                  {[
+                    { id: 'openai', label: 'OpenAI' },
+                    { id: 'groq', label: 'Groq' },
+                    { id: 'google', label: 'Google' },
+                    { id: 'bridge', label: 'GPT Plus' }
+                  ].map(p => (
+                    <label key={p.id} className="flex-1 cursor-pointer group">
                       <input 
                         type="radio" 
                         name="provider" 
                         className="hidden" 
-                        checked={settings.preferredProvider === p}
-                        onChange={() => setSettings(s => ({ ...s, preferredProvider: p }))}
+                        checked={settings.preferredProvider === p.id}
+                        onChange={() => setSettings(s => ({ ...s, preferredProvider: p.id }))}
                       />
                       <div className={`
                         p-4 rounded-xl border-2 text-center transition-all
-                        ${settings.preferredProvider === p 
+                        ${settings.preferredProvider === p.id 
                           ? 'border-blue-500 bg-blue-50 text-blue-600 shadow-sm' 
                           : 'border-gray-100 bg-gray-50 text-gray-400 group-hover:border-gray-200'}
                       `}>
-                        <span className="text-sm font-black uppercase tracking-widest">{p}</span>
+                        <span className="text-sm font-black uppercase tracking-widest">{p.label}</span>
                       </div>
                     </label>
                   ))}

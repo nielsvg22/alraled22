@@ -11,6 +11,7 @@ interface AISettings {
   openaiApiKey?: string;
   groqApiKey?: string;
   googleApiKey?: string;
+  chatgptAccessToken?: string;
   preferredProvider?: string;
   preferredImageProvider?: string;
   nanoBananaModel?: string;
@@ -31,6 +32,16 @@ interface AIClient {
 const getClient = async (): Promise<AIClient> => {
   const settings = await getAISettings();
   const provider = settings.preferredProvider || 'groq';
+
+  if (provider === 'bridge' && settings.chatgptAccessToken) {
+    // Return a special client for the ChatGPT Bridge
+    return {
+      isBridge: true,
+      accessToken: settings.chatgptAccessToken,
+      openai: null as any,
+      model: 'gpt-4o'
+    } as any;
+  }
 
   if (provider === 'openai') {
     const key = settings.openaiApiKey;
@@ -65,6 +76,51 @@ const getClient = async (): Promise<AIClient> => {
   }
 };
 
+const callBridge = async (accessToken: string, prompt: string) => {
+  // This is a simplified unofficial ChatGPT bridge. 
+  // It uses the same endpoint as the web interface.
+  const response = await fetch('https://chatgpt.com/backend-api/conversation', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    },
+    body: JSON.stringify({
+      action: 'next',
+      messages: [{
+        id: randomUUID(),
+        author: { role: 'user' },
+        content: { content_type: 'text', parts: [prompt] },
+        metadata: {}
+      }],
+      model: 'gpt-4o',
+      parent_message_id: randomUUID(),
+      timezone_offset_min: -60,
+      history_and_training_disabled: true,
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    console.error('Bridge Error:', err);
+    throw new Error('ChatGPT Bridge faal: Je token is mogelijk verlopen.');
+  }
+
+  // The web API returns a stream of events. We need to parse the last one.
+  const text = await response.text();
+  const lines = text.split('\n').filter(l => l.startsWith('data: '));
+  const lastLine = lines[lines.length - 2]; // Usually the second to last is the final complete object
+  if (!lastLine) throw new Error('Geen antwoord van Bridge');
+  
+  try {
+    const data = JSON.parse(lastLine.substring(6));
+    return data.message?.content?.parts?.[0] || '';
+  } catch {
+    return 'Fout bij verwerken van Bridge antwoord';
+  }
+};
+
 // ── POST /api/ai/product-description ────────────────────────────
 export const generateProductDescription = async (req: Request, res: Response) => {
   try {
@@ -85,7 +141,9 @@ export const generateProductDescription = async (req: Request, res: Response) =>
     ].filter(Boolean).join('\n');
 
     let text = '';
-    if ((client as any).isGoogle) {
+    if ((client as any).isBridge) {
+      text = await callBridge((client as any).accessToken, prompt);
+    } else if ((client as any).isGoogle) {
       const result = await (client as any).googleModel.generateContent(prompt);
       text = result.response.text().trim();
     } else {
@@ -123,7 +181,9 @@ export const generatePageText = async (req: Request, res: Response) => {
     ].filter(Boolean).join('\n');
 
     let text = '';
-    if ((client as any).isGoogle) {
+    if ((client as any).isBridge) {
+      text = await callBridge((client as any).accessToken, prompt);
+    } else if ((client as any).isGoogle) {
       const result = await (client as any).googleModel.generateContent(prompt);
       text = result.response.text().trim();
     } else {
@@ -153,7 +213,9 @@ export const chat = async (req: Request, res: Response) => {
     const client = await getClient();
     let text = '';
 
-    if ((client as any).isGoogle) {
+    if ((client as any).isBridge) {
+      text = await callBridge((client as any).accessToken, messages[messages.length - 1].content);
+    } else if ((client as any).isGoogle) {
       const history = messages.slice(0, -1).map((m: any) => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.content }]
@@ -227,7 +289,9 @@ export const storefrontChat = async (req: Request, res: Response) => {
       stockContext,
     ].filter(Boolean).join(' ');
 
-    if ((client as any).isGoogle) {
+    if ((client as any).isBridge) {
+      reply = await callBridge((client as any).accessToken, systemPrompt + "\n\nUser message: " + messages[messages.length - 1].content);
+    } else if ((client as any).isGoogle) {
       const history = messages.slice(0, -1).map((m: any) => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.content }]
@@ -373,9 +437,11 @@ export const generateNewBlock = async (req: Request, res: Response) => {
     ].join('\n');
 
     let raw = '';
-    if (client.isGoogle) {
-      const result = await client.googleModel.generateContent(prompt);
+    if ((client as any).isGoogle) {
+      const result = await (client as any).googleModel.generateContent(prompt);
       raw = result.response.text().trim();
+    } else if ((client as any).isBridge) {
+      raw = await callBridge((client as any).accessToken, prompt);
     } else {
       const completion = await client.openai.chat.completions.create({
         model: client.model,

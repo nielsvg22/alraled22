@@ -435,7 +435,7 @@ export const improveImage = async (req: Request, res: Response) => {
     // Try to get API key from DB settings first, then fall back to env
     const settingsRaw = await getContent('ai_settings');
     const settings = (settingsRaw || {}) as any;
-    const provider = settings?.preferredImageProvider || 'openai';
+    const provider = settings?.preferredImageProvider || 'pollinations';
     
     const uploadsDir = process.env.UPLOADS_DIR
       ? path.resolve(process.env.UPLOADS_DIR)
@@ -460,6 +460,14 @@ export const improveImage = async (req: Request, res: Response) => {
 
     let newFilename = `${randomUUID()}.png`;
     let b64: string | undefined;
+
+    if (provider === 'bridge' && settings.chatgptAccessToken) {
+      // Use the Bridge for image analysis/generation instructions if possible
+      // Note: Official image editing via web bridge is complex, we use it for better prompts.
+      const promptToBridge = `Describe a DALL-E prompt to modify this image based on: ${prompt}. The image shows: (already analyzed). Return only the prompt.`;
+      // For now, image editing still works best via OpenAI API or Pollinations.
+      // We'll treat 'bridge' as 'openai' fallback for images if they have a key, or pollinators.
+    }
 
     if (provider === 'google') {
       const googleKey = settings?.googleApiKey;
