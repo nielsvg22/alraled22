@@ -465,7 +465,13 @@ export const improveImage = async (req: Request, res: Response) => {
       if (!googleKey) return res.status(500).json({ error: 'Google API Key is niet geconfigureerd' });
 
       const genAI = new GoogleGenerativeAI(googleKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      
+      // Select model based on Nano Banana settings
+      let modelId = 'gemini-1.5-flash';
+      if (settings?.nanoBananaModel === 'pro') modelId = 'gemini-1.5-pro';
+      else if (settings?.nanoBananaModel === 'thinking') modelId = 'gemini-1.5-pro'; // Pro is better for "thinking"
+      
+      const model = genAI.getGenerativeModel({ model: modelId });
 
       // Google Gemini 1.5 can't directly "edit" like OpenAI, 
       // so we use it to analyze and then we would ideally use Imagen.
