@@ -1,7 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import api, { getMediaUrl } from '../lib/api';
-import { Upload, X, Loader2, Wand2, Sparkles } from 'lucide-react';
+import { Upload, X, Loader2, Wand2, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { errorText } from '../lib/errorText';
+
+const QUICK_PROMPTS = [
+  { label: '⬜ Witte achtergrond', prompt: 'Witte achtergrond, professionele studio-opname' },
+  { label: '💡 Betere belichting', prompt: 'Verbeter de belichting, zachte studio verlichting, geen harde schaduwen' },
+  { label: '🎯 Scherper beeld', prompt: 'Maak het beeld scherper, hoge resolutie, meer detail' },
+  { label: '🛍️ E-commerce stijl', prompt: 'Professionele e-commerce productfoto, clean en minimalistisch' },
+  { label: '🌑 Schaduw toevoegen', prompt: 'Voeg een subtiele zachte schaduw toe onder het product' },
+  { label: '✨ Premium uitstraling', prompt: 'Luxe premium uitstraling, high-end productfotografie' },
+  { label: '🔲 Transparante achtergrond', prompt: 'Verwijder de achtergrond, transparant PNG' },
+  { label: '📐 Product centreren', prompt: 'Centreer het product, meer witruimte rondom, schone compositie' },
+];
 
 export default function ImageUploader({ value, onChange, label = 'Afbeelding', height = 'h-44' }) {
   const [imgPreview, setImgPreview] = useState(value ? getMediaUrl(value) : null);
@@ -10,14 +21,15 @@ export default function ImageUploader({ value, onChange, label = 'Afbeelding', h
   const [aiPrompt, setAiPrompt] = useState('');
   const [error, setError] = useState('');
   const [provider, setProvider] = useState('AI');
+  const [showQuickPrompts, setShowQuickPrompts] = useState(false);
   const fileRef = useRef(null);
 
   useEffect(() => {
     setImgPreview(value ? getMediaUrl(value) : null);
-    // Fetch settings to know which provider is used
     api.get('/content/ai_settings').then(r => {
       if (r.data?.preferredImageProvider) {
-        setProvider(r.data.preferredImageProvider === 'openai' ? 'ChatGPT' : 'Nano Banana');
+        const p = r.data.preferredImageProvider;
+        setProvider(p === 'openai' ? 'ChatGPT' : p === 'google' ? 'Nano Banana' : p === 'stabilityai' ? 'Stability AI' : p === 'replicate' ? 'Replicate' : 'AI');
       }
     }).catch(() => {});
   }, [value]);
@@ -132,12 +144,40 @@ export default function ImageUploader({ value, onChange, label = 'Afbeelding', h
 
       {value && !uploading && !aiLoading && (
         <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[10px] font-black text-violet-500 uppercase tracking-widest flex items-center gap-1">
+              <Sparkles size={10} /> AI Verbetering via {provider}
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowQuickPrompts(v => !v)}
+              className="text-[10px] text-violet-400 hover:text-violet-600 font-bold flex items-center gap-0.5 transition-colors"
+            >
+              Snelknoppen {showQuickPrompts ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+          </div>
+
+          {showQuickPrompts && (
+            <div className="grid grid-cols-2 gap-1.5 pb-1">
+              {QUICK_PROMPTS.map(q => (
+                <button
+                  key={q.label}
+                  type="button"
+                  onClick={() => { setAiPrompt(q.prompt); setShowQuickPrompts(false); }}
+                  className="text-left px-3 py-2 bg-violet-50 hover:bg-violet-100 border border-violet-100 rounded-xl text-[11px] font-bold text-violet-700 transition-colors"
+                >
+                  {q.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="relative">
             <input
               type="text"
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
-              placeholder={`Verbeter met ${provider}...`}
+              placeholder={`Beschrijf de aanpassing...`}
               className="w-full pl-4 pr-12 py-2.5 bg-violet-50 border border-violet-100 rounded-xl text-sm focus:outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100 transition-all placeholder:text-violet-300"
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAiImprove())}
             />
@@ -151,10 +191,6 @@ export default function ImageUploader({ value, onChange, label = 'Afbeelding', h
               <Wand2 size={14} />
             </button>
           </div>
-          <p className="text-[10px] text-violet-400 font-bold flex items-center gap-1">
-            <Sparkles size={10} />
-            Tip: "Maak de achtergrond professioneler" of "Verbeter de belichting"
-          </p>
         </div>
       )}
 

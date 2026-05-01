@@ -504,61 +504,68 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
     }
 
     if (provider === 'google') {
-      // Google Gemini kan geen afbeeldingen genereren via de API
-      // Fallback naar Pollinations (gratis) voor image generation
-      console.log('Google provider selected but Gemini has no image generation API. Falling back to Pollinations...');
-      
-      let contextualPrompt = enhancedPrompt;
       const googleKey = settings?.googleApiKey;
-      
-      if (googleKey) {
-        try {
-          const genAI = new GoogleGenerativeAI(googleKey);
-          const visionModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-          
-          const analysisResult = await visionModel.generateContent([
-            "Analyze this image. Give me a 30-word prompt for an AI generator that would RECREATE THIS EXACT IMAGE but with these changes: " + prompt + ". Start with 'A photo of...'",
-            {
-              inlineData: {
-                data: imageBuffer.toString('base64'),
-                mimeType
-              }
-            },
-          ]);
-          
-          const description = analysisResult.response.text().trim();
-          contextualPrompt = `${description} --ar 1:1 --v 6.0`;
-        } catch (visionErr) {
-          console.error('Vision analysis failed:', visionErr);
-        }
+      if (!googleKey) return res.status(500).json({ error: 'Nano Banana (Google Gemini) API Key is niet geconfigureerd in het CRM' });
+
+      // Stap 1: Gemini analyseert de foto en bouwt een rijke image-generation prompt
+      let imageGenPrompt = enhancedPrompt;
+      try {
+        const genAI = new GoogleGenerativeAI(googleKey);
+        const visionModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+        const analysisResult = await visionModel.generateContent([
+          `You are an expert product photographer and AI prompt engineer.
+Analyze this product image carefully. Then write a detailed, vivid image generation prompt (max 80 words) that:
+1. Describes the exact product in the photo
+2. Applies this user instruction: "${prompt}"
+3. Aims for professional e-commerce product photography
+4. Specifies: studio lighting, clean background, sharp focus, photorealistic
+
+Only output the prompt text, nothing else. Start with "Professional product photo of..."`,
+          { inlineData: { data: imageBuffer.toString('base64'), mimeType } }
+        ]);
+
+        imageGenPrompt = analysisResult.response.text().trim();
+        console.log('[NanoBanana] Generated prompt:', imageGenPrompt.slice(0, 100));
+      } catch (visionErr) {
+        console.error('Gemini vision analysis failed, using fallback prompt:', visionErr);
       }
 
-      const seed = Math.floor(Math.random() * 1000000);
-      const encodedPrompt = encodeURIComponent(contextualPrompt);
-      const pollinationUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
-      
-      let response = await fetch(pollinationUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
+      // Stap 2: Genereer de afbeelding via Hugging Face FLUX.1 (gratis, geen key nodig)
+      const hfUrl = 'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell';
+      console.log('[NanoBanana] Requesting FLUX.1 image generation...');
+
+      let hfResponse = await fetch(hfUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inputs: imageGenPrompt,
+          parameters: { width: 1024, height: 1024, num_inference_steps: 4 }
+        })
       });
 
-      if (!response.ok) {
-        console.warn('Primary Pollinations request failed, retrying with simple prompt...');
-        const simplePrompt = encodeURIComponent(enhancedPrompt);
-        const fallbackUrl = `https://image.pollinations.ai/prompt/${simplePrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
-        response = await fetch(fallbackUrl);
+      // Als model laadt, wacht en probeer opnieuw
+      if (hfResponse.status === 503) {
+        console.log('[NanoBanana] Model loading, waiting 10s...');
+        await new Promise(r => setTimeout(r, 10000));
+        hfResponse = await fetch(hfUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ inputs: imageGenPrompt, parameters: { width: 1024, height: 1024, num_inference_steps: 4 } })
+        });
       }
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error('Pollinations Error:', response.status, errorBody);
-        return res.status(500).json({ error: `Gratis AI is momenteel druk. Probeer het over een moment opnieuw.` });
+      if (!hfResponse.ok) {
+        const errText = await hfResponse.text();
+        console.error('HuggingFace FLUX.1 error:', hfResponse.status, errText.slice(0, 200));
+        return res.status(500).json({ error: `Nano Banana image generation mislukt (${hfResponse.status}). Probeer het opnieuw.` });
       }
-      
-      const buffer = Buffer.from(await response.arrayBuffer());
-      if (buffer.length < 1000) { 
-        return res.status(500).json({ error: 'Gratis AI retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
+
+      const hfBuffer = Buffer.from(await hfResponse.arrayBuffer());
+      if (hfBuffer.length < 1000) {
+        return res.status(500).json({ error: 'Nano Banana retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
       }
-      b64 = buffer.toString('base64');
+      b64 = hfBuffer.toString('base64');
 
     } else if (provider === 'replicate') {
       // Replicate API - $5 free credits, proper img2img support
