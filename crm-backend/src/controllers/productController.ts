@@ -543,29 +543,28 @@ Only output the prompt text, nothing else. Start with "Professional product phot
           headers: {
             'x-api-key': segmindKey,
             'Content-Type': 'application/json',
+            'Accept': 'image/png, image/jpeg, image/webp, */*',
           },
           body: JSON.stringify({
-            image: `data:${mimeType};base64,${imageBuffer.toString('base64')}`,
+            image: imageBuffer.toString('base64'),
             prompt: imageGenPrompt,
             negative_prompt: 'blurry, low quality, distorted, watermark, text, ugly',
             samples: 1,
             num_inference_steps: 30,
             guidance_scale: 6.5,
             strength: 0.65,
-            base64: true,
           })
         });
 
         if (!segmindResponse.ok) {
           const errText = await segmindResponse.text();
-          console.error('Segmind error:', segmindResponse.status, errText.slice(0, 200));
+          console.error('Segmind error:', segmindResponse.status, errText.slice(0, 300));
           if (segmindResponse.status === 401) return res.status(500).json({ error: 'Segmind API key is ongeldig. Controleer je key in AI Instellingen.' });
           if (segmindResponse.status === 402) return res.status(500).json({ error: 'Segmind credits op. Maak gratis een nieuw account aan op segmind.com.' });
-          throw new Error(`Segmind fout (${segmindResponse.status})`);
+          throw new Error(`Segmind fout (${segmindResponse.status}): ${errText.slice(0, 100)}`);
         }
 
-        const segmindData = await segmindResponse.arrayBuffer();
-        const segmindBuffer = Buffer.from(segmindData);
+        const segmindBuffer = Buffer.from(await segmindResponse.arrayBuffer());
         if (segmindBuffer.length < 1000) {
           return res.status(500).json({ error: 'Segmind retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
         }
