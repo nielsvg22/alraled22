@@ -18,7 +18,7 @@ const productSchema = z.object({
   description: z.string().trim().optional().nullable(),
   price: z.coerce.number().nonnegative(),
   stock: z.coerce.number().int().nonnegative(),
-  imageUrl: z.string().trim().url().optional().nullable().or(z.literal('')),
+  imageUrl: z.string().trim().optional().nullable().or(z.literal('')),
   category: z.string().trim().optional().nullable(),
 });
 
