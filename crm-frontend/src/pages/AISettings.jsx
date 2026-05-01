@@ -238,9 +238,23 @@ export default function AISettings() {
                   Zorg dat je een actief Plus abonnement hebt. De bridge gebruikt je eigen account voor AI tekst én beelden.
                 </p>
               </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                <p className="text-xs text-blue-800 font-bold mb-2">🔑 Token Ophalen (stap-voor-stap):</p>
+                <ol className="text-[11px] text-blue-700 space-y-1.5 list-decimal list-inside">
+                  <li>Ga naar <a href="https://chatgpt.com" target="_blank" className="underline font-bold">chatgpt.com</a> en log in</li>
+                  <li>Druk <strong>F12</strong> (of Ctrl+Shift+I) voor DevTools</li>
+                  <li>Klik tabblad <strong>Network</strong> (of <strong>Netwerk</strong>)</li>
+                  <li>Ververs de pagina (F5)</li>
+                  <li>Zoek in de lijst: <code className="bg-blue-100 px-1 rounded">session</code></li>
+                  <li>Klik erop → klik <strong>Response</strong> → kopieer de waarde van <code className="bg-blue-100 px-1 rounded">accessToken</code> (begint met eyJ...)</li>
+                  <li>Plak hieronder 👇</li>
+                </ol>
+                <p className="text-[10px] text-blue-600 mt-2">💡 Tip: Token verloopt na ~1-2 weken, dan moet je opnieuw</p>
+              </div>
+              
               <Field 
                 label="ChatGPT Access Token" 
-                hint={<>Haal je Access Token uit je browser op chatgpt.com (DevTools → Application → Cookies → __Secure-next-auth.session-token of uit de Authorization header in netwerkverzoeken). <a href="https://github.com/acheong08/ChatGPT-to-API/blob/main/README.md" target="_blank" className="underline font-bold text-blue-500">Hulp nodig?</a></>}
+                hint={'Het JWT access token uit chatgpt.com/api/auth/session → "accessToken" veld (begint met eyJ...)'}
               >
                 <textarea 
                   value={settings.chatgptAccessToken || ''} 

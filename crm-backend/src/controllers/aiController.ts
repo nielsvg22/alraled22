@@ -94,8 +94,13 @@ export const callBridge = async (accessToken: string, prompt: string) => {
       headers: {
         'Authorization': `Bearer ${accessToken.trim()}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'Accept': 'text/event-stream',
+        'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Origin': 'https://chatgpt.com',
+        'Referer': 'https://chatgpt.com/',
+        'oai-language': 'nl-NL',
+        'oai-device-id': randomUUID(),
       },
       body: JSON.stringify({
         action: 'next',
@@ -179,10 +184,13 @@ export const callBridgeImage = async (accessToken: string, prompt: string, maxRe
         headers: {
           'Authorization': `Bearer ${accessToken.trim()}`,
           'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
           'Accept': 'text/event-stream',
+          'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7',
           'Origin': 'https://chatgpt.com',
           'Referer': 'https://chatgpt.com/',
+          'oai-language': 'nl-NL',
+          'oai-device-id': randomUUID(),
         },
         body: JSON.stringify({
           action: 'next',
