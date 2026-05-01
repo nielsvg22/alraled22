@@ -207,7 +207,7 @@ export default function AISettings() {
                   {[
                     { id: 'openai', label: 'OpenAI' },
                     { id: 'google', label: 'Nano Banana' },
-                    { id: 'pollinations', label: 'Gratis AI' }
+                    { id: 'bridge', label: 'GPT Plus Bridge' }
                   ].map(p => (
                     <label key={p.id} className="flex-1 cursor-pointer group">
                       <input 

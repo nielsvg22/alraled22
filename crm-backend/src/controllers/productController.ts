@@ -462,11 +462,13 @@ export const improveImage = async (req: Request, res: Response) => {
     let b64: string | undefined;
 
     if (provider === 'bridge' && settings.chatgptAccessToken) {
-      // Use the Bridge for image analysis/generation instructions if possible
-      // Note: Official image editing via web bridge is complex, we use it for better prompts.
-      const promptToBridge = `Describe a DALL-E prompt to modify this image based on: ${prompt}. The image shows: (already analyzed). Return only the prompt.`;
-      // For now, image editing still works best via OpenAI API or Pollinations.
-      // We'll treat 'bridge' as 'openai' fallback for images if they have a key, or pollinators.
+      // Temporarily use the bridge for image generation testing
+      // Note: ChatGPT Web Bridge handles text well, but for images it returns a text description or a DALL-E link
+      // We will try to fetch the prompt via the bridge
+      return res.status(200).json({ 
+        url: imageUrl, 
+        message: "GPT Plus Bridge voor afbeeldingen is momenteel in 'prompt-only' modus voor deze test." 
+      });
     }
 
     if (provider === 'google') {
