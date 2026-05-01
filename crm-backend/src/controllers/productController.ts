@@ -613,28 +613,53 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
         // Enhanced prompt for product photos
         const enhancedPrompt = `professional product photo, ${prompt}, high quality, commercial photography, studio lighting, sharp focus, detailed`;
 
-        // Start the prediction
-        const startResponse = await fetch('https://api.replicate.com/v1/predictions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Token ${replicateKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            version: 'a07a00d27a4f014fbe3fcbe770dc24e8b7bdbe847222a59b421244842f727fd3', // stability-ai/stable-diffusion-img2img
-            input: {
-              image: dataUrl,
-              prompt: enhancedPrompt,
-              strength: 0.75,
-              num_inference_steps: 50,
-              guidance_scale: 7.5,
-            }
-          })
-        });
+        // Try multiple Replicate models for img2img
+        const replicateModels = [
+          { owner: 'tstramer', name: 'stable-diffusion-img2img', version: 'latest' },
+          { owner: 'stability-ai', name: 'stable-diffusion', version: 'ac732df83cea7fff18b8472768c88ad041fa750ff7682a21a8184447be7a4b69' },
+        ];
 
-        if (!startResponse.ok) {
-          const errorData = await startResponse.json() as any;
-          throw new Error(`Replicate error: ${errorData.detail || startResponse.status}`);
+        let startResponse: globalThis.Response | null = null;
+        let lastReplicateError = '';
+
+        for (const model of replicateModels) {
+          try {
+            let url: string;
+            let body: any;
+            
+            if (model.version === 'latest') {
+              url = `https://api.replicate.com/v1/models/${model.owner}/${model.name}/predictions`;
+              body = { input: { image: dataUrl, prompt: enhancedPrompt, strength: 0.75, num_inference_steps: 50, guidance_scale: 7.5 } };
+            } else {
+              url = 'https://api.replicate.com/v1/predictions';
+              body = { version: model.version, input: { prompt: enhancedPrompt, width: 1024, height: 1024 } };
+            }
+
+            startResponse = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Token ${replicateKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(body)
+            });
+
+            if (startResponse && startResponse.ok) {
+              break; // Success!
+            } else if (startResponse) {
+              const errorData = await startResponse.json() as any;
+              lastReplicateError = `${model.owner}/${model.name}: ${errorData.detail || startResponse.status}`;
+              console.error(`Replicate ${model.owner}/${model.name} failed:`, startResponse.status, errorData);
+            }
+          } catch (modelErr: any) {
+            lastReplicateError = modelErr.message;
+            console.error(`Replicate ${model.owner}/${model.name} error:`, modelErr);
+            startResponse = null;
+          }
+        }
+
+        if (!startResponse || !startResponse.ok) {
+          throw new Error(`Replicate: Alle modellen faalden. Laatste fout: ${lastReplicateError}`);
         }
 
         const prediction = await startResponse.json() as any;
