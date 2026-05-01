@@ -499,13 +499,36 @@ export const improveImage = async (req: Request, res: Response) => {
       });
 
     } else if (provider === 'pollinations') {
-      // Pollinations.ai (FREE) - Simple image-to-image via URL prompt
-      // We use the URL format: https://image.pollinations.ai/prompt/{prompt}?width=1024&height=1024&seed={random}&model=flux
-      // For image-to-image, we can try to include the source URL in the prompt or use their specific img2img if available.
-      // For now, we'll use a high-quality generation based on the prompt.
+      // Pollinations.ai (FREE) - We improve the prompt by analyzing the original image first
+      // if a Gemini key is available, to maintain context.
       
+      let contextualPrompt = prompt;
+      
+      const googleKey = settings?.googleApiKey || process.env.GOOGLE_API_KEY;
+      if (googleKey) {
+        try {
+          const genAI = new GoogleGenerativeAI(googleKey);
+          const visionModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+          
+          const analysisResult = await visionModel.generateContent([
+            "Describe this product image in extreme detail for an AI image generator. Focus on the product, materials, lighting and background. Keep it to one paragraph.",
+            {
+              inlineData: {
+                data: imageBuffer.toString('base64'),
+                mimeType
+              }
+            },
+          ]);
+          
+          const description = analysisResult.response.text();
+          contextualPrompt = `A professional high-quality photo based on this description: ${description}. With these improvements: ${prompt}. Cinematic lighting, 8k resolution, commercial photography style.`;
+        } catch (visionErr) {
+          console.error('Vision analysis failed, falling back to simple prompt:', visionErr);
+        }
+      }
+
       const seed = Math.floor(Math.random() * 1000000);
-      const encodedPrompt = encodeURIComponent(prompt + " high quality, professional photography, industrial led lighting");
+      const encodedPrompt = encodeURIComponent(contextualPrompt);
       const pollinationUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
       
       const response = await fetch(pollinationUrl);
