@@ -694,7 +694,7 @@ Only output the prompt text, nothing else. Start with "Professional product phot
         const imageBlob = new Blob([new Uint8Array(imageBuffer)], { type: mimeType });
         formData.append('image', imageBlob, 'product.png');
         formData.append('prompt', enhancedPrompt);
-        formData.append('strength', '0.65');
+        formData.append('control_strength', '0.7');
         formData.append('output_format', 'png');
 
         // Gebruik Gemini voor een betere prompt als key beschikbaar is
@@ -716,27 +716,27 @@ Only output the prompt text, nothing else. Start with "Professional product phot
           }
         }
         
-        const stabilityResponse = await fetch('https://api.stability.ai/v2beta/stable-image/edit/image-to-image', {
+        // control/structure behoudt de structuur van de originele foto
+        const stabilityResponse = await fetch('https://api.stability.ai/v2beta/stable-image/control/structure', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${stabilityKey}`,
-            'Accept': 'application/json',
+            'Accept': 'image/*',
           },
           body: formData
         });
 
         if (!stabilityResponse.ok) {
           const errorText = await stabilityResponse.text();
-          console.error('Stability AI img2img Error:', stabilityResponse.status, errorText.slice(0, 300));
+          console.error('Stability AI Error:', stabilityResponse.status, errorText.slice(0, 300));
           throw new Error(`Stability AI fout (${stabilityResponse.status}): ${errorText.slice(0, 150)}`);
         }
 
-        const data = await stabilityResponse.json() as any;
-        if (data.image) {
-          b64 = data.image;
-        } else {
+        const imgBuffer = Buffer.from(await stabilityResponse.arrayBuffer());
+        if (imgBuffer.length < 1000) {
           throw new Error('Geen afbeelding ontvangen van Stability AI');
         }
+        b64 = imgBuffer.toString('base64');
       } catch (stabilityError: any) {
         console.error('Stability AI failed:', stabilityError);
         return res.status(500).json({ 
