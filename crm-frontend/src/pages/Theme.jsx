@@ -20,7 +20,10 @@ const PRESETS = [
   { name: 'Rood Bold',         primary: '#dc2626', secondary: '#111827', accent: '#fca5a5', bg: '#ffffff', surface: '#fef2f2', textColor: '#0f172a', textMuted: '#6b7280' },
   { name: 'Paars Premium',     primary: '#7c3aed', secondary: '#1e1b4b', accent: '#c4b5fd', bg: '#ffffff', surface: '#f5f3ff', textColor: '#0f172a', textMuted: '#6b7280' },
   { name: 'Dark Mode',         primary: '#f59e0b', secondary: '#f8fafc', accent: '#fbbf24', bg: '#0f172a', surface: '#1e293b', textColor: '#f8fafc', textMuted: '#94a3b8' },
-  { name: '🌑 ALRA Dark',      primary: '#24BEC7', secondary: '#1F2529', accent: '#24BEC7', bg: '#050505', surface: '#1F2529', textColor: '#ffffff', textMuted: '#E6EAEC' },
+  { name: '🌑 ALRA Dark',        primary: '#24BEC7', secondary: '#1F2529', accent: '#24BEC7', bg: '#050505', surface: '#1F2529', textColor: '#ffffff',  textMuted: '#E6EAEC' },
+  { name: '🚇 ALRA Tunnel',      primary: '#24BEC7', secondary: '#050505', accent: '#E6EAEC', bg: '#0a0e10', surface: '#111618', textColor: '#E6EAEC',  textMuted: '#8a9ba3' },
+  { name: '🔵 ALRA Graphite',    primary: '#24BEC7', secondary: '#1F2529', accent: '#E6EAEC', bg: '#1F2529', surface: '#2a3238', textColor: '#ffffff',  textMuted: '#E6EAEC' },
+  { name: '🩵 ALRA Ice',         primary: '#050505', secondary: '#1F2529', accent: '#24BEC7', bg: '#E6EAEC', surface: '#ffffff', textColor: '#050505',  textMuted: '#1F2529' },
 ];
 
 const FIELDS = [
