@@ -13,12 +13,14 @@ const DEFAULTS = {
 };
 
 const PRESETS = [
+  { name: '🍌 ALRA Brand Guide', primary: '#24BEC7', secondary: '#050505', accent: '#24BEC7', bg: '#ffffff', surface: '#E6EAEC', textColor: '#050505', textMuted: '#1F2529' },
   { name: 'ALRA Origineel',   primary: '#0c4684', secondary: '#0c4684', accent: '#fcd34d', bg: '#ffffff', surface: '#f9fafb', textColor: '#0f172a', textMuted: '#6b7280' },
   { name: 'Oranje Glow',      primary: '#f97316', secondary: '#1e293b', accent: '#fbbf24', bg: '#ffffff', surface: '#f8fafc', textColor: '#0f172a', textMuted: '#64748b' },
   { name: 'Groen Industrieel', primary: '#16a34a', secondary: '#1e293b', accent: '#bbf7d0', bg: '#ffffff', surface: '#f0fdf4', textColor: '#0f172a', textMuted: '#6b7280' },
   { name: 'Rood Bold',         primary: '#dc2626', secondary: '#111827', accent: '#fca5a5', bg: '#ffffff', surface: '#fef2f2', textColor: '#0f172a', textMuted: '#6b7280' },
   { name: 'Paars Premium',     primary: '#7c3aed', secondary: '#1e1b4b', accent: '#c4b5fd', bg: '#ffffff', surface: '#f5f3ff', textColor: '#0f172a', textMuted: '#6b7280' },
   { name: 'Dark Mode',         primary: '#f59e0b', secondary: '#f8fafc', accent: '#fbbf24', bg: '#0f172a', surface: '#1e293b', textColor: '#f8fafc', textMuted: '#94a3b8' },
+  { name: '🌑 ALRA Dark',      primary: '#24BEC7', secondary: '#1F2529', accent: '#24BEC7', bg: '#050505', surface: '#1F2529', textColor: '#ffffff', textMuted: '#E6EAEC' },
 ];
 
 const FIELDS = [
