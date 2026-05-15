@@ -24,14 +24,17 @@ body {
   color: rgb(var(--color-text));
 }
 
-/* ── Thema-aware overrides (alleen actief als thema geladen is) ── */
-/* data-theme wordt gezet door ThemeLoader in App.js */
+/* ── Thema-aware overrides (actief zodra thema geladen is) ── */
+/* data-theme="loaded" wordt gezet door ThemeLoader in App.js */
+
+/* Achtergronden */
 [data-theme] .bg-white,
 [data-theme] .bg-gray-50,
 [data-theme] .bg-slate-50     { background-color: rgb(var(--color-surface)); }
 [data-theme] .bg-gray-100     { background-color: rgb(var(--color-bg)); }
 [data-theme] .bg-gray-200     { background-color: rgb(var(--color-surface)); }
 
+/* Grijze tekst → thema tekst */
 [data-theme] .text-gray-900,
 [data-theme] .text-slate-900  { color: rgb(var(--color-text)); }
 [data-theme] .text-gray-800   { color: rgb(var(--color-text)); }
@@ -40,15 +43,29 @@ body {
 [data-theme] .text-gray-500   { color: rgb(var(--color-text-muted)); }
 [data-theme] .text-gray-400   { color: rgb(var(--color-text-muted) / 0.75); }
 
+/* text-secondary op lichte achtergrond → leesbaar maken via tekst kleur */
+[data-theme] .text-secondary  { color: rgb(var(--color-text)); }
+
+/* Borders */
 [data-theme] .border-gray-100 { border-color: rgb(var(--color-text) / 0.08); }
 [data-theme] .border-gray-200 { border-color: rgb(var(--color-text) / 0.12); }
 
+/* Kaarten / dividers met lichte achtergrond */
+[data-theme] .divide-gray-100 > * + * { border-color: rgb(var(--color-text) / 0.08); }
+
+/* Inputs */
 [data-theme] input:not([type="color"]):not([type="range"]),
 [data-theme] textarea,
 [data-theme] select {
   background-color: rgb(var(--color-surface));
   color: rgb(var(--color-text));
   border-color: rgb(var(--color-text) / 0.15);
+}
+
+/* Placeholder tekst */
+[data-theme] input::placeholder,
+[data-theme] textarea::placeholder {
+  color: rgb(var(--color-text-muted) / 0.6);
 }
 
 @keyframes fadeSlideUp {
