@@ -24,6 +24,35 @@ body {
   color: rgb(var(--color-text));
 }
 
+/* ── Thema-aware overrides ── */
+/* Pagina achtergronden volgen het thema */
+.bg-white        { background-color: rgb(var(--color-surface)) !important; }
+.bg-gray-50,
+.bg-slate-50     { background-color: rgb(var(--color-bg)) !important; }
+.bg-gray-100     { background-color: rgb(var(--color-surface) / 0.7) !important; }
+
+/* Tekst volgt het thema */
+.text-gray-900,
+.text-slate-900  { color: rgb(var(--color-text)) !important; }
+.text-gray-800   { color: rgb(var(--color-text) / 0.9) !important; }
+.text-gray-700   { color: rgb(var(--color-text) / 0.8) !important; }
+.text-gray-600   { color: rgb(var(--color-text-muted)) !important; }
+.text-gray-500   { color: rgb(var(--color-text-muted) / 0.85) !important; }
+.text-gray-400   { color: rgb(var(--color-text-muted) / 0.7) !important; }
+
+/* Borders */
+.border-gray-100 { border-color: rgb(var(--color-text) / 0.08) !important; }
+.border-gray-200 { border-color: rgb(var(--color-text) / 0.12) !important; }
+
+/* Input velden */
+input:not([type="color"]):not([type="range"]),
+textarea,
+select {
+  background-color: rgb(var(--color-surface));
+  color: rgb(var(--color-text));
+  border-color: rgb(var(--color-text) / 0.15);
+}
+
 @keyframes fadeSlideUp {
   from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
