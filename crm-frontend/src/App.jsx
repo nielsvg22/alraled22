@@ -20,6 +20,7 @@ import Snelstart from './pages/Snelstart';
 import DiscountCodes from './pages/DiscountCodes';
 import PasswordWall from './components/PasswordWall';
 import ErrorBoundary from './components/ErrorBoundary';
+import { ThemeProvider } from './context/ThemeContext';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -85,13 +86,15 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <BrowserRouter basename={basename}>
-        <ErrorBoundary>
-          <PasswordWall>
-            <AppRoutes />
-          </PasswordWall>
-        </ErrorBoundary>
-      </BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter basename={basename}>
+          <ErrorBoundary>
+            <PasswordWall>
+              <AppRoutes />
+            </PasswordWall>
+          </ErrorBoundary>
+        </BrowserRouter>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

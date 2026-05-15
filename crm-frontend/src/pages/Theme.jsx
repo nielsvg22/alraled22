@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 import { Save, RotateCcw } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const DEFAULTS = {
   primary:   '#0c4684',
@@ -59,6 +60,7 @@ export default function Theme() {
   const [theme, setTheme]   = useState(DEFAULTS);
   const [saved, setSaved]   = useState(false);
   const [loading, setLoading] = useState(true);
+  const { applyToCRM } = useTheme();
 
   useEffect(() => {
     api.get('/content/theme')
@@ -70,20 +72,23 @@ export default function Theme() {
   const update = useCallback((key, value) => {
     const next = { ...theme, [key]: value };
     setTheme(next);
-  }, [theme]);
+    applyToCRM(next);
+  }, [theme, applyToCRM]);
 
   const applyPreset = (preset) => {
     const { name, ...colors } = preset;
     setTheme(colors);
+    applyToCRM(colors);
   };
 
   const handleSave = async () => {
     await api.put('/content/theme', theme);
+    applyToCRM(theme);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleReset = () => setTheme(DEFAULTS);
+  const handleReset = () => { setTheme(DEFAULTS); applyToCRM(DEFAULTS); };
 
   if (loading) return <div className="p-8 text-gray-400 text-sm">Laden...</div>;
 

@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+:root {
+  --crm-bg:           #f8fafc;
+  --crm-surface:      #ffffff;
+  --crm-sidebar:      #1e293b;
+  --crm-sidebar-text: #ffffff;
+  --crm-primary:      #0c4684;
+  --crm-accent:       #fcd34d;
+  --crm-text:         #0f172a;
+  --crm-text-muted:   #6b7280;
+  --crm-border:       rgba(255,255,255,0.07);
+  --crm-nav-active:   #0c4684;
+  --crm-nav-hover:    rgba(255,255,255,0.07);
+}
