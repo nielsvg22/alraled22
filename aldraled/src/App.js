@@ -48,6 +48,8 @@ function ThemeLoader() {
         if (data.surface)   root.style.setProperty('--color-surface',    hexToRgbVars(data.surface));
         if (data.textColor) root.style.setProperty('--color-text',       hexToRgbVars(data.textColor));
         if (data.textMuted) root.style.setProperty('--color-text-muted', hexToRgbVars(data.textMuted));
+        // Zet data-theme op <html> zodat CSS [data-theme] selectors actief zijn
+        root.setAttribute('data-theme', 'loaded');
         // Zet ook body direct zodat geen flash van witte achtergrond
         if (data.bg)        document.body.style.backgroundColor = data.bg;
         if (data.textColor) document.body.style.color = data.textColor;

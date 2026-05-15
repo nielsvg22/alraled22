@@ -24,30 +24,28 @@ body {
   color: rgb(var(--color-text));
 }
 
-/* ── Thema-aware overrides ── */
-/* Pagina achtergronden volgen het thema */
-.bg-white        { background-color: rgb(var(--color-surface)) !important; }
-.bg-gray-50,
-.bg-slate-50     { background-color: rgb(var(--color-bg)) !important; }
-.bg-gray-100     { background-color: rgb(var(--color-surface) / 0.7) !important; }
+/* ── Thema-aware overrides (alleen actief als thema geladen is) ── */
+/* data-theme wordt gezet door ThemeLoader in App.js */
+[data-theme] .bg-white,
+[data-theme] .bg-gray-50,
+[data-theme] .bg-slate-50     { background-color: rgb(var(--color-surface)); }
+[data-theme] .bg-gray-100     { background-color: rgb(var(--color-bg)); }
+[data-theme] .bg-gray-200     { background-color: rgb(var(--color-surface)); }
 
-/* Tekst volgt het thema */
-.text-gray-900,
-.text-slate-900  { color: rgb(var(--color-text)) !important; }
-.text-gray-800   { color: rgb(var(--color-text) / 0.9) !important; }
-.text-gray-700   { color: rgb(var(--color-text) / 0.8) !important; }
-.text-gray-600   { color: rgb(var(--color-text-muted)) !important; }
-.text-gray-500   { color: rgb(var(--color-text-muted) / 0.85) !important; }
-.text-gray-400   { color: rgb(var(--color-text-muted) / 0.7) !important; }
+[data-theme] .text-gray-900,
+[data-theme] .text-slate-900  { color: rgb(var(--color-text)); }
+[data-theme] .text-gray-800   { color: rgb(var(--color-text)); }
+[data-theme] .text-gray-700   { color: rgb(var(--color-text) / 0.85); }
+[data-theme] .text-gray-600   { color: rgb(var(--color-text-muted)); }
+[data-theme] .text-gray-500   { color: rgb(var(--color-text-muted)); }
+[data-theme] .text-gray-400   { color: rgb(var(--color-text-muted) / 0.75); }
 
-/* Borders */
-.border-gray-100 { border-color: rgb(var(--color-text) / 0.08) !important; }
-.border-gray-200 { border-color: rgb(var(--color-text) / 0.12) !important; }
+[data-theme] .border-gray-100 { border-color: rgb(var(--color-text) / 0.08); }
+[data-theme] .border-gray-200 { border-color: rgb(var(--color-text) / 0.12); }
 
-/* Input velden */
-input:not([type="color"]):not([type="range"]),
-textarea,
-select {
+[data-theme] input:not([type="color"]):not([type="range"]),
+[data-theme] textarea,
+[data-theme] select {
   background-color: rgb(var(--color-surface));
   color: rgb(var(--color-text));
   border-color: rgb(var(--color-text) / 0.15);
