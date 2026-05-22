@@ -4,9 +4,17 @@ import { orders, payments } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { z } from 'zod';
-import createMollieClient from '@mollie/api-client';
+import createMollieClient, { Payment } from '@mollie/api-client';
+import { getContent } from '../db/contentRepo';
 
-const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API_KEY || '' });
+async function getMollieClient() {
+  const settings = (await getContent('ai_settings')) as { mollieApiKey?: string } | null;
+  const apiKey = settings?.mollieApiKey || process.env.MOLLIE_API_KEY || '';
+  if (!apiKey) {
+    throw new Error('Mollie API key not configured');
+  }
+  return createMollieClient({ apiKey });
+}
 
 const createPaymentSchema = z.object({
   orderId: z.string().uuid(),
@@ -41,6 +49,7 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
     const webhookUrl = `${process.env.API_BASE_URL}/api/payments/webhook`;
 
+    const mollieClient = await getMollieClient();
     const molliePayment = await mollieClient.payments.create({
       amount: {
         currency: 'EUR',
@@ -49,18 +58,19 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
       description: `Order #${order.id.slice(0, 8)}`,
       redirectUrl: redirectUrl,
       webhookUrl: webhookUrl,
-      method: method || undefined,
+      method: method as any,
       metadata: {
         orderId: order.id,
         userId: userId,
       },
     });
 
+    const molliePaymentResolved = molliePayment as unknown as Payment;
     const paymentData = {
       id: crypto.randomUUID(),
       orderId: order.id,
-      molliePaymentId: molliePayment.id,
-      molliePaymentUrl: molliePayment.getCheckoutUrl(),
+      molliePaymentId: molliePaymentResolved.id,
+      molliePaymentUrl: molliePaymentResolved.getCheckoutUrl(),
       amount: order.total,
       currency: 'EUR',
       method: method || null,
@@ -71,7 +81,7 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
     await db.insert(payments).values(paymentData);
 
     res.json({
-      paymentUrl: molliePayment.getCheckoutUrl(),
+      paymentUrl: molliePaymentResolved.getCheckoutUrl(),
       paymentId: paymentData.id,
     });
   } catch (error) {
@@ -117,20 +127,22 @@ export const handleWebhook = async (req: Request, res: Response) => {
     const id = req.body.id;
     if (!id) return res.status(400).json({ error: 'Missing payment id' });
 
+    const mollieClient = await getMollieClient();
     const molliePayment = await mollieClient.payments.get(id);
-    const metadata = molliePayment.metadata as { orderId?: string };
+    const molliePaymentResolved = molliePayment as unknown as Payment;
+    const metadata = molliePaymentResolved.metadata as { orderId?: string };
 
     if (!metadata?.orderId) {
       return res.status(400).json({ error: 'Missing orderId in metadata' });
     }
 
     const orderId = metadata.orderId as string;
-    const status = (molliePayment.status?.toUpperCase() || 'PENDING') as 'PENDING' | 'OPEN' | 'CANCELLED' | 'EXPIRED' | 'FAILED' | 'PAID';
+    const status = (molliePaymentResolved.status?.toUpperCase() || 'PENDING') as 'PENDING' | 'OPEN' | 'CANCELLED' | 'EXPIRED' | 'FAILED' | 'PAID';
 
     await db.update(payments)
       .set({
         status: status,
-        method: molliePayment.method || undefined,
+        method: molliePaymentResolved.method || undefined,
         paidAt: status === 'PAID' ? new Date() : undefined,
         updatedAt: new Date(),
       })

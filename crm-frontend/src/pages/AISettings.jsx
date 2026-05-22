@@ -23,6 +23,7 @@ export default function AISettings() {
     replicateApiKey: '',
     stabilityAiKey: '',
     chatgptAccessToken: '',
+    mollieApiKey: '',
     preferredProvider: 'groq',
     preferredImageProvider: 'pollinations',
     nanoBananaModel: 'fast'
@@ -261,6 +262,31 @@ export default function AISettings() {
                   onChange={e => setSettings(s => ({ ...s, chatgptAccessToken: e.target.value }))}
                   placeholder="eyJhbGci..."
                   className={`${inputCls} h-24 font-mono text-[10px]`}
+                />
+              </Field>
+            </div>
+
+            <div className="pt-4 border-t border-gray-100">
+              <h4 className="text-[10px] font-black text-pink-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                💳 Mollie Betalingen
+              </h4>
+              <div className="bg-pink-50 border border-pink-100 rounded-xl p-4 mb-4">
+                <p className="text-xs text-pink-700 font-bold mb-1">💳 Online Betalingen via Mollie</p>
+                <p className="text-[10px] text-pink-600 leading-relaxed">
+                  Accepteer iDEAL, Bancontact, Creditcard, PayPal en meer. 
+                  Maak een gratis account aan op <a href="https://www.mollie.com" target="_blank" className="underline font-bold">mollie.com</a> en voeg je API key toe.
+                </p>
+              </div>
+              <Field 
+                label="Mollie API Key" 
+                hint={'Je live API key uit het Mollie dashboard (begint met live_... of test_...)'}
+              >
+                <input 
+                  type="password" 
+                  value={settings.mollieApiKey || ''} 
+                  onChange={e => setSettings(s => ({ ...s, mollieApiKey: e.target.value }))}
+                  placeholder="live_... of test_..."
+                  className={inputCls}
                 />
               </Field>
             </div>
