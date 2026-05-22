@@ -134,6 +134,7 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
   discountCode: one(discountCodes, { fields: [orders.discountCodeId], references: [discountCodes.id] }),
   items: many(orderItems),
   rmas: many(rmas),
+  payments: many(payments),
 }));
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
@@ -154,6 +155,25 @@ export const rmasRelations = relations(rmas, ({ one, many }) => ({
 export const rmaItemsRelations = relations(rmaItems, ({ one }) => ({
   rma: one(rmas, { fields: [rmaItems.rmaId], references: [rmas.id] }),
   orderItem: one(orderItems, { fields: [rmaItems.orderItemId], references: [orderItems.id] }),
+}));
+
+export const payments = mysqlTable('Payment', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  orderId: varchar('orderId', { length: 36 }).notNull().references(() => orders.id),
+  molliePaymentId: varchar('molliePaymentId', { length: 255 }),
+  molliePaymentUrl: varchar('molliePaymentUrl', { length: 512 }),
+  amount: double('amount').notNull(),
+  currency: varchar('currency', { length: 3 }).notNull().default('EUR'),
+  method: varchar('method', { length: 50 }),
+  status: mysqlEnum('status', ['PENDING', 'OPEN', 'CANCELLED', 'EXPIRED', 'FAILED', 'PAID']).notNull().default('PENDING'),
+  paidAt: timestamp('paidAt'),
+  metadata: text('metadata'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
+});
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  order: one(orders, { fields: [payments.orderId], references: [orders.id] }),
 }));
 
 export const siteContent = mysqlTable('SiteContent', {

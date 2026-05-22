@@ -16,6 +16,7 @@ import aiRoutes from './routes/aiRoutes';
 import geoRoutes from './routes/geoRoutes';
 import snelstartRoutes from './routes/snelstartRoutes';
 import discountCodeRoutes from './routes/discountCodeRoutes';
+import paymentRoutes from './routes/paymentRoutes';
 import { db } from './lib/db';
 import { users } from './db/schema';
 import bcrypt from 'bcryptjs';
@@ -94,6 +95,7 @@ app.use('/api/ai',      aiRoutes);
 app.use('/api/geo',     geoRoutes);
 app.use('/api/snelstart', snelstartRoutes);
 app.use('/api/discounts', discountCodeRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the CRM API' });

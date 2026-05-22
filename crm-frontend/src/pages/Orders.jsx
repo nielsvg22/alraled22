@@ -4,7 +4,7 @@ import {
   Eye, Clock, CheckCircle, Truck, XCircle, MoreVertical,
   Search, TrendingUp, ShoppingBag, AlertCircle,
   PackageCheck, Copy, X, ChevronDown, Mail, RefreshCw, Filter,
-  FileDown,
+  FileDown, CreditCard, ExternalLink, Wallet,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { errorText } from '../lib/errorText';
@@ -17,6 +17,15 @@ const STATUS = {
   SHIPPED:    { label: 'Verzonden',      short: 'Shipped',    color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe', dot: '#8b5cf6', icon: Truck       },
   DELIVERED:  { label: 'Afgeleverd',     short: 'Delivered',  color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', dot: '#10b981', icon: PackageCheck},
   CANCELLED:  { label: 'Geannuleerd',    short: 'Cancelled',  color: '#dc2626', bg: '#fef2f2', border: '#fecaca', dot: '#ef4444', icon: XCircle     },
+};
+
+const PAYMENT_STATUS = {
+  PENDING:   { label: 'In afwachting', color: '#d97706', bg: '#fffbeb', dot: '#f59e0b' },
+  OPEN:      { label: 'Open',          color: '#2563eb', bg: '#eff6ff', dot: '#3b82f6' },
+  CANCELLED: { label: 'Geannuleerd',   color: '#dc2626', bg: '#fef2f2', dot: '#ef4444' },
+  EXPIRED:   { label: 'Verlopen',      color: '#6b7280', bg: '#f9fafb', dot: '#9ca3af' },
+  FAILED:    { label: 'Mislukt',       color: '#dc2626', bg: '#fef2f2', dot: '#ef4444' },
+  PAID:      { label: 'Betaald',       color: '#059669', bg: '#ecfdf5', dot: '#10b981' },
 };
 
 function StatusBadge({ status, size = 'sm' }) {
@@ -75,6 +84,163 @@ function StatCard({ label, value, sub, gradient, icon: Icon }) {
       <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-1">{label}</p>
       <p className="text-2xl font-black text-white leading-none">{value}</p>
       {sub && <p className="text-xs text-white/50 mt-1.5">{sub}</p>}
+    </div>
+  );
+}
+
+function PaymentSection({ orderId, total }) {
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState('ideal');
+  const [methods, setMethods] = useState([]);
+
+  useEffect(() => {
+    fetchPayments();
+    fetchMethods();
+  }, [orderId]);
+
+  const fetchPayments = async () => {
+    try {
+      const r = await api.get(`/payments/order/${orderId}`);
+      setPayments(r.data);
+    } catch (e) {
+      console.error('Failed to fetch payments', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMethods = async () => {
+    try {
+      const r = await api.get('/payments/methods');
+      setMethods(r.data);
+    } catch (e) {
+      console.error('Failed to fetch payment methods', e);
+    }
+  };
+
+  const createPayment = async () => {
+    setCreating(true);
+    try {
+      const redirectUrl = `${window.location.origin}/orders?payment=success`;
+      const r = await api.post('/payments', {
+        orderId,
+        method: selectedMethod,
+        redirectUrl,
+      });
+      window.location.href = r.data.paymentUrl;
+    } catch (e) {
+      alert('Betaling starten mislukt: ' + errorText(e));
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const paidPayment = payments.find(p => p.status === 'PAID');
+  const pendingPayment = payments.find(p => ['PENDING', 'OPEN'].includes(p.status));
+
+  if (loading) {
+    return (
+      <div className="rounded-2xl p-4" style={{ background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Betaling</p>
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+          Laden...
+        </div>
+      </div>
+    );
+  }
+
+  if (paidPayment) {
+    const ps = PAYMENT_STATUS.PAID;
+    return (
+      <div className="rounded-2xl p-4" style={{ background: ps.bg, border: `1px solid ${ps.dot}30` }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: ps.color }}>Betaling</p>
+            <p className="font-bold text-gray-900 text-sm flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ background: ps.dot }} />
+              {ps.label}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {paidPayment.paidAt ? new Date(paidPayment.paidAt).toLocaleDateString('nl-NL') : '-'}
+              {paidPayment.method && ` · ${paidPayment.method}`}
+            </p>
+          </div>
+          <CheckCircle size={24} style={{ color: ps.dot }} />
+        </div>
+      </div>
+    );
+  }
+
+  if (pendingPayment) {
+    const ps = PAYMENT_STATUS[pendingPayment.status] || PAYMENT_STATUS.PENDING;
+    return (
+      <div className="rounded-2xl p-4" style={{ background: ps.bg, border: `1px solid ${ps.dot}30` }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: ps.color }}>Betaling</p>
+            <p className="font-bold text-gray-900 text-sm flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: ps.dot }} />
+              {ps.label}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {pendingPayment.molliePaymentUrl && (
+                <a href={pendingPayment.molliePaymentUrl} target="_blank" rel="noopener noreferrer"
+                  className="text-blue-500 hover:underline flex items-center gap-1">
+                  Betaal link <ExternalLink size={10} />
+                </a>
+              )}
+            </p>
+          </div>
+          <Clock size={24} style={{ color: ps.dot }} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl p-4" style={{ background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Betaling</p>
+      <p className="text-xs text-gray-500 mb-3">Nog geen betaling ontvangen</p>
+
+      <div className="mb-3">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Betaalmethode</p>
+        <div className="flex flex-wrap gap-1.5">
+          {methods.map(m => (
+            <button
+              key={m.id}
+              onClick={() => setSelectedMethod(m.id)}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                selectedMethod === m.id
+                  ? 'bg-blue-500 text-white border-blue-500'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {m.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button
+        onClick={createPayment}
+        disabled={creating}
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+      >
+        {creating ? (
+          <>
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            Bezig...
+          </>
+        ) : (
+          <>
+            <CreditCard size={16} />
+            Betaal {euro.format(total)}
+          </>
+        )}
+      </button>
     </div>
   );
 }
@@ -179,8 +345,8 @@ function OrderModal({ order, onClose, onStatusUpdate, isAdmin }) {
           )}
 
           <div className="p-6 space-y-5">
-            {/* Klant + meta */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Klant + meta + Payment */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="rounded-2xl p-4" style={{ background: '#f8fafc', border: '1px solid #f1f5f9' }}>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Klant</p>
                 <p className="font-bold text-gray-900 text-sm">{order.user?.name || 'Onbekend'}</p>
@@ -193,6 +359,7 @@ function OrderModal({ order, onClose, onStatusUpdate, isAdmin }) {
                 <p className="text-2xl font-black text-gray-900">{euro.format(order.total)}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{order.items.reduce((s, i) => s + i.quantity, 0)} producten</p>
               </div>
+              <PaymentSection orderId={order.id} total={order.total} />
             </div>
 
             {/* Items */}
