@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '../lib/CartContext';
 import { useAuth } from '../lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
+import analytics from '../lib/analytics';
 
 const Checkout = () => {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -10,6 +11,10 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    analytics.trackCheckoutStart();
+  }, []);
 
   const [emailValue, setEmailValue] = useState(user?.email || '');
   const [phone, setPhone] = useState('');
@@ -53,6 +58,7 @@ const Checkout = () => {
         items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity })),
         discountCodeId: appliedDiscount?.discountId,
       });
+      analytics.trackCheckoutComplete(res.data.id, cartTotal);
       clearCart();
       navigate('/bestelling-geplaatst', { state: { order: res.data } });
     } catch (err) {

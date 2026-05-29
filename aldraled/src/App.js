@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './lib/AuthContext';
 import { CartProvider } from './lib/CartContext';
 import { ThemeProvider } from './lib/ThemeContext';
@@ -20,6 +20,7 @@ import DealersMap from './pages/DealersMap';
 import Returns from './pages/Returns';
 import ChatBubble from './components/ChatBubble';
 import PasswordWall from './components/PasswordWall';
+import analytics from './lib/analytics';
 import './App.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -59,6 +60,14 @@ function ThemeLoader() {
   return null;
 }
 
+function RouteTracker() {
+  const location = useLocation();
+  useEffect(() => {
+    setTimeout(() => analytics.trackPageView(), 100);
+  }, [location]);
+  return null;
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -66,6 +75,7 @@ function App() {
         <CartProvider>
           <Router>
             <ThemeLoader />
+            <RouteTracker />
             <PasswordWall>
               <Layout>
                 <Routes>
