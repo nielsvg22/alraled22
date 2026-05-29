@@ -347,8 +347,11 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
 export const getVisitDetails = async (req: Request, res: Response) => {
   try {
-    const { visitId } = req.params;
-    
+    const visitId = Array.isArray(req.params.visitId) ? req.params.visitId[0] : req.params.visitId;
+    if (!visitId) {
+      return res.status(400).json({ error: 'Visit ID is required' });
+    }
+
     const visit = await db.query.visits.findFirst({
       where: eq(visits.id, visitId),
       with: {
