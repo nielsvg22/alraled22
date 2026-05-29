@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
 import { getMediaUrl, API_URL } from '../lib/api';
+import analytics from '../lib/analytics';
 
 const SPECS = [
   { label: "Lichtopbrengst", value: "12.000 Lumen" },
@@ -40,6 +41,7 @@ const ProductDetail = () => {
     axios.get(`${API_URL}/api/products/${id}`)
       .then(res => {
         setProduct(res.data);
+        analytics.trackProductView(res.data.id, res.data.name);
         setLoading(false);
         axios.get(`${API_URL}/api/products/${res.data.id}/relations`)
           .then(r => {

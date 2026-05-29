@@ -19,8 +19,6 @@ import {
 import { Card, CardHeader, CardContent } from '../components/Card';
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -52,16 +50,16 @@ export default function Dashboard() {
     scope: 'personal',
   });
   const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analyticsError, setAnalyticsError] = useState('');
+  const [analyticsDays, setAnalyticsDays] = useState(30);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [dashRes, analyticsRes] = await Promise.all([
-          api.get('/dashboard/stats'),
-          api.get('/analytics/dashboard'),
-        ]);
+        const dashRes = await api.get('/dashboard/stats');
         const data = dashRes.data;
         setStats((prev) => ({
           ...prev,
@@ -69,7 +67,6 @@ export default function Dashboard() {
           recentOrders: Array.isArray(data?.recentOrders) ? data.recentOrders : [],
           revenueSeries: Array.isArray(data?.revenueSeries) ? data.revenueSeries : [],
         }));
-        setAnalytics(analyticsRes.data);
       } catch (fetchError) {
         setError(errorText(fetchError, 'Failed to fetch dashboard stats'));
       } finally {
@@ -79,6 +76,38 @@ export default function Dashboard() {
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setAnalyticsLoading(true);
+        setAnalyticsError('');
+        const analyticsRes = await api.get('/analytics/dashboard', { params: { days: analyticsDays } });
+        setAnalytics(analyticsRes.data);
+      } catch (fetchError) {
+        setAnalytics(null);
+        setAnalyticsError(errorText(fetchError, 'Analytics konden niet geladen worden'));
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+
+    if (!loading && !error) {
+      fetchAnalytics();
+    }
+  }, [loading, error, analyticsDays]);
+
+  const funnelSteps = useMemo(() => {
+    if (!analytics) return [];
+    const eventCount = (type) => analytics.funnelEvents?.find((e) => e.type === type)?.count || 0;
+    return [
+      { key: 'visit', label: 'Bezoek', count: analytics.summary.totalVisits },
+      { key: 'view', label: 'Product bekeken', count: eventCount('view') },
+      { key: 'add_to_cart', label: 'In winkelwagen', count: eventCount('add_to_cart') },
+      { key: 'checkout_start', label: 'Checkout gestart', count: eventCount('checkout_start') },
+      { key: 'checkout_complete', label: 'Bestelling voltooid', count: eventCount('checkout_complete') },
+    ];
+  }, [analytics]);
 
   const statCards = useMemo(
     () => [
@@ -275,15 +304,46 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {analytics && (
+      {!loading && !error && (
         <>
           <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4">
             <div>
-              <h2 className="text-3xl font-black text-gray-900 tracking-tight">Bezoekersinzicht</h2>
-              <p className="text-gray-500 mt-1 font-medium">Website analytics en conversietrechter</p>
+              <h2 className="text-3xl font-black text-gray-900 tracking-tight">Basis Analytics</h2>
+              <p className="text-gray-500 mt-1 font-medium">Bezoekers, conversietrechter en waar bezoekers afhaken</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {[7, 30, 90].map((days) => (
+                <button
+                  key={days}
+                  type="button"
+                  onClick={() => setAnalyticsDays(days)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
+                    analyticsDays === days
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {days}d
+                </button>
+              ))}
             </div>
           </header>
 
+          {analyticsError && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-4 text-amber-800 text-sm">
+              {analyticsError}
+              <span className="block mt-1 text-amber-700">Voer in de backend uit: <code className="font-mono">npm run db:push</code> om de analytics-tabellen aan te maken.</span>
+            </div>
+          )}
+
+          {analyticsLoading && (
+            <div className="flex items-center justify-center py-16">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+            </div>
+          )}
+
+          {!analyticsLoading && analytics && (
+          <>
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {[
               { label: 'Bezoeken', value: analytics.summary.totalVisits, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -306,38 +366,77 @@ export default function Dashboard() {
             ))}
           </div>
 
+          <Card>
+            <CardHeader title="Bezoekers per dag" subtitle={`Laatste ${analyticsDays} dagen`} />
+            <CardContent>
+              {(!analytics.dailyStats || analytics.dailyStats.length === 0) ? (
+                <div className="h-48 flex items-center justify-center bg-gray-50/50 rounded-2xl">
+                  <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Nog geen bezoekdata</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart
+                    data={analytics.dailyStats.map((d) => ({
+                      ...d,
+                      date: String(d.date).slice(5),
+                    }))}
+                    margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={40} />
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb' }} />
+                    <Bar dataKey="visits" name="Bezoeken" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="conversions" name="Conversies" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <Card className="lg:col-span-2">
-              <CardHeader title="Conversietrechter" subtitle="Hoe ver komen bezoekers in het aankoopproces" />
+              <CardHeader title="Conversietrechter" subtitle="Hoe ver komen bezoekers in het aankoopproces — percentage t.o.v. vorige stap" />
               <CardContent>
-                {(!analytics.funnelEvents || analytics.funnelEvents.length === 0) ? (
+                {funnelSteps.every((s) => s.count === 0) ? (
                   <div className="h-64 flex items-center justify-center bg-gray-50/50 rounded-2xl">
                     <div className="text-center">
                       <Funnel className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                      <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Nog geen data</p>
+                      <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Nog geen data — bezoek de webshop om tracking te starten</p>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {[
-                      { key: 'view', label: 'Product bekeken', color: 'bg-blue-500' },
-                      { key: 'add_to_cart', label: 'Toegevoegd aan winkelwagen', color: 'bg-indigo-500' },
-                      { key: 'checkout_start', label: 'Checkout gestart', color: 'bg-amber-500' },
-                      { key: 'checkout_complete', label: 'Bestelling voltooid', color: 'bg-emerald-500' },
-                    ].map((step, i) => {
-                      const event = analytics.funnelEvents.find(e => e.type === step.key);
-                      const count = event?.count || 0;
-                      const maxCount = analytics.funnelEvents.length > 0 ? Math.max(...analytics.funnelEvents.map(e => e.count)) : 1;
-                      const pct = Math.round((count / maxCount) * 100);
-                      const dropPct = i > 0 ? Math.round((count / (analytics.funnelEvents[Math.min(i-1, analytics.funnelEvents.length-1)]?.count || 1)) * 100) : 100;
+                      { color: 'bg-slate-500' },
+                      { color: 'bg-blue-500' },
+                      { color: 'bg-indigo-500' },
+                      { color: 'bg-amber-500' },
+                      { color: 'bg-emerald-500' },
+                    ].map((style, i) => {
+                      const step = funnelSteps[i];
+                      const count = step.count;
+                      const prevCount = i > 0 ? funnelSteps[i - 1].count : count;
+                      const maxCount = Math.max(...funnelSteps.map((s) => s.count), 1);
+                      const barPct = Math.round((count / maxCount) * 100);
+                      const stepPct = i === 0 ? 100 : prevCount > 0 ? Math.round((count / prevCount) * 100) : 0;
+                      const dropOff = i > 0 && prevCount > 0 ? Math.round(((prevCount - count) / prevCount) * 100) : 0;
                       return (
                         <div key={step.key} className="space-y-1">
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-sm gap-2">
                             <span className="font-bold text-gray-700">{step.label}</span>
-                            <span className="font-black text-gray-900">{count} <span className="text-xs text-gray-400 font-bold">({dropPct}%)</span></span>
+                            <span className="font-black text-gray-900 shrink-0">
+                              {count}
+                              {i > 0 && (
+                                <span className="text-xs text-gray-400 font-bold ml-1">
+                                  ({stepPct}% door)
+                                  {dropOff > 0 && <span className="text-red-500 ml-1">−{dropOff}% afgehaakt</span>}
+                                </span>
+                              )}
+                            </span>
                           </div>
                           <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-                            <div className={`${step.color} h-3 rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                            <div className={`${style.color} h-3 rounded-full transition-all duration-700`} style={{ width: `${barPct}%` }} />
                           </div>
                         </div>
                       );
@@ -361,6 +460,50 @@ export default function Dashboard() {
                           <span className="text-sm font-medium text-gray-700 truncate">{page.url}</span>
                         </div>
                         <span className="text-xs font-black text-gray-500 ml-2">{page.views}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card>
+              <CardHeader title="Afhaakpunten" subtitle="Pagina's waar bezoekers de site verlaten" />
+              <CardContent className="p-0">
+                {(!analytics.exitPages || analytics.exitPages.length === 0) ? (
+                  <div className="px-4 py-8 text-center text-gray-400 text-xs font-bold uppercase tracking-widest">Nog geen exit-data</div>
+                ) : (
+                  <div className="divide-y divide-gray-50">
+                    {analytics.exitPages.slice(0, 8).map((page, i) => (
+                      <div key={page.url} className="px-4 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+                        <div className="flex items-center space-x-3 min-w-0">
+                          <span className="text-xs font-black text-red-400 w-4">{i + 1}</span>
+                          <span className="text-sm font-medium text-gray-700 truncate" title={page.url}>{page.url}</span>
+                        </div>
+                        <span className="text-xs font-black text-red-600 ml-2">{page.exits}× exit</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader title="Instappagina's" subtitle="Waar bezoekers binnenkomen" />
+              <CardContent className="p-0">
+                {(!analytics.landingPages || analytics.landingPages.length === 0) ? (
+                  <div className="px-4 py-8 text-center text-gray-400 text-xs font-bold uppercase tracking-widest">Nog geen data</div>
+                ) : (
+                  <div className="divide-y divide-gray-50">
+                    {analytics.landingPages.slice(0, 8).map((page, i) => (
+                      <div key={page.url} className="px-4 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+                        <div className="flex items-center space-x-3 min-w-0">
+                          <span className="text-xs font-black text-emerald-500 w-4">{i + 1}</span>
+                          <span className="text-sm font-medium text-gray-700 truncate" title={page.url}>{page.url}</span>
+                        </div>
+                        <span className="text-xs font-black text-gray-500 ml-2">{page.visits}</span>
                       </div>
                     ))}
                   </div>
@@ -424,6 +567,8 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
+          </>
+          )}
         </>
       )}
     </div>

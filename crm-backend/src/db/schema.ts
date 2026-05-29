@@ -217,3 +217,64 @@ export const snelstartLedgers = mysqlTable('SnelstartLedger', {
 export const snelstartSyncLogsRelations = relations(snelstartSyncLogs, ({ one }) => ({
   order: one(orders, { fields: [snelstartSyncLogs.orderId], references: [orders.id] }),
 }));
+
+export const visits = mysqlTable('Visit', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  sessionId: varchar('sessionId', { length: 255 }).notNull(),
+  userAgent: text('userAgent'),
+  ip: varchar('ip', { length: 45 }),
+  referrer: text('referrer'),
+  utmSource: varchar('utmSource', { length: 255 }),
+  utmMedium: varchar('utmMedium', { length: 255 }),
+  utmCampaign: varchar('utmCampaign', { length: 255 }),
+  country: varchar('country', { length: 2 }),
+  city: varchar('city', { length: 100 }),
+  device: varchar('device', { length: 50 }),
+  browser: varchar('browser', { length: 50 }),
+  os: varchar('os', { length: 50 }),
+  isNewVisitor: int('isNewVisitor').notNull().default(1),
+  landingPage: text('landingPage'),
+  exitPage: text('exitPage'),
+  duration: int('duration').default(0),
+  pageViews: int('pageViews').notNull().default(0),
+  converted: int('converted').notNull().default(0),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
+});
+
+export const pageViews = mysqlTable('PageView', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  visitId: varchar('visitId', { length: 36 }).notNull().references(() => visits.id, { onDelete: 'cascade' }),
+  url: text('url').notNull(),
+  title: text('title'),
+  referrer: text('referrer'),
+  timeOnPage: int('timeOnPage').default(0),
+  scrollDepth: int('scrollDepth').default(0),
+  isExit: int('isExit').notNull().default(0),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+});
+
+export const analyticsEvents = mysqlTable('AnalyticsEvent', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  visitId: varchar('visitId', { length: 36 }).notNull().references(() => visits.id, { onDelete: 'cascade' }),
+  type: mysqlEnum('type', ['click', 'view', 'form_submit', 'purchase', 'add_to_cart', 'remove_from_cart', 'checkout_start', 'checkout_complete', 'error']).notNull(),
+  category: varchar('category', { length: 100 }),
+  action: varchar('action', { length: 100 }),
+  label: text('label'),
+  value: double('value'),
+  metadata: text('metadata'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+});
+
+export const visitsRelations = relations(visits, ({ many }) => ({
+  pageViews: many(pageViews),
+  events: many(analyticsEvents),
+}));
+
+export const pageViewsRelations = relations(pageViews, ({ one }) => ({
+  visit: one(visits, { fields: [pageViews.visitId], references: [visits.id] }),
+}));
+
+export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => ({
+  visit: one(visits, { fields: [analyticsEvents.visitId], references: [visits.id] }),
+}));

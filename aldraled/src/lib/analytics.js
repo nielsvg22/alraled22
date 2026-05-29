@@ -7,6 +7,7 @@ class Analytics {
     this.sessionId = this.getSessionId();
     this.visitId = null;
     this.pageStartTime = Date.now();
+    this.hasTrackedPage = false;
     this.trackingEnabled = true;
     this.deviceInfo = this.getDeviceInfo();
     this.init();
@@ -95,6 +96,18 @@ class Analytics {
   trackPageView() {
     if (!this.trackingEnabled || !this.visitId) return;
 
+    if (this.hasTrackedPage) {
+      const timeOnPage = Math.floor((Date.now() - this.pageStartTime) / 1000);
+      this.sendToBackend(`${ANALYTICS_API}/pageview/update`, {
+        visitId: this.visitId,
+        timeOnPage,
+        isExit: 1,
+      });
+    }
+
+    this.pageStartTime = Date.now();
+    this.hasTrackedPage = true;
+
     this.sendToBackend(`${ANALYTICS_API}/pageview`, {
       visitId: this.visitId,
       url: window.location.pathname + window.location.search,
@@ -124,6 +137,10 @@ class Analytics {
       id: element.id,
       href: element.href,
     });
+  }
+
+  trackProductView(productId, productName = null) {
+    this.trackEvent('view', 'ecommerce', 'product_view', String(productId), null, { productName });
   }
 
   trackAddToCart(productId, price, quantity = 1) {
@@ -205,7 +222,7 @@ class Analytics {
     const payload = JSON.stringify(data);
 
     if (isBeacon && navigator.sendBeacon) {
-      navigator.sendBeacon(endpoint, payload);
+      navigator.sendBeacon(endpoint, new Blob([payload], { type: 'application/json' }));
       return;
     }
 
