@@ -20,6 +20,7 @@ import paymentRoutes from './routes/paymentRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import { db } from './lib/db';
 import { users } from './db/schema';
+import { ensureAnalyticsTables } from './db/ensureAnalyticsTables';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
 
@@ -62,7 +63,12 @@ async function ensureAdmin() {
     console.error('[server] Error ensuring admin:', err);
   }
 }
-ensureAdmin();
+async function bootstrap() {
+  await ensureAnalyticsTables();
+  await ensureAdmin();
+}
+
+bootstrap();
 
 app.use(cors());
 app.use(express.json());

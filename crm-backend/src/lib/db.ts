@@ -12,8 +12,8 @@ if (!connectionUrl) {
 }
 
 // Create the connection pool
-const poolConnection = mysql.createPool(connectionUrl);
+export const pool = mysql.createPool(connectionUrl);
 
-export const db = drizzle(poolConnection, { schema, mode: 'default' });
+export const db = drizzle(pool, { schema, mode: 'default' });
 
 console.log('[db] Connected to MySQL');

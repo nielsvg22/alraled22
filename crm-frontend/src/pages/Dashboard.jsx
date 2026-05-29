@@ -332,7 +332,9 @@ export default function Dashboard() {
           {analyticsError && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-4 text-amber-800 text-sm">
               {analyticsError}
-              <span className="block mt-1 text-amber-700">Voer in de backend uit: <code className="font-mono">npm run db:push</code> om de analytics-tabellen aan te maken.</span>
+              <span className="block mt-1 text-amber-700">
+                De backend maakt deze tabellen automatisch aan bij opstarten. Wacht op een nieuwe deploy of herstart de Railway-service.
+              </span>
             </div>
           )}
 

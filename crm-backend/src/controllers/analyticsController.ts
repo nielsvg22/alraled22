@@ -339,9 +339,16 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       exitPages,
       landingPages,
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error('Get dashboard stats error:', error);
-    res.status(500).json({ error: 'Failed to get dashboard stats' });
+    const missingTable = /doesn't exist|does not exist|Unknown table/i.test(message);
+    res.status(500).json({
+      error: missingTable
+        ? 'Analytics-tabellen ontbreken nog in de database'
+        : 'Analytics konden niet geladen worden',
+      message,
+    });
   }
 };
 
