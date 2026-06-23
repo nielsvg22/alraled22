@@ -4,6 +4,7 @@ import { useAuth } from '../lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import analytics from '../lib/analytics';
+import { getImageSrc } from '../lib/productHelpers';
 
 const Checkout = () => {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -177,7 +178,7 @@ const Checkout = () => {
                 <div key={item.id} className="flex justify-between items-center gap-6">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-white rounded-xl overflow-hidden shrink-0 border border-gray-100 shadow-sm">
-                      <img src={item.imageUrl || 'https://via.placeholder.com/100'} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={getImageSrc(item, 'https://via.placeholder.com/100')} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <h4 className="font-black text-secondary uppercase italic text-sm leading-tight">{item.name}</h4>

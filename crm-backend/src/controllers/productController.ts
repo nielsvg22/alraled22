@@ -19,6 +19,7 @@ const productSchema = z.object({
   price: z.coerce.number().nonnegative(),
   stock: z.coerce.number().int().nonnegative(),
   imageUrl: z.string().trim().optional().nullable().or(z.literal('')),
+  imageUrls: z.array(z.string().trim()).optional().nullable(),
   category: z.string().trim().optional().nullable(),
 });
 
@@ -38,6 +39,23 @@ function normalizeOptionalString(value?: string | null) {
 
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
+}
+
+function normalizeImageUrls(imageUrls?: string[] | null, imageUrl?: string | null) {
+  const urls = imageUrls !== undefined && imageUrls !== null
+    ? imageUrls
+    : imageUrl
+      ? [imageUrl]
+      : [];
+  const seen = new Set<string>();
+
+  return urls
+    .map((url) => String(url || '').trim())
+    .filter((url) => {
+      if (!url || seen.has(url)) return false;
+      seen.add(url);
+      return true;
+    });
 }
 
 export const getProducts = async (req: Request, res: Response) => {
@@ -72,12 +90,15 @@ export const getProductById = async (req: Request, res: Response) => {
 export const createProduct = async (req: Request, res: Response) => {
   try {
     const validatedData = productSchema.parse(req.body);
+    const imageUrl = normalizeOptionalString(validatedData.imageUrl);
+    const imageUrls = normalizeImageUrls(validatedData.imageUrls, imageUrl);
     const product = await productsRepo.createProduct({
       name: validatedData.name,
       description: normalizeOptionalString(validatedData.description),
       price: validatedData.price,
       stock: validatedData.stock,
-      imageUrl: normalizeOptionalString(validatedData.imageUrl),
+      imageUrl,
+      imageUrls,
       category: normalizeOptionalString(validatedData.category),
     });
     res.status(201).json(product);
@@ -93,6 +114,12 @@ export const updateProduct = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const validatedData = productSchema.partial().parse(req.body);
+    const imageUrl = validatedData.imageUrl !== undefined
+      ? normalizeOptionalString(validatedData.imageUrl)
+      : undefined;
+    const imageUrls = validatedData.imageUrls !== undefined
+      ? normalizeImageUrls(validatedData.imageUrls, imageUrl)
+      : undefined;
     const product = await productsRepo.updateProduct(id, {
       ...(validatedData.name !== undefined ? { name: validatedData.name } : {}),
       ...(validatedData.description !== undefined
@@ -100,9 +127,8 @@ export const updateProduct = async (req: Request, res: Response) => {
         : {}),
       ...(validatedData.price !== undefined ? { price: validatedData.price } : {}),
       ...(validatedData.stock !== undefined ? { stock: validatedData.stock } : {}),
-      ...(validatedData.imageUrl !== undefined
-        ? { imageUrl: normalizeOptionalString(validatedData.imageUrl) }
-        : {}),
+      ...(imageUrl !== undefined ? { imageUrl } : {}),
+      ...(imageUrls !== undefined ? { imageUrls } : {}),
       ...(validatedData.category !== undefined
         ? { category: normalizeOptionalString(validatedData.category) }
         : {}),
@@ -312,7 +338,7 @@ export const importProducts = async (req: Request, res: Response) => {
     };
 
     // Split the document into product blocks using the price lines as anchors
-    interface ProductBlock { name: string; price: number; description: string; specs: string; imageUrl: string | null }
+    interface ProductBlock { name: string; price: number; description: string; specs: string; imageUrls: string[] }
     const blocks: ProductBlock[] = [];
 
     for (let i = 0; i < priceHits.length; i++) {
@@ -362,7 +388,7 @@ export const importProducts = async (req: Request, res: Response) => {
         description = body;
       }
 
-      blocks.push({ name: name.trim(), price: hit.price, description, specs, imageUrl: images[0] || null });
+      blocks.push({ name: name.trim(), price: hit.price, description, specs, imageUrls: images });
     }
 
     if (blocks.length === 0) {
@@ -381,7 +407,8 @@ export const importProducts = async (req: Request, res: Response) => {
           description: fullDesc,
           price: block.price,
           stock: 0,
-          imageUrl: block.imageUrl,
+          imageUrl: block.imageUrls[0] || null,
+          imageUrls: block.imageUrls,
           category: null,
         });
         created.push(product);

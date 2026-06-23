@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useCart } from '../lib/CartContext';
 import { getMediaUrl, API_URL } from '../lib/api';
 import analytics from '../lib/analytics';
+import { getProductImages, getImageSrc } from '../lib/productHelpers';
 
 const SPECS = [
   { label: "Lichtopbrengst", value: "12.000 Lumen" },
@@ -18,10 +19,6 @@ const TRUST = [
   { icon: "↩️", title: "30 dagen retour", sub: "Geen vragen" },
 ];
 
-const getImageSrc = (url) => {
-  return getMediaUrl(url) || 'https://via.placeholder.com/800';
-};
-
 const ProductDetail = () => {
   const { id } = useParams();
   const [product, setProduct]           = useState(null);
@@ -33,6 +30,7 @@ const ProductDetail = () => {
   const [qty, setQty]                   = useState(1);
   const [added, setAdded]               = useState(false);
   const [stickyVisible, setStickyVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(0);
   const mainBtnRef = useRef(null);
   const { addToCart } = useCart();
 
@@ -101,15 +99,37 @@ const ProductDetail = () => {
       <div className="max-w-6xl mx-auto px-6 md:px-10 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
 
-          {/* Image */}
-          <div className="relative">
-            <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
-              <img src={getImageSrc(product.imageUrl)} alt={product.name}
-                className="w-full h-full object-contain p-8" />
+          {/* Image gallery */}
+          <div className="space-y-4">
+            <div className="relative aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
+              {(() => {
+                const images = getProductImages(product);
+                const src = images[selectedImage] || product.imageUrl;
+                return (
+                  <img src={getMediaUrl(src) || 'https://via.placeholder.com/800'} alt={product.name}
+                    className="w-full h-full object-contain p-8" />
+                );
+              })()}
             </div>
-            <div className="absolute top-4 left-4 bg-secondary text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
-              Professional Grade
-            </div>
+            {(() => {
+              const images = getProductImages(product);
+              return images.length > 1 ? (
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {images.map((url, index) => (
+                    <button
+                      key={`${url}-${index}`}
+                      onClick={() => setSelectedImage(index)}
+                      className={`w-20 h-20 shrink-0 rounded-xl overflow-hidden border-2 transition-all ${
+                        index === selectedImage ? 'border-primary ring-2 ring-primary/20' : 'border-gray-100 hover:border-gray-300'
+                      }`}
+                    >
+                      <img src={getMediaUrl(url) || 'https://via.placeholder.com/150'} alt=""
+                        className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              ) : null;
+            })()}
           </div>
 
           {/* Details */}
@@ -183,7 +203,7 @@ const ProductDetail = () => {
                     <div key={item.id} className="flex items-center justify-between gap-3 bg-white p-2.5 rounded-xl border border-gray-100 group">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gray-50 rounded-lg overflow-hidden shrink-0 border border-gray-100">
-                          <img src={getImageSrc(item.imageUrl)} alt={item.name} className="w-full h-full object-contain" />
+                          <img src={getImageSrc(item)} alt={item.name} className="w-full h-full object-contain" />
                         </div>
                         <div className="min-w-0">
                           <p className="text-[11px] font-bold text-secondary line-clamp-1">{item.name}</p>
@@ -208,7 +228,7 @@ const ProductDetail = () => {
                 <div className="flex flex-wrap gap-3">
                   {bundle.items.map((b) => (
                     <div key={b.id} className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2">
-                      {b.imageUrl && <img src={getImageSrc(b.imageUrl)} alt={b.name} className="w-8 h-8 rounded-lg object-cover" />}
+                      {b.imageUrl && <img src={getImageSrc(b)} alt={b.name} className="w-8 h-8 rounded-lg object-cover" />}
                       <span className="text-xs font-bold text-secondary">{b.name}</span>
                     </div>
                   ))}
@@ -245,7 +265,7 @@ const ProductDetail = () => {
               {fbt.map(p => (
                 <div key={p.id} className="group block">
                   <div className="relative aspect-square overflow-hidden rounded-xl bg-white border border-gray-100 mb-3">
-                    <img src={getImageSrc(p.imageUrl)} alt={p.name}
+                    <img src={getImageSrc(p)} alt={p.name}
                       className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105" />
                   </div>
                   <div className="flex items-center justify-between">
@@ -284,7 +304,7 @@ const ProductDetail = () => {
               {related.map(p => (
                 <Link key={p.id} to={`/product/${p.id}`} className="group block">
                   <div className="relative aspect-square overflow-hidden rounded-xl bg-white border border-gray-100 mb-3">
-                    <img src={getImageSrc(p.imageUrl)} alt={p.name}
+                    <img src={getImageSrc(p)} alt={p.name}
                       className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-secondary/0 group-hover:bg-secondary/40 transition-all duration-300 flex items-center justify-center">
                       <span className="text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity bg-primary px-3 py-1.5 rounded-full">
@@ -304,7 +324,7 @@ const ProductDetail = () => {
       {/* Sticky "Bestel nu" balk */}
       <div className={`fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-2xl transition-transform duration-300 ${stickyVisible ? 'translate-y-0' : 'translate-y-full'}`}>
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-3 flex items-center gap-4">
-          <img src={getImageSrc(product.imageUrl)} alt={product.name} className="w-10 h-10 object-contain rounded-lg bg-gray-50 border border-gray-100 shrink-0" />
+          <img src={getImageSrc(product)} alt={product.name} className="w-10 h-10 object-contain rounded-lg bg-gray-50 border border-gray-100 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="font-bold text-secondary text-sm truncate">{product.name}</p>
             <p className="text-primary font-black text-sm">€{product.price} <span className="text-gray-400 font-normal text-xs">excl. btw</span></p>

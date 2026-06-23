@@ -5,6 +5,7 @@ import CustomBlocks from '../components/CustomBlocks';
 import LogoCarousel from '../components/LogoCarousel';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { getImageSrc } from '../lib/productHelpers';
 
 const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
 
@@ -344,7 +345,7 @@ const Home = () => {
                 <Link key={product.id} to={`/product/${product.id}`} className="group block">
                   <div className="relative aspect-square overflow-hidden rounded-xl bg-gray-100 mb-3">
                     <img
-                      src={product.imageUrl ? (product.imageUrl.startsWith('/uploads') ? `${API_URL}${product.imageUrl}` : product.imageUrl) : 'https://via.placeholder.com/400'}
+                      src={getImageSrc(product, 'https://via.placeholder.com/400')}
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />

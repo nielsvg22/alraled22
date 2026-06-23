@@ -35,6 +35,14 @@ export const products = mysqlTable('Product', {
   updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
 
+export const productImages = mysqlTable('ProductImage', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  productId: varchar('productId', { length: 36 }).notNull().references(() => products.id, { onDelete: 'cascade' }),
+  url: varchar('url', { length: 512 }).notNull(),
+  sortOrder: int('sortOrder').notNull().default(0),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+});
+
 export const productPriceTiers = mysqlTable('ProductPriceTier', {
   id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
   productId: varchar('productId', { length: 36 }).notNull().references(() => products.id, { onDelete: 'cascade' }),
@@ -116,8 +124,13 @@ export const customerGroupsRelations = relations(customerGroups, ({ many }) => (
 export const productsRelations = relations(products, ({ many }) => ({
   orderItems: many(orderItems),
   priceTiers: many(productPriceTiers),
+  images: many(productImages),
   relatedProducts: many(productRelations, { relationName: 'productToRelated' }),
   isRelatedTo: many(productRelations, { relationName: 'relatedToProduct' }),
+}));
+
+export const productImagesRelations = relations(productImages, ({ one }) => ({
+  product: one(products, { fields: [productImages.productId], references: [products.id] }),
 }));
 
 export const productRelationsRelations = relations(productRelations, ({ one }) => ({

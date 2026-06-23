@@ -6,7 +6,15 @@ import { errorText } from '../lib/errorText';
 import ImageUploader from '../components/ImageUploader';
 
 const euro = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
-const emptyForm = { name: '', description: '', price: '', stock: '', category: '', imageUrl: '' };
+const emptyForm = { name: '', description: '', price: '', stock: '', category: '', imageUrl: '', imageUrls: [] };
+
+const getProductImages = (product) => {
+  const urls = Array.isArray(product?.images) ? product.images.map((image) => image.url || image).filter(Boolean) : [];
+  if (urls.length > 0) return urls;
+  return product?.imageUrl ? [product.imageUrl] : [];
+};
+
+const getPrimaryImage = (product) => getProductImages(product)[0] || '';
 
 function StockBadge({ stock }) {
   if (stock <= 0)  return <span style={{ background:'#fef2f2', color:'#dc2626', border:'1px solid #fecaca', padding:'2px 10px', borderRadius:999, fontSize:11, fontWeight:700 }}>Uitverkocht</span>;
@@ -70,7 +78,8 @@ export default function Products() {
 
   const openModal = async (product = null) => {
     setEditing(product);
-    setFormData(product ? { name: product.name, description: product.description||'', price: String(product.price), stock: String(product.stock), category: product.category||'', imageUrl: product.imageUrl||'' } : emptyForm);
+    const imageUrls = product ? getProductImages(product) : [];
+    setFormData(product ? { name: product.name, description: product.description||'', price: String(product.price), stock: String(product.stock), category: product.category||'', imageUrl: imageUrls[0] || '', imageUrls } : emptyForm);
     setError('');
     setModalOpen(true);
     
@@ -104,7 +113,8 @@ export default function Products() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    const data = { ...formData, price: parseFloat(formData.price), stock: parseInt(formData.stock, 10) };
+    const imageUrls = Array.isArray(formData.imageUrls) ? formData.imageUrls : [];
+    const data = { ...formData, imageUrl: imageUrls[0] || formData.imageUrl || '', imageUrls, price: parseFloat(formData.price), stock: parseInt(formData.stock, 10) };
     try {
       editing ? await api.put(`/products/${editing.id}`, data) : await api.post('/products', data);
       await fetchProducts();
@@ -121,7 +131,8 @@ export default function Products() {
 
   const handleDuplicate = async (p) => {
     try {
-      await api.post('/products', { name: p.name+' (kopie)', description: p.description||'', price: p.price, stock: p.stock, category: p.category||'', imageUrl: p.imageUrl||'' });
+      const imageUrls = getProductImages(p);
+      await api.post('/products', { name: p.name+' (kopie)', description: p.description||'', price: p.price, stock: p.stock, category: p.category||'', imageUrl: imageUrls[0] || '', imageUrls });
       await fetchProducts();
     } catch { setError('Dupliceren mislukt'); }
   };
@@ -259,8 +270,8 @@ export default function Products() {
               style={{ border: '1px solid #f1f5f9', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
               {/* Image */}
               <div className="relative h-44 bg-gray-50 overflow-hidden">
-                {product.imageUrl ? (
-                  <img src={getMediaUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                {getPrimaryImage(product) ? (
+                  <img src={getMediaUrl(getPrimaryImage(product))} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-2">
                     <Package size={32} className="text-gray-200" />
@@ -357,10 +368,11 @@ export default function Products() {
                 {error && <div className="rounded-xl bg-red-50 border border-red-100 text-red-600 px-4 py-3 text-sm font-medium">{String(error)}</div>}
 
                 {/* Image upload */}
-                <ImageUploader 
-                  value={formData.imageUrl} 
-                  onChange={(val) => setFormData(f => ({ ...f, imageUrl: val }))}
-                  label="Afbeelding"
+                <ImageUploader
+                  value={formData.imageUrls}
+                  onChange={(val) => setFormData(f => ({ ...f, imageUrls: val, imageUrl: val[0] || '' }))}
+                  label="Productfoto's"
+                  multiple
                 />
 
                 {/* Name */}
@@ -420,8 +432,8 @@ export default function Products() {
                       {relations.map(rel => (
                         <div key={rel.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 group">
                           <div className="flex items-center gap-3">
-                            {rel.relatedProduct.imageUrl && (
-                              <img src={getMediaUrl(rel.relatedProduct.imageUrl)} className="w-8 h-8 rounded-lg object-cover" />
+                            {getPrimaryImage(rel.relatedProduct) && (
+                              <img src={getMediaUrl(getPrimaryImage(rel.relatedProduct))} className="w-8 h-8 rounded-lg object-cover" />
                             )}
                             <div>
                               <p className="text-xs font-black text-gray-900 line-clamp-1">{rel.relatedProduct.name}</p>
@@ -456,7 +468,7 @@ export default function Products() {
                                 onClick={() => { handleAddRelation(p.id); setRelSearch(''); }}
                                 className="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center gap-3 border-b border-gray-50 last:border-0"
                               >
-                                {p.imageUrl && <img src={getMediaUrl(p.imageUrl)} className="w-6 h-6 rounded-lg object-cover" />}
+                                {getPrimaryImage(p) && <img src={getMediaUrl(getPrimaryImage(p))} className="w-6 h-6 rounded-lg object-cover" />}
                                 <div className="flex-1">
                                   <p className="text-xs font-black text-gray-900">{p.name}</p>
                                   <p className="text-[10px] text-gray-400 font-bold">{euro.format(p.price)}</p>

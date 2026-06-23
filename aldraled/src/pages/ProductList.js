@@ -3,12 +3,9 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
 import { getMediaUrl, API_URL } from '../lib/api';
+import { getImageSrc } from '../lib/productHelpers';
 
 const CATEGORIES = ['Alle', 'Bedrijfswagens', 'Bouwverlichting', 'Werkplaats', 'Accessoires'];
-
-const getImageSrc = (url) => {
-  return getMediaUrl(url) || 'https://via.placeholder.com/400';
-};
 
 /* ── QUICK-VIEW MODAL ─────────────────────────── */
 function QuickViewModal({ product, onClose }) {
@@ -37,7 +34,7 @@ function QuickViewModal({ product, onClose }) {
         <div className="grid grid-cols-2">
           {/* Image */}
           <div className="bg-gray-50 aspect-square flex items-center justify-center p-8">
-            <img src={getImageSrc(product.imageUrl)} alt={product.name} className="w-full h-full object-contain" />
+            <img src={getImageSrc(product)} alt={product.name} className="w-full h-full object-contain" />
           </div>
           {/* Info */}
           <div className="p-7 flex flex-col gap-4">
@@ -78,7 +75,7 @@ function CompareBar({ list, onRemove, onClear, onCompare }) {
         <div className="flex items-center gap-3 flex-1 overflow-x-auto">
           {list.map(p => (
             <div key={p.id} className="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-1.5 shrink-0">
-              <img src={getImageSrc(p.imageUrl)} alt={p.name} className="w-7 h-7 rounded-lg object-cover bg-white" />
+              <img src={getImageSrc(p)} alt={p.name} className="w-7 h-7 rounded-lg object-cover bg-white" />
               <span className="text-xs font-semibold max-w-[120px] truncate">{p.name}</span>
               <button onClick={() => onRemove(p.id)} className="text-white/40 hover:text-white ml-1 text-xs">✕</button>
             </div>
@@ -129,7 +126,7 @@ function CompareModal({ list, onClose }) {
             {list.map(p => (
               <div key={p.id} className="text-center space-y-2">
                 <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
-                  <img src={getImageSrc(p.imageUrl)} alt={p.name} className="w-full h-full object-contain p-4" />
+                  <img src={getImageSrc(p)} alt={p.name} className="w-full h-full object-contain p-4" />
                 </div>
                 <h3 className="text-sm font-black text-secondary">{p.name}</h3>
               </div>
@@ -281,7 +278,7 @@ const ProductList = () => {
 
                   <Link to={`/product/${product.id}`} className="block">
                     <div className={`relative overflow-hidden rounded-xl bg-gray-50 aspect-square mb-3 border-2 transition-all duration-200 ${inCompare ? 'border-primary' : 'border-gray-100'}`}>
-                      <img src={getImageSrc(product.imageUrl)} alt={product.name}
+                      <img src={getImageSrc(product)} alt={product.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       <div className="absolute inset-0 bg-secondary/0 group-hover:bg-secondary/60 transition-all duration-300 flex items-end p-4">
                         <span className="text-white text-xs font-bold bg-primary px-3 py-1.5 rounded-full translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">

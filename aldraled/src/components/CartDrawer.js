@@ -2,6 +2,7 @@ import React from 'react';
 import { useCart } from '../lib/CartContext';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { getImageSrc } from '../lib/productHelpers';
 
 const CartDrawer = () => {
   const { t } = useTranslation();
@@ -38,7 +39,7 @@ const CartDrawer = () => {
                 <div key={item.id} className="flex gap-6 group">
                   <div className="w-24 h-24 bg-gray-50 rounded-2xl overflow-hidden shrink-0">
                     <img
-                      src={item.imageUrl || 'https://via.placeholder.com/150'}
+                      src={getImageSrc(item, 'https://via.placeholder.com/150')}
                       alt={item.name}
                       className="w-full h-full object-cover"
                     />
