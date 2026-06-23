@@ -489,17 +489,50 @@ export const improveImage = async (req: Request, res: Response) => {
     let newFilename = `${randomUUID()}.png`;
     let b64: string | undefined;
 
-    // Better prompts with product context
     const enhancedPrompt = `Professional product photography: ${prompt}. High-end commercial lighting, studio quality, sharp focus, 8K detail, e-commerce ready. Clean background, product centered, premium finish.`;
-    
+
+    // Try to build a richer prompt using Gemini vision (optional — only if key is configured)
+    let visionPrompt = enhancedPrompt;
+    const googleKey = settings?.googleApiKey;
+    if (googleKey) {
+      try {
+        const genAI = new GoogleGenerativeAI(googleKey);
+        const visionModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const analysisResult = await visionModel.generateContent([
+          `You are an expert product photographer. Analyze this image and write a vivid 80-word prompt that: describes the exact product, applies this user request: "${prompt}", and aims for professional e-commerce quality — studio lighting, clean background, sharp focus, photorealistic. Only output the prompt, start with "Professional product photo of..."`,
+          { inlineData: { data: imageBuffer.toString('base64'), mimeType } }
+        ]);
+        visionPrompt = analysisResult.response.text().trim();
+        console.log('[vision] Gemini prompt:', visionPrompt.slice(0, 100));
+      } catch (e) {
+        console.error('Gemini vision failed, using fallback prompt:', e);
+      }
+    }
+
+    if (provider === 'pollinations' || (!settings?.openaiApiKey && !settings?.stabilityAiKey && !settings?.replicateApiKey && !settings?.chatgptAccessToken && !settings?.segmindApiKey)) {
+      // Pollinations.ai — volledig gratis, geen API key nodig
+      console.log('[Pollinations] Generating image from prompt…');
+      const pollinationsPrompt = encodeURIComponent(visionPrompt);
+      const pollinationsUrl = `https://image.pollinations.ai/prompt/${pollinationsPrompt}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
+
+      const pollinationsResponse = await fetch(pollinationsUrl);
+      if (!pollinationsResponse.ok) throw new Error(`Pollinations returned ${pollinationsResponse.status}`);
+
+      const imgBuffer = Buffer.from(await pollinationsResponse.arrayBuffer());
+      if (imgBuffer.length < 500) throw new Error('Pollinations returned an invalid image');
+
+      fs.mkdirSync(uploadsDir, { recursive: true });
+      const newPath = path.join(uploadsDir, newFilename);
+      fs.writeFileSync(newPath, imgBuffer);
+
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+      const host = req.get('host');
+      const url = `${protocol}://${host}/uploads/${newFilename}`;
+      return res.json({ url });
+    }
+
     if (provider === 'bridge' && settings.chatgptAccessToken) {
-      // Gebruik de ChatGPT Plus Bridge met DALL-E 3 voor image generation
-      // Eerst analyseren we de afbeelding met Gemini (als beschikbaar) voor een betere prompt
-      
       let description = "Een professionele productfoto van verlichting.";
-      
-      // Als Gemini beschikbaar is, gebruik die voor de visuele analyse
-      const googleKey = settings?.googleApiKey;
       if (googleKey) {
         try {
           const genAI = new GoogleGenerativeAI(googleKey);
@@ -514,7 +547,6 @@ export const improveImage = async (req: Request, res: Response) => {
         }
       }
 
-      // Vraag ChatGPT Plus (DALL-E 3) om een verbeterde versie van de afbeelding
       const imagePrompt = `Ik heb een afbeelding met deze beschrijving: "${description}". 
 
 De gebruiker wil dit aanpassen: "${prompt}".
@@ -524,7 +556,6 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
       const { callBridgeImage } = require('./aiController');
       const imageBase64 = await callBridgeImage(settings.chatgptAccessToken, imagePrompt);
 
-      // Sla de gegenereerde afbeelding op
       const buffer = Buffer.from(imageBase64, 'base64');
       const filename = `${randomUUID()}.png`;
       fs.writeFileSync(path.join(uploadsDir, filename), buffer);
@@ -535,31 +566,8 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
       const googleKey = settings?.googleApiKey;
       if (!googleKey) return res.status(500).json({ error: 'Nano Banana (Google Gemini) API Key is niet geconfigureerd in het CRM' });
 
-      // Stap 1: Gemini analyseert de foto en bouwt een rijke image-generation prompt
-      let imageGenPrompt = enhancedPrompt;
-      try {
-        const genAI = new GoogleGenerativeAI(googleKey);
-        const visionModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      let imageGenPrompt = visionPrompt;
 
-        const analysisResult = await visionModel.generateContent([
-          `You are an expert product photographer and AI prompt engineer.
-Analyze this product image carefully. Then write a detailed, vivid image generation prompt (max 80 words) that:
-1. Describes the exact product in the photo
-2. Applies this user instruction: "${prompt}"
-3. Aims for professional e-commerce product photography
-4. Specifies: studio lighting, clean background, sharp focus, photorealistic
-
-Only output the prompt text, nothing else. Start with "Professional product photo of..."`,
-          { inlineData: { data: imageBuffer.toString('base64'), mimeType } }
-        ]);
-
-        imageGenPrompt = analysisResult.response.text().trim();
-        console.log('[NanoBanana] Generated prompt:', imageGenPrompt.slice(0, 100));
-      } catch (visionErr) {
-        console.error('Gemini vision analysis failed, using fallback prompt:', visionErr);
-      }
-
-      // Stap 2: Segmind SDXL img2img — originele foto als base64 input
       const segmindKey = settings?.segmindApiKey;
       if (!segmindKey) return res.status(500).json({ error: 'Segmind API Key is niet geconfigureerd. Maak gratis een account aan op segmind.com en voeg je key toe in AI Instellingen.' });
 
@@ -602,16 +610,12 @@ Only output the prompt text, nothing else. Start with "Professional product phot
       }
 
     } else if (provider === 'replicate') {
-      // Replicate API - $5 free credits, proper img2img support
-      // Uses models like stability-ai/stable-diffusion-img2img
       const replicateKey = settings?.replicateApiKey;
       if (!replicateKey) return res.status(500).json({ error: 'Replicate API Key is niet geconfigureerd in het CRM. Haal een gratis key op bij replicate.com/account/api-tokens' });
 
       try {
-        // Convert image to base64 data URL
         const dataUrl = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
         
-        // Try multiple Replicate models for img2img
         const replicateModels = [
           { owner: 'tstramer', name: 'stable-diffusion-img2img', version: 'latest' },
           { owner: 'stability-ai', name: 'stable-diffusion', version: 'ac732df83cea7fff18b8472768c88ad041fa750ff7682a21a8184447be7a4b69' },
@@ -627,10 +631,10 @@ Only output the prompt text, nothing else. Start with "Professional product phot
             
             if (model.version === 'latest') {
               url = `https://api.replicate.com/v1/models/${model.owner}/${model.name}/predictions`;
-              body = { input: { image: dataUrl, prompt: enhancedPrompt, strength: 0.75, num_inference_steps: 50, guidance_scale: 7.5 } };
+              body = { input: { image: dataUrl, prompt: visionPrompt, strength: 0.75, num_inference_steps: 50, guidance_scale: 7.5 } };
             } else {
               url = 'https://api.replicate.com/v1/predictions';
-              body = { version: model.version, input: { prompt: enhancedPrompt, width: 1024, height: 1024 } };
+              body = { version: model.version, input: { prompt: visionPrompt, width: 1024, height: 1024 } };
             }
 
             startResponse = await fetch(url, {
@@ -643,7 +647,7 @@ Only output the prompt text, nothing else. Start with "Professional product phot
             });
 
             if (startResponse && startResponse.ok) {
-              break; // Success!
+              break;
             } else if (startResponse) {
               const errorData = await startResponse.json() as any;
               lastReplicateError = `${model.owner}/${model.name}: ${errorData.detail || startResponse.status}`;
@@ -663,13 +667,12 @@ Only output the prompt text, nothing else. Start with "Professional product phot
         const prediction = await startResponse.json() as any;
         const predictionId = prediction.id;
 
-        // Poll for result (max 60 seconds)
         let result: any = null;
         let attempts = 0;
         const maxAttempts = 30;
 
         while (attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+          await new Promise(resolve => setTimeout(resolve, 2000));
           
           const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
             headers: { 'Authorization': `Token ${replicateKey}` }
@@ -692,9 +695,8 @@ Only output the prompt text, nothing else. Start with "Professional product phot
           throw new Error('Replicate timeout - image generation took too long');
         }
 
-        // Download the generated image
-        const imageUrl = result.output[0];
-        const imageResponse = await fetch(imageUrl);
+        const imgUrl = result.output[0];
+        const imageResponse = await fetch(imgUrl);
         
         if (!imageResponse.ok) {
           throw new Error('Failed to download generated image');
@@ -710,40 +712,17 @@ Only output the prompt text, nothing else. Start with "Professional product phot
         });
       }
     } else if (provider === 'stabilityai') {
-      // Stability AI - 25 free credits for new users, proper img2img
-      // https://platform.stability.ai/
       const stabilityKey = settings?.stabilityAiKey;
       if (!stabilityKey) return res.status(500).json({ error: 'Stability AI API Key is niet geconfigureerd. Haal een gratis key op bij platform.stability.ai' });
 
       try {
-        // Create FormData for the API
         const formData = new FormData();
         const imageBlob = new Blob([new Uint8Array(imageBuffer)], { type: mimeType });
         formData.append('image', imageBlob, 'product.png');
-        formData.append('prompt', enhancedPrompt);
+        formData.append('prompt', visionPrompt);
         formData.append('control_strength', '0.7');
         formData.append('output_format', 'png');
 
-        // Gebruik Gemini voor een betere prompt als key beschikbaar is
-        let stabilityPrompt = enhancedPrompt;
-        const googleKey = settings?.googleApiKey;
-        if (googleKey) {
-          try {
-            const genAI = new GoogleGenerativeAI(googleKey);
-            const visionModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-            const analysisResult = await visionModel.generateContent([
-              `You are an expert product photographer. Analyze this image and write a 60-word prompt for Stable Diffusion that recreates the product but applies: "${prompt}". Be specific about lighting, background, and product details. Start with "Professional product photo of..."`,
-              { inlineData: { data: imageBuffer.toString('base64'), mimeType } }
-            ]);
-            stabilityPrompt = analysisResult.response.text().trim();
-            console.log('[StabilityAI] Gemini prompt:', stabilityPrompt.slice(0, 80));
-            formData.set('prompt', stabilityPrompt);
-          } catch (e) {
-            console.error('Gemini analysis failed, using base prompt:', e);
-          }
-        }
-        
-        // control/structure behoudt de structuur van de originele foto
         const stabilityResponse = await fetch('https://api.stability.ai/v2beta/stable-image/control/structure', {
           method: 'POST',
           headers: {
@@ -771,7 +750,6 @@ Only output the prompt text, nothing else. Start with "Professional product phot
         });
       }
     } else {
-      // Default to OpenAI
       const apiKey = settings?.openaiApiKey;
       if (!apiKey) return res.status(500).json({ error: 'OpenAI API Key is niet geconfigureerd in het CRM' });
 
@@ -781,7 +759,7 @@ Only output the prompt text, nothing else. Start with "Professional product phot
       const result = await openai.images.edit({
         model: 'gpt-image-1',
         image: imgFile,
-        prompt: enhancedPrompt,
+        prompt: visionPrompt,
         size: '1024x1024',
         response_format: 'b64_json'
       });

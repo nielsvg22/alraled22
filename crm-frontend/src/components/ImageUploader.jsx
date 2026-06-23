@@ -43,9 +43,11 @@ export default function ImageUploader({ value, onChange, label = 'Afbeelding', h
     api.get('/content/ai_settings').then(r => {
       if (r.data?.preferredImageProvider) {
         const p = r.data.preferredImageProvider;
-        setProvider(p === 'openai' ? 'ChatGPT' : p === 'google' ? 'Nano Banana' : p === 'stabilityai' ? 'Stability AI' : p === 'replicate' ? 'Replicate' : 'AI');
+        setProvider(p === 'openai' ? 'ChatGPT' : p === 'google' ? 'Nano Banana' : p === 'stabilityai' ? 'Stability AI' : p === 'replicate' ? 'Replicate' : p === 'pollinations' ? 'Pollinations' : 'AI');
+      } else {
+        setProvider('Pollinations');
       }
-    }).catch(() => {});
+    }).catch(() => { setProvider('Pollinations'); });
   }, [activeValue]);
 
   const emit = (nextImages) => {
