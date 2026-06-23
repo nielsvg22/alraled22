@@ -564,208 +564,186 @@ Genereer een professionele, verbeterde productfoto met DALL-E 3. Behoud het prod
 
     if (provider === 'google') {
       const googleKey = settings?.googleApiKey;
-      if (!googleKey) return res.status(500).json({ error: 'Nano Banana (Google Gemini) API Key is niet geconfigureerd in het CRM' });
-
-      let imageGenPrompt = visionPrompt;
-
       const segmindKey = settings?.segmindApiKey;
-      if (!segmindKey) return res.status(500).json({ error: 'Segmind API Key is niet geconfigureerd. Maak gratis een account aan op segmind.com en voeg je key toe in AI Instellingen.' });
+      if (googleKey && segmindKey) {
+        try {
+          const segmindResponse = await fetch('https://api.segmind.com/v1/sdxl-img2img', {
+            method: 'POST',
+            headers: {
+              'x-api-key': segmindKey,
+              'Content-Type': 'application/json',
+              'Accept': 'image/png, image/jpeg, image/webp, */*',
+            },
+            body: JSON.stringify({
+              image: imageBuffer.toString('base64'),
+              prompt: visionPrompt,
+              negative_prompt: 'blurry, low quality, distorted, watermark, text, ugly',
+              samples: 1,
+              num_inference_steps: 30,
+              guidance_scale: 6.5,
+              strength: 0.65,
+            })
+          });
 
-      console.log('[NanoBanana] Requesting Segmind SDXL img2img...');
-      try {
-        const segmindResponse = await fetch('https://api.segmind.com/v1/sdxl-img2img', {
-          method: 'POST',
-          headers: {
-            'x-api-key': segmindKey,
-            'Content-Type': 'application/json',
-            'Accept': 'image/png, image/jpeg, image/webp, */*',
-          },
-          body: JSON.stringify({
-            image: imageBuffer.toString('base64'),
-            prompt: imageGenPrompt,
-            negative_prompt: 'blurry, low quality, distorted, watermark, text, ugly',
-            samples: 1,
-            num_inference_steps: 30,
-            guidance_scale: 6.5,
-            strength: 0.65,
-          })
-        });
-
-        if (!segmindResponse.ok) {
-          const errText = await segmindResponse.text();
-          console.error('Segmind error:', segmindResponse.status, errText.slice(0, 300));
-          if (segmindResponse.status === 401) return res.status(500).json({ error: 'Segmind API key is ongeldig. Controleer je key in AI Instellingen.' });
-          if (segmindResponse.status === 402) return res.status(500).json({ error: 'Segmind credits op. Maak gratis een nieuw account aan op segmind.com.' });
-          throw new Error(`Segmind fout (${segmindResponse.status}): ${errText.slice(0, 100)}`);
+          if (segmindResponse.ok) {
+            const segmindBuffer = Buffer.from(await segmindResponse.arrayBuffer());
+            if (segmindBuffer.length >= 1000) {
+              b64 = segmindBuffer.toString('base64');
+            }
+          } else {
+            const errText = await segmindResponse.text();
+            console.error('Segmind error:', segmindResponse.status, errText.slice(0, 300));
+          }
+        } catch (segErr: any) {
+          console.error('Segmind failed:', segErr?.message);
         }
-
-        const segmindBuffer = Buffer.from(await segmindResponse.arrayBuffer());
-        if (segmindBuffer.length < 1000) {
-          return res.status(500).json({ error: 'Segmind retourneerde een ongeldige afbeelding. Probeer een andere prompt.' });
-        }
-        b64 = segmindBuffer.toString('base64');
-      } catch (segErr: any) {
-        console.error('Segmind img2img error:', segErr?.message);
-        return res.status(500).json({ error: `Nano Banana (Segmind) mislukt: ${segErr?.message || 'onbekende fout'}` });
       }
 
     } else if (provider === 'replicate') {
       const replicateKey = settings?.replicateApiKey;
-      if (!replicateKey) return res.status(500).json({ error: 'Replicate API Key is niet geconfigureerd in het CRM. Haal een gratis key op bij replicate.com/account/api-tokens' });
+      if (replicateKey) {
+        try {
+          const dataUrl = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+          
+          const replicateModels = [
+            { owner: 'tstramer', name: 'stable-diffusion-img2img', version: 'latest' },
+            { owner: 'stability-ai', name: 'stable-diffusion', version: 'ac732df83cea7fff18b8472768c88ad041fa750ff7682a21a8184447be7a4b69' },
+          ];
 
-      try {
-        const dataUrl = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
-        
-        const replicateModels = [
-          { owner: 'tstramer', name: 'stable-diffusion-img2img', version: 'latest' },
-          { owner: 'stability-ai', name: 'stable-diffusion', version: 'ac732df83cea7fff18b8472768c88ad041fa750ff7682a21a8184447be7a4b69' },
-        ];
+          let startResponse: globalThis.Response | null = null;
 
-        let startResponse: globalThis.Response | null = null;
-        let lastReplicateError = '';
+          for (const model of replicateModels) {
+            try {
+              let url: string;
+              let body: any;
+              
+              if (model.version === 'latest') {
+                url = `https://api.replicate.com/v1/models/${model.owner}/${model.name}/predictions`;
+                body = { input: { image: dataUrl, prompt: visionPrompt, strength: 0.75, num_inference_steps: 50, guidance_scale: 7.5 } };
+              } else {
+                url = 'https://api.replicate.com/v1/predictions';
+                body = { version: model.version, input: { prompt: visionPrompt, width: 1024, height: 1024 } };
+              }
 
-        for (const model of replicateModels) {
-          try {
-            let url: string;
-            let body: any;
-            
-            if (model.version === 'latest') {
-              url = `https://api.replicate.com/v1/models/${model.owner}/${model.name}/predictions`;
-              body = { input: { image: dataUrl, prompt: visionPrompt, strength: 0.75, num_inference_steps: 50, guidance_scale: 7.5 } };
-            } else {
-              url = 'https://api.replicate.com/v1/predictions';
-              body = { version: model.version, input: { prompt: visionPrompt, width: 1024, height: 1024 } };
+              startResponse = await fetch(url, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Token ${replicateKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body)
+              });
+
+              if (startResponse && startResponse.ok) break;
+            } catch (modelErr: any) {
+              console.error(`Replicate ${model.owner}/${model.name} error:`, modelErr);
+              startResponse = null;
+            }
+          }
+
+          if (startResponse && startResponse.ok) {
+            const prediction = await startResponse.json() as any;
+            const predictionId = prediction.id;
+
+            let result: any = null;
+            let attempts = 0;
+
+            while (attempts < 30) {
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
+                headers: { 'Authorization': `Token ${replicateKey}` }
+              });
+              if (!pollResponse.ok) { attempts++; continue; }
+              result = await pollResponse.json() as any;
+              if (result.status === 'succeeded') break;
+              if (result.status === 'failed') break;
+              attempts++;
             }
 
-            startResponse = await fetch(url, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Token ${replicateKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(body)
-            });
-
-            if (startResponse && startResponse.ok) {
-              break;
-            } else if (startResponse) {
-              const errorData = await startResponse.json() as any;
-              lastReplicateError = `${model.owner}/${model.name}: ${errorData.detail || startResponse.status}`;
-              console.error(`Replicate ${model.owner}/${model.name} failed:`, startResponse.status, errorData);
+            if (result?.status === 'succeeded' && result.output?.[0]) {
+              const imgUrl = result.output[0];
+              const imageResponse = await fetch(imgUrl);
+              if (imageResponse.ok) {
+                b64 = (Buffer.from(await imageResponse.arrayBuffer())).toString('base64');
+              }
             }
-          } catch (modelErr: any) {
-            lastReplicateError = modelErr.message;
-            console.error(`Replicate ${model.owner}/${model.name} error:`, modelErr);
-            startResponse = null;
           }
+        } catch (replicateError: any) {
+          console.error('Replicate failed:', replicateError);
         }
-
-        if (!startResponse || !startResponse.ok) {
-          throw new Error(`Replicate: Alle modellen faalden. Laatste fout: ${lastReplicateError}`);
-        }
-
-        const prediction = await startResponse.json() as any;
-        const predictionId = prediction.id;
-
-        let result: any = null;
-        let attempts = 0;
-        const maxAttempts = 30;
-
-        while (attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
-            headers: { 'Authorization': `Token ${replicateKey}` }
-          });
-
-          if (!pollResponse.ok) continue;
-
-          result = await pollResponse.json() as any;
-          
-          if (result.status === 'succeeded') {
-            break;
-          } else if (result.status === 'failed') {
-            throw new Error('Replicate image generation failed');
-          }
-          
-          attempts++;
-        }
-
-        if (!result || result.status !== 'succeeded') {
-          throw new Error('Replicate timeout - image generation took too long');
-        }
-
-        const imgUrl = result.output[0];
-        const imageResponse = await fetch(imgUrl);
-        
-        if (!imageResponse.ok) {
-          throw new Error('Failed to download generated image');
-        }
-
-        const resultBuffer = Buffer.from(await imageResponse.arrayBuffer());
-        b64 = resultBuffer.toString('base64');
-        
-      } catch (replicateError: any) {
-        console.error('Replicate img2img failed:', replicateError);
-        return res.status(500).json({ 
-          error: replicateError.message || 'Replicate image editing mislukt. Controleer je API key of probeer een andere provider.' 
-        });
       }
     } else if (provider === 'stabilityai') {
       const stabilityKey = settings?.stabilityAiKey;
-      if (!stabilityKey) return res.status(500).json({ error: 'Stability AI API Key is niet geconfigureerd. Haal een gratis key op bij platform.stability.ai' });
+      if (stabilityKey) {
+        try {
+          const formData = new FormData();
+          const imageBlob = new Blob([new Uint8Array(imageBuffer)], { type: mimeType });
+          formData.append('image', imageBlob, 'product.png');
+          formData.append('prompt', visionPrompt);
+          formData.append('control_strength', '0.7');
+          formData.append('output_format', 'png');
 
-      try {
-        const formData = new FormData();
-        const imageBlob = new Blob([new Uint8Array(imageBuffer)], { type: mimeType });
-        formData.append('image', imageBlob, 'product.png');
-        formData.append('prompt', visionPrompt);
-        formData.append('control_strength', '0.7');
-        formData.append('output_format', 'png');
+          const stabilityResponse = await fetch('https://api.stability.ai/v2beta/stable-image/control/structure', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${stabilityKey}`,
+              'Accept': 'image/*',
+            },
+            body: formData
+          });
 
-        const stabilityResponse = await fetch('https://api.stability.ai/v2beta/stable-image/control/structure', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${stabilityKey}`,
-            'Accept': 'image/*',
-          },
-          body: formData
-        });
-
-        if (!stabilityResponse.ok) {
-          const errorText = await stabilityResponse.text();
-          console.error('Stability AI Error:', stabilityResponse.status, errorText.slice(0, 300));
-          throw new Error(`Stability AI fout (${stabilityResponse.status}): ${errorText.slice(0, 150)}`);
+          if (stabilityResponse.ok) {
+            const imgBuffer = Buffer.from(await stabilityResponse.arrayBuffer());
+            if (imgBuffer.length >= 1000) {
+              b64 = imgBuffer.toString('base64');
+            }
+          } else {
+            const errorText = await stabilityResponse.text();
+            console.error('Stability AI Error:', stabilityResponse.status, errorText.slice(0, 300));
+          }
+        } catch (stabilityError: any) {
+          console.error('Stability AI failed:', stabilityError);
         }
-
-        const imgBuffer = Buffer.from(await stabilityResponse.arrayBuffer());
-        if (imgBuffer.length < 1000) {
-          throw new Error('Geen afbeelding ontvangen van Stability AI');
-        }
-        b64 = imgBuffer.toString('base64');
-      } catch (stabilityError: any) {
-        console.error('Stability AI failed:', stabilityError);
-        return res.status(500).json({ 
-          error: stabilityError.message || 'Stability AI image editing mislukt. Probeer een andere provider.' 
-        });
       }
     } else {
       const apiKey = settings?.openaiApiKey;
-      if (!apiKey) return res.status(500).json({ error: 'OpenAI API Key is niet geconfigureerd in het CRM' });
+      if (apiKey) {
+        try {
+          const openai = new OpenAI({ apiKey });
+          const imgFile = await toFile(imageBuffer, 'image.png', { type: mimeType as any });
+          const result = await openai.images.edit({
+            model: 'gpt-image-1',
+            image: imgFile,
+            prompt: visionPrompt,
+            size: '1024x1024',
+            response_format: 'b64_json'
+          });
+          b64 = (result.data?.[0] as any)?.b64_json;
+        } catch (openaiErr: any) {
+          console.error('OpenAI failed:', openaiErr?.message);
+        }
+      }
+    }
 
-      const openai = new OpenAI({ apiKey });
-      const imgFile = await toFile(imageBuffer, 'image.png', { type: mimeType as any });
-
-      const result = await openai.images.edit({
-        model: 'gpt-image-1',
-        image: imgFile,
-        prompt: visionPrompt,
-        size: '1024x1024',
-        response_format: 'b64_json'
-      });
-
-      b64 = (result.data?.[0] as any)?.b64_json;
-      if (!b64) return res.status(500).json({ error: 'Geen afbeelding geretourneerd door AI' });
+    // Fallback naar pollinations.ai als alle betaalde providers faalden
+    if (!b64) {
+      console.log('[Fallback] Pollinations.ai (geen betalende provider gelukt)…');
+      const pollinationsPrompt = encodeURIComponent(visionPrompt);
+      const pollinationsUrl = `https://image.pollinations.ai/prompt/${pollinationsPrompt}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
+      const pollinationsResponse = await fetch(pollinationsUrl);
+      if (pollinationsResponse.ok) {
+        const fallbackBuffer = Buffer.from(await pollinationsResponse.arrayBuffer());
+        if (fallbackBuffer.length >= 500) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+          const fallbackPath = path.join(uploadsDir, newFilename);
+          fs.writeFileSync(fallbackPath, fallbackBuffer);
+          const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+          const host = req.get('host');
+          const url = `${protocol}://${host}/uploads/${newFilename}`;
+          return res.json({ url });
+        }
+      }
+      return res.status(500).json({ error: 'AI beeldbewerking mislukt. Geen betalende provider beschikbaar en fallback naar pollinations.ai werkte niet.' });
     }
 
     if (b64) {
