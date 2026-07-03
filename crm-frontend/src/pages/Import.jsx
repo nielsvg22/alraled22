@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import api from '../lib/api';
-import { Upload, CheckCircle, AlertCircle, Loader2, ExternalLink, ListChecks } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, Loader2, ExternalLink, ListChecks, FileText } from 'lucide-react';
 
 export default function Import() {
   const [status, setStatus] = useState('idle');
@@ -10,6 +10,10 @@ export default function Import() {
   const [specsStatus, setSpecsStatus] = useState('idle');
   const [specsResult, setSpecsResult] = useState(null);
   const [specsError, setSpecsError] = useState('');
+
+  const [textStatus, setTextStatus] = useState('idle');
+  const [textResult, setTextResult] = useState(null);
+  const [textError, setTextError] = useState('');
 
   const handleImport = async () => {
     setStatus('running');
@@ -36,6 +40,20 @@ export default function Import() {
     } catch (err) {
       setSpecsError(err.response?.data?.message || err.message);
       setSpecsStatus('error');
+    }
+  };
+
+  const handleImportText = async () => {
+    setTextStatus('running');
+    setTextError('');
+    setTextResult(null);
+    try {
+      const res = await api.post('/import/text');
+      setTextResult(res.data);
+      setTextStatus(res.data.status === 'completed' || res.data.status === 'completed_with_errors' ? 'done' : 'error');
+    } catch (err) {
+      setTextError(err.response?.data?.message || err.message);
+      setTextStatus('error');
     }
   };
 
@@ -104,6 +122,33 @@ export default function Import() {
               <><Loader2 size={16} className="animate-spin" /> Bezig met scrapen...</>
             ) : (
               <><ListChecks size={16} /> Scrape Specificaties</>
+            )}
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b bg-gray-50 flex items-center gap-2">
+          <FileText className="w-4 h-4 text-gray-400" />
+          <h3 className="font-black text-gray-600 text-xs uppercase tracking-widest">Tekst Inhoud Importeren</h3>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
+            <p className="text-xs text-purple-700 font-bold mb-1">Importeer pagina tekst van WordPress naar nieuwe site</p>
+            <p className="text-[10px] text-purple-600 leading-relaxed">
+              Haalt de tekstinhoud op van homepage, over ons, contact en juridische pagina's
+              van de oude WordPress website en slaat ze op onder de juiste kopjes in de database.
+            </p>
+          </div>
+          <button
+            onClick={handleImportText}
+            disabled={textStatus === 'running'}
+            className={`${btnBase} ${textStatus === 'running' ? 'bg-gray-400 text-white' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
+          >
+            {textStatus === 'running' ? (
+              <><Loader2 size={16} className="animate-spin" /> Bezig met importeren...</>
+            ) : (
+              <><FileText size={16} /> Import Tekst</>
             )}
           </button>
         </div>
@@ -190,6 +235,68 @@ export default function Import() {
                 <ul className="space-y-1">
                   {specsResult.errors.map((err, i) => (
                     <li key={i} className="text-xs text-red-500">• {err}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {textStatus === 'running' && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center gap-3">
+          <Loader2 size={20} className="animate-spin text-purple-600" />
+          <span className="text-sm text-gray-600">Pagina teksten worden opgehaald en verwerkt...</span>
+        </div>
+      )}
+
+      {textResult && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className={`px-6 py-4 border-b flex items-center gap-2 ${textResult.failed === 0 ? 'bg-green-50' : 'bg-amber-50'}`}>
+            {textResult.failed === 0
+              ? <CheckCircle className="w-4 h-4 text-green-600" />
+              : <AlertCircle className="w-4 h-4 text-amber-600" />
+            }
+            <h3 className={`font-black text-xs uppercase tracking-widest ${textResult.failed === 0 ? 'text-green-700' : 'text-amber-700'}`}>
+              {textResult.failed === 0 ? 'Tekst Import Voltooid' : 'Tekst Import Voltooid met Fouten'}
+            </h3>
+          </div>
+
+          <div className="p-6 space-y-3 text-sm">
+            <div className="grid grid-cols-2 gap-4">
+              <Stat label="Pagina's gevonden" value={textResult.total} />
+              <Stat label="Geslaagd" value={textResult.succeeded} color="text-green-600" />
+              <Stat label="Mislukt" value={textResult.failed} color="text-red-600" />
+            </div>
+
+            {textResult.results?.length > 0 && (
+              <div>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Per pagina</p>
+                <ul className="space-y-1">
+                  {textResult.results.map((r, i) => (
+                    <li key={i} className={`text-xs flex items-start gap-1 ${r.status === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+                      <span>{r.status === 'error' ? '•' : '✓'}</span>
+                      <span className="font-bold">{r.label}</span>
+                      {r.status === 'completed' && r.sectionsFound != null && (
+                        <span className="text-gray-400">({r.sectionsFound} secties)</span>
+                      )}
+                      {r.status === 'error' && r.error && (
+                        <span className="text-red-500">: {r.error}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {textResult.errors?.length > 0 && (
+              <div>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Foutmeldingen</p>
+                <ul className="space-y-1">
+                  {textResult.errors.map((err, i) => (
+                    <li key={i} className="text-xs text-red-500 flex items-start gap-1">
+                      <span>•</span> {err}
+                    </li>
                   ))}
                 </ul>
               </div>
