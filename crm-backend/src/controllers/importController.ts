@@ -26,18 +26,12 @@ function extractBetween(text: string, start: string, end: string): string {
 
 function parseSpecsFromHtml(html: string): { label: string; value: string }[] {
   const specs: { label: string; value: string }[] = [];
-  const re = /<(?:strong|b)>([^<]+)<\/(?:strong|b)>:\s*([^<\n]+)/gi;
+  const re = /<(?:strong|b)>([^<:]+):\s*<\/(?:strong|b)>\s*([^<\n]+)/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) {
     const label = (m[1] || '').trim();
-    const rawVal = (m[2] || '').trim();
-    if (!label || !rawVal) continue;
-    let value = rawVal;
-    const rest = html.slice(m.index + m[0].length, html.indexOf('<', m.index + m[0].length));
-    if (rest && !rest.includes('<')) {
-      const extra = rest.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('<'))[0];
-      if (extra) value += ' ' + extra;
-    }
+    const value = (m[2] || '').trim();
+    if (!label || !value) continue;
     specs.push({ label, value });
   }
   return specs;
