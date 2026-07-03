@@ -366,6 +366,95 @@ function LayoutBuilderBlock({ data }) {
   );
 }
 
+/* ── About ALRA LED ──────────────────────────────────── */
+function AboutAlraBlock({ data }) {
+  const isRight = data.imagePosition === 'right';
+  const features = Array.isArray(data.features) ? data.features : [];
+
+  return (
+    <section className="py-20 md:py-28 px-6 md:px-10 overflow-hidden relative bg-white">
+      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+      <div className="max-w-6xl mx-auto">
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center ${isRight ? '' : ''}`}>
+          <div className={`space-y-6 relative z-10 ${isRight ? 'md:order-2' : ''}`}>
+            {data.badge && (
+              <p className="text-xs font-bold text-primary uppercase tracking-[0.2em]">{data.badge}</p>
+            )}
+            {data.heading && (
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-secondary leading-[1.1] tracking-tight">
+                {data.heading}
+              </h2>
+            )}
+            <div className="w-12 h-1 bg-primary rounded-full" />
+            {data.body && (
+              <p className="text-gray-500 text-sm md:text-base leading-relaxed max-w-lg whitespace-pre-wrap">
+                {data.body}
+              </p>
+            )}
+            {features.length > 0 && (
+              <div className="space-y-3 pt-1">
+                {features.map((feat, i) => {
+                  const text = typeof feat === 'string' ? feat : feat.text || '';
+                  if (!text) return null;
+                  return (
+                    <div key={i} className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                        <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                      </div>
+                      <p className="text-sm font-bold text-secondary">{text}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {data.buttonText && (
+              <div className="pt-2">
+                {(data.buttonLink || '').startsWith('/') ? (
+                  <Link to={data.buttonLink || '/over-ons'} className="inline-flex items-center gap-3 text-secondary font-bold text-sm group">
+                    <span className="border-b-2 border-secondary pb-0.5 group-hover:text-primary group-hover:border-primary transition-colors">{data.buttonText}</span>
+                    <span className="w-8 h-8 rounded-full bg-secondary group-hover:bg-primary flex items-center justify-center text-white text-xs transition-colors">&rarr;</span>
+                  </Link>
+                ) : (
+                  <a href={data.buttonLink || '#'} className="inline-flex items-center gap-3 text-secondary font-bold text-sm group">
+                    <span className="border-b-2 border-secondary pb-0.5 group-hover:text-primary group-hover:border-primary transition-colors">{data.buttonText}</span>
+                    <span className="w-8 h-8 rounded-full bg-secondary group-hover:bg-primary flex items-center justify-center text-white text-xs transition-colors">&rarr;</span>
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+          <div className={`relative ${isRight ? 'md:order-1' : ''}`}>
+            {data.imageUrl ? (
+              <>
+                <div className="absolute -inset-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-3xl blur-2xl" />
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
+                  <img
+                    src={getMediaUrl(data.imageUrl)}
+                    alt={data.heading || ''}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-secondary/20 to-transparent" />
+                </div>
+              </>
+            ) : (
+              <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center">
+                <span className="text-primary/20 text-6xl">🏭</span>
+              </div>
+            )}
+            {data.statValue && (
+              <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg px-5 py-3 border border-gray-100 hidden md:block">
+                <p className="text-2xl font-black text-primary">{data.statValue}</p>
+                <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">{data.statLabel || 'Ervaring'}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ── Product Highlight ───────────────────────────────── */
 function ProductHighlightBlock({ data }) {
   const isRight = data.imagePosition === 'right';
@@ -459,6 +548,7 @@ export default function CustomBlocks({ blocks = [] }) {
           case 'steps':        return <StepsBlock       key={id} data={data} />;
           case 'layout_builder': return <LayoutBuilderBlock key={id} data={data} />;
           case 'product_highlight': return <ProductHighlightBlock key={id} data={data} />;
+          case 'about_alra':        return <AboutAlraBlock      key={id} data={data} />;
           default:             return null;
         }
       })}

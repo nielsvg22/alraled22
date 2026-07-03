@@ -23,6 +23,7 @@ const BLOCK_TYPES = [
   { key: 'feature_grid',     label: 'Voordelen grid',     icon: '⊞',  desc: 'Kaartjes met icoon' },
   { key: 'image_text',       label: 'Afbeelding + tekst', icon: '🖼️', desc: "Foto + tekst naast elkaar" },
   { key: 'product_highlight', label: 'Product highlight', icon: '🏷️', desc: 'Product met afbeelding & features' },
+  { key: 'about_alra',        label: 'Over ALRA LED',     icon: '🏭', desc: 'Tekst + afbeelding info sectie' },
   { key: 'stats_row',        label: 'Statistieken',       icon: '📊', desc: 'Rij met cijfers' },
   { key: 'cta_block',        label: 'Call-to-action',     icon: '🎯', desc: 'Knop sectie' },
   { key: 'steps',            label: 'Stappen',            icon: '🔢', desc: 'Genummerde stappen' },
@@ -68,6 +69,20 @@ const SCHEMAS = {
     ]},
     { key: 'buttonText',    type: 'text',     label: 'Knoptekst' },
     { key: 'buttonLink',    type: 'text',     label: 'Knop link (bv. /producten)' },
+  ],
+  about_alra: [
+    { key: 'badge',         type: 'text',     label: 'Badge (bv. Over ALRA LED)' },
+    { key: 'heading',       type: 'text',     label: 'Koptekst' },
+    { key: 'body',          type: 'textarea', label: 'Beschrijving', rows: 5 },
+    { key: 'imageUrl',      type: 'image',    label: 'Afbeelding' },
+    { key: 'imagePosition', type: 'select',   label: 'Afbeeldingspositie', options: ['left', 'right'] },
+    { key: 'features',      type: 'array',    label: 'Voordelen / kenmerken', subfields: [
+      { key: 'text', type: 'text', label: 'Tekst' },
+    ]},
+    { key: 'buttonText',    type: 'text',     label: 'Knoptekst' },
+    { key: 'buttonLink',    type: 'text',     label: 'Knop link (bv. /over-ons)' },
+    { key: 'statValue',     type: 'text',     label: 'Statistiek getal (bv. 10+)' },
+    { key: 'statLabel',     type: 'text',     label: 'Statistiek label (bv. Jaar ervaring)' },
   ],
   stats_row:    [
     { key: 'items', type: 'array', label: 'Statistieken', subfields: [
