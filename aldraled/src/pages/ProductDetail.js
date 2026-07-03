@@ -191,6 +191,24 @@ const ProductDetail = () => {
                 Op voorraad
               </div>
 
+              {/* Specs preview */}
+              {specs.length > 0 && (
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden divide-y divide-gray-100">
+                  {specs.slice(0, 4).map((spec, i) => (
+                    <div key={i} className="flex items-center justify-between px-4 py-2.5">
+                      <span className="text-xs text-gray-500 font-medium">{spec.label}</span>
+                      <span className="text-xs font-semibold text-gray-900 text-right ml-4">{spec.value}</span>
+                    </div>
+                  ))}
+                  {specs.length > 4 && (
+                    <button onClick={() => setActiveTab('Specificaties')}
+                      className="w-full px-4 py-2.5 text-xs font-semibold text-gray-900 hover:bg-gray-50 transition-colors text-center border-t border-gray-100">
+                      Alle {specs.length} specificaties bekijken →
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Qty + CTA */}
               <div ref={mainBtnRef} className="space-y-3 pt-1">
                 <div className="flex items-center gap-3">
@@ -242,29 +260,6 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Specs preview — high-end */}
-            {specs.length > 0 && (
-              <div className="bg-gradient-to-b from-gray-50 to-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm">
-                <div className="px-5 py-3.5 border-b border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Specificaties</h3>
-                    {specs.length > 4 && (
-                      <button onClick={() => setActiveTab('Specificaties')} className="text-xs font-medium text-gray-900 hover:text-gray-600 transition-colors">
-                        Alle {specs.length} bekijken
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="divide-y divide-gray-100/80">
-                  {specs.slice(0, 4).map((spec, i) => (
-                    <div key={i} className="flex items-center justify-between px-5 py-3">
-                      <span className="text-[13px] text-gray-500 font-medium">{spec.label}</span>
-                      <span className="text-[13px] font-semibold text-gray-900 text-right ml-6">{spec.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
