@@ -32,15 +32,15 @@ dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT || 5000);
 
-// Ensure default admin exists
+// Ensure default admin and dev user exist
 async function ensureAdmin() {
   try {
     const adminEmail = 'admin@alraled.nl';
     const adminPassword = 'admin1234';
     const adminEmailLower = adminEmail.toLowerCase();
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
     const existing = await db.select().from(users).where(eq(users.email, adminEmailLower));
-    const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
     if (existing.length === 0) {
       console.log('[server] Creating default admin...');
@@ -51,17 +51,29 @@ async function ensureAdmin() {
         role: 'ADMIN',
       });
       console.log(`[server] Default admin created: ${adminEmail} / ${adminPassword}`);
-      return;
+    } else {
+      await db.update(users).set({
+        role: 'ADMIN',
+        password: hashedPassword,
+        name: existing[0]?.name ?? 'Admin',
+        updatedAt: new Date(),
+      }).where(eq(users.email, adminEmailLower));
+      console.log('[server] Default admin ensured');
     }
 
-    await db.update(users).set({
-      role: 'ADMIN',
-      password: hashedPassword,
-      name: existing[0]?.name ?? 'Admin',
-      updatedAt: new Date(),
-    }).where(eq(users.email, adminEmailLower));
-
-    console.log('[server] Default admin ensured');
+    // Ensure dev user exists (hardcoded userId used by authMiddleware bypass)
+    const devUser = await db.select().from(users).where(eq(users.id, 'dev'));
+    if (devUser.length === 0) {
+      console.log('[server] Creating dev user...');
+      await db.insert(users).values({
+        id: 'dev',
+        email: 'dev@alraled.nl',
+        password: hashedPassword,
+        name: 'Dev',
+        role: 'ADMIN',
+      });
+      console.log('[server] Dev user created');
+    }
   } catch (err) {
     console.error('[server] Error ensuring admin:', err);
   }
