@@ -18,6 +18,7 @@ import snelstartRoutes from './routes/snelstartRoutes';
 import discountCodeRoutes from './routes/discountCodeRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
+import importRoutes from './routes/importRoutes';
 import { db } from './lib/db';
 import { users } from './db/schema';
 import { ensureAnalyticsTables } from './db/ensureAnalyticsTables';
@@ -108,6 +109,7 @@ app.use('/api/snelstart', snelstartRoutes);
 app.use('/api/discounts', discountCodeRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/import', importRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the CRM API' });

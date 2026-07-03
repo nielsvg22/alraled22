@@ -21,6 +21,7 @@ import Snelstart from './pages/Snelstart';
 import DiscountCodes from './pages/DiscountCodes';
 import LegalPages from './pages/LegalPages';
 import SeoPages from './pages/SeoPages';
+import Import from './pages/Import';
 import PasswordWall from './components/PasswordWall';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
@@ -73,6 +74,7 @@ function AppRoutes() {
         <Route path="discounts" element={<AdminRoute><DiscountCodes /></AdminRoute>} />
         <Route path="legal" element={<AdminRoute><LegalPages /></AdminRoute>} />
         <Route path="seo" element={<AdminRoute><SeoPages /></AdminRoute>} />
+        <Route path="import" element={<AdminRoute><Import /></AdminRoute>} />
         <Route
           path="users"
           element={
