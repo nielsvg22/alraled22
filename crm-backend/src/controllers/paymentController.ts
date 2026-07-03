@@ -84,9 +84,10 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
       paymentUrl: molliePaymentResolved.getCheckoutUrl(),
       paymentId: paymentData.id,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create payment error:', error);
-    res.status(500).json({ error: 'Failed to create payment' });
+    const message = error?.message || 'Failed to create payment';
+    res.status(500).json({ error: message });
   }
 };
 
