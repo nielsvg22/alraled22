@@ -352,8 +352,21 @@ export default function Products() {
               <div className="p-4 flex flex-col flex-1">
                 <p className="font-black text-gray-900 text-sm leading-tight line-clamp-2 mb-1">{product.name}</p>
                 {product.description && (
-                  <p className="text-xs text-gray-400 leading-relaxed line-clamp-2 mb-3 flex-1">{product.description}</p>
+                  <p className="text-xs text-gray-400 leading-relaxed line-clamp-2 mb-1 flex-1">{product.description}</p>
                 )}
+                {product.specs && (() => {
+                  const s = parseSpecs(product.specs);
+                  return s.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {s.slice(0, 4).map((spec, i) => (
+                        <span key={i} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium truncate max-w-[140px]">
+                          {spec.label}: <strong className="text-gray-700">{spec.value}</strong>
+                        </span>
+                      ))}
+                      {s.length > 4 && <span className="text-[10px] text-gray-400 font-medium">+{s.length - 4}</span>}
+                    </div>
+                  ) : null;
+                })()}
                 <div className="flex items-center justify-between mt-auto pt-3" style={{ borderTop: '1px solid #f8fafc' }}>
                   <p className="text-lg font-black text-gray-900">{euro.format(product.price)}</p>
                   <StockBadge stock={product.stock} />
