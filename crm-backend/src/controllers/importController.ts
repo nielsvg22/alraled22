@@ -38,11 +38,21 @@ function parseSpecsFromHtml(html: string): { label: string; value: string }[] {
   return specs;
 }
 
+function stripNonContent(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<svg[^>]*>[\s\S]*?<\/svg>/gi, '')
+    .replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, '');
+}
+
 function cleanHtml(html: string): string {
   return html
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&euro;/g, '€')
-    .replace(/\s*\n\s*/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    .replace(/\s*\n\s*/g, '\n').replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
 }
 
 function parseDescription(html: string): string {
@@ -228,7 +238,8 @@ export const importWordpress = async (_req: Request, res: Response) => {
 };
 
 function extractMainContent(html: string): string {
-  // Divi theme: main content is in et_pb_section rows inside the body
+  const clean = stripNonContent(html);
+
   // Try common WordPress content containers
   const patterns = [
     /<div[^>]*class="[^"]*entry-content[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/article>/i,
@@ -240,23 +251,19 @@ function extractMainContent(html: string): string {
   ];
 
   for (const pattern of patterns) {
-    const m = pattern.exec(html);
+    const m = pattern.exec(clean);
     if (m && m[1] && m[1].length > 100) {
       return m[1];
     }
   }
 
-  // Fallback: strip header/footer by finding common WordPress structural elements
-  let cleaned = html
-    // Remove everything before <article> or first .et_pb_section
+  // Fallback: strip header/footer/nav
+  return clean
     .replace(/^[\s\S]*?(?=<div[^>]*class="[^"]*(?:et_pb_section|entry-content)[^"]*")/i, '')
-    // Remove navigation, header, footer, sidebar
     .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
     .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
     .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
     .replace(/<aside[^>]*>[\s\S]*?<\/aside>/gi, '');
-
-  return cleaned;
 }
 
 function extractHeadings(html: string): { level: number; text: string; content: string }[] {
@@ -351,6 +358,22 @@ function extractMetaDescription(html: string): string {
   return m ? (m[1] || '').trim() : '';
 }
 
+function extractPageImage(html: string): string {
+  // Look for the first large image in the main content (hero image)
+  const clean = stripNonContent(html);
+  const imgRe = /<img[^>]+src="([^"]+)"[^>]*(?:class="[^"]*(?:wp-post-image|et_pb_image|size-full|hero|featured)[^"]*"|width="[89]\d{2})[^>]*>/i;
+  const m = imgRe.exec(clean);
+  if (m && m[1]) return removeSizeFromUrl(m[1]);
+
+  // Fallback: any decent sized image in main content area
+  const mainContent = extractMainContent(html);
+  const fallbackRe = /<img[^>]+src="([^"]+)"[^>]*>/i;
+  const fm = fallbackRe.exec(mainContent);
+  if (fm && fm[1]) return removeSizeFromUrl(fm[1]);
+
+  return '';
+}
+
 function extractContactInfo(html: string): Record<string, string> {
   const info: Record<string, string> = {};
 
@@ -402,16 +425,19 @@ async function scrapeTextPage(url: string): Promise<{
   intro: string;
   sections: { h2: string; subs: { h3: string; content: string }[] }[];
   rawSections: { level: number; text: string; content: string }[];
+  images: string[];
   contactInfo: Record<string, string>;
   stats: { label: string; value: string }[];
 }> {
   const html = await fetchHtml(url);
+  const image = extractPageImage(html);
   return {
     title: extractPageTitle(html),
     metaDescription: extractMetaDescription(html),
     intro: extractIntroContent(html),
     sections: groupSectionsByH2(extractHeadings(html)),
     rawSections: extractHeadings(html),
+    images: image ? [image] : [],
     contactInfo: extractContactInfo(html),
     stats: extractStatsFromHtml(html),
   };
@@ -500,7 +526,7 @@ function buildAboutContent(scraped: Awaited<ReturnType<typeof scrapeTextPage>>):
     eyebrow: 'Over ons',
     title: scraped.title || 'Over ALRA LED Solutions',
     description: description.trim() || scraped.metaDescription,
-    image: '',
+    image: scraped.images?.[0] || '',
     stats: scraped.stats.length > 0 ? scraped.stats.map(s => ({ label: s.label, value: s.value })) : [{ label: 'Opgericht', value: '2014' }, { label: 'Partners', value: '50+' }],
     values: values.length > 0 ? values : [{ icon: '⭐', title: 'Kwaliteit', text: description.slice(0, 300) || 'Wij staan voor kwaliteit.' }],
     timelineTitle: 'Onze geschiedenis',
