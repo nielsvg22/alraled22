@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import api from '../lib/api';
-import { Upload, CheckCircle, AlertCircle, Loader2, ExternalLink } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, Loader2, ExternalLink, ListChecks } from 'lucide-react';
 
 export default function Import() {
   const [status, setStatus] = useState('idle');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+
+  const [specsStatus, setSpecsStatus] = useState('idle');
+  const [specsResult, setSpecsResult] = useState(null);
+  const [specsError, setSpecsError] = useState('');
 
   const handleImport = async () => {
     setStatus('running');
@@ -18,6 +22,20 @@ export default function Import() {
     } catch (err) {
       setError(err.response?.data?.message || err.message);
       setStatus('error');
+    }
+  };
+
+  const handleScrapeSpecs = async () => {
+    setSpecsStatus('running');
+    setSpecsError('');
+    setSpecsResult(null);
+    try {
+      const res = await api.post('/import/scrape-specs');
+      setSpecsResult(res.data);
+      setSpecsStatus(res.data.status === 'completed' ? 'done' : 'error');
+    } catch (err) {
+      setSpecsError(err.response?.data?.message || err.message);
+      setSpecsStatus('error');
     }
   };
 
@@ -60,6 +78,32 @@ export default function Import() {
               <><Loader2 size={16} className="animate-spin" /> Bezig met importeren...</>
             ) : (
               <><Upload size={16} /> Start Import</>
+            )}
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b bg-gray-50 flex items-center gap-2">
+          <ListChecks className="w-4 h-4 text-gray-400" />
+          <h3 className="font-black text-gray-600 text-xs uppercase tracking-widest">Specificaties Scrapen</h3>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+            <p className="text-xs text-blue-700 font-bold mb-1">Voeg specificaties toe aan bestaande producten</p>
+            <p className="text-[10px] text-blue-600 leading-relaxed">
+              Zoekt bestaande producten op de oude website en werkt de specificaties bij in de database.
+            </p>
+          </div>
+          <button
+            onClick={handleScrapeSpecs}
+            disabled={specsStatus === 'running'}
+            className={`${btnBase} ${specsStatus === 'running' ? 'bg-gray-400 text-white' : 'bg-green-600 text-white hover:bg-green-700'}`}
+          >
+            {specsStatus === 'running' ? (
+              <><Loader2 size={16} className="animate-spin" /> Bezig met scrapen...</>
+            ) : (
+              <><ListChecks size={16} /> Scrape Specificaties</>
             )}
           </button>
         </div>
@@ -113,6 +157,39 @@ export default function Import() {
                     <li key={i} className="text-xs text-red-500 flex items-start gap-1">
                       <span>•</span> {err}
                     </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {specsStatus === 'running' && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center gap-3">
+          <Loader2 size={20} className="animate-spin text-green-600" />
+          <span className="text-sm text-gray-600">Specificaties worden opgehaald...</span>
+        </div>
+      )}
+
+      {specsResult && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className={`px-6 py-4 border-b flex items-center gap-2 bg-green-50`}>
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            <h3 className="font-black text-xs uppercase tracking-widest text-green-700">Specificaties Scrapen Voltooid</h3>
+          </div>
+          <div className="p-6 space-y-3 text-sm">
+            <div className="grid grid-cols-2 gap-4">
+              <Stat label="Gevonden" value={specsResult.totalUrls} />
+              <Stat label="Gematcht" value={specsResult.matched} />
+              <Stat label="Bijgewerkt" value={specsResult.updated} color="text-green-600" />
+            </div>
+            {specsResult.errors?.length > 0 && (
+              <div>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Fouten</p>
+                <ul className="space-y-1">
+                  {specsResult.errors.map((err, i) => (
+                    <li key={i} className="text-xs text-red-500">• {err}</li>
                   ))}
                 </ul>
               </div>

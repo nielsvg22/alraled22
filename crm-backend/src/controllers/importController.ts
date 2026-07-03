@@ -225,3 +225,44 @@ export const importWordpress = async (_req: Request, res: Response) => {
     return res.status(500).json({ status: 'error', message: err.message });
   }
 };
+
+export const scrapeSpecs = async (_req: Request, res: Response) => {
+  try {
+    const urls = await scrapeAllProductUrls();
+    const existing = await productsRepo.listProducts();
+    let updated = 0;
+    let matched = 0;
+    const errors: string[] = [];
+
+    for (const url of urls) {
+      try {
+        const result: any = await scrapeProduct(url);
+        if (!result || result.error) continue;
+
+        const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const productName = norm(result.name);
+        const match = existing.find(p => norm(p.name) === productName);
+
+        if (!match) { matched++; continue; }
+
+        const specsJson = result.specs || null;
+        if (specsJson) {
+          await productsRepo.updateProduct(match.id, { specs: specsJson });
+          updated++;
+        }
+      } catch (err: any) {
+        errors.push(`${url}: ${err.message}`);
+      }
+    }
+
+    return res.json({
+      status: 'completed',
+      totalUrls: urls.length,
+      matched,
+      updated,
+      errors: errors.slice(0, 10),
+    });
+  } catch (err: any) {
+    return res.status(500).json({ status: 'error', message: err.message });
+  }
+};
