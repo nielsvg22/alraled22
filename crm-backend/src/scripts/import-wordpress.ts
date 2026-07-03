@@ -27,7 +27,7 @@ interface ProductData {
 
 function parsePrice(text: string): number | null {
   const m = text.match(/€\s*([0-9]+[.,][0-9]+)/);
-  if (!m) return null;
+  if (!m || !m[1]) return null;
   return parseFloat(m[1].replace(',', '.'));
 }
 
@@ -41,28 +41,25 @@ function extractBetween(text: string, start: string, end: string): string {
 
 function parseSpecsFromHtml(html: string): Spec[] {
   const specs: Spec[] = [];
-  // Match <strong>Label:</strong> Value or **Label:** Value patterns
   const strongRe = /<(?:strong|b)>([^<]+)<\/(?:strong|b)>:\s*([^<\n]+)/gi;
   let m: RegExpExecArray | null;
   while ((m = strongRe.exec(html)) !== null) {
-    const label = m[1].trim();
-    let value = m[2].trim();
-    // Check if value continues on next non-HTML line
+    const label = (m[1] || '').trim();
+    let value = (m[2] || '').trim();
+    if (!label || !value) continue;
     const rest = html.slice(m.index + m[0].length, html.indexOf('<', m.index + m[0].length));
     if (rest && !rest.includes('<')) {
       const extra = rest.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('<'))[0];
       if (extra) value += ' ' + extra;
     }
-    if (label && value) specs.push({ label, value });
+    specs.push({ label, value });
   }
   return specs;
 }
 
 function parseDescription(html: string): string {
-  // Get Beschrijving tab content or main product description
   const descTab = extractBetween(html, 'id="tab-description"', '</div>');
   const text = descTab || html;
-  // Remove HTML tags, keep line breaks
   return text
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ')
@@ -73,33 +70,37 @@ function parseDescription(html: string): string {
     .trim();
 }
 
+function removeSizeFromUrl(url: string): string {
+  return url.replace(/-\d+x\d+(?=\.\w+$)/, '');
+}
+
 function extractImages(html: string): string[] {
   const urls: string[] = [];
   const seen = new Set<string>();
 
-  // WooCommerce gallery images (full-size from -300x300 or similar)
+  // Main product image
+  const mainImgRe = /<img[^>]+class="[^"]*wp-post-image[^"]*"[^>]+src="([^"]+)"/i;
+  const mainM = mainImgRe.exec(html);
+  if (mainM && mainM[1]) {
+    const url = removeSizeFromUrl(mainM[1]);
+    if (!seen.has(url)) { seen.add(url); urls.push(url); }
+  }
+
+  // WooCommerce gallery images
   const galleryRe = /<a[^>]+href="([^"]+)"[^>]*>\s*<img[^>]*class="[^"]*wp-post-image[^"]*"[^>]*>/gi;
   let m: RegExpExecArray | null;
   while ((m = galleryRe.exec(html)) !== null) {
-    let url = m[1];
-    // Convert thumbnail to full: remove -NNNxNNN part
-    url = url.replace(/-\d+x\d+(?=\.\w+$)/, '');
-    if (url && !seen.has(url)) { seen.add(url); urls.push(url); }
-  }
-
-  // Also find main product image
-  const mainImgRe = /<img[^>]+class="[^"]*wp-post-image[^"]*"[^>]+src="([^"]+)"/i;
-  const mainM = mainImgRe.exec(html);
-  if (mainM) {
-    let url = mainM[1].replace(/-\d+x\d+(?=\.\w+$)/, '');
-    if (url && !seen.has(url)) { seen.add(url); urls.unshift(url); }
+    if (!m[1]) continue;
+    const url = removeSizeFromUrl(m[1]);
+    if (!seen.has(url)) { seen.add(url); urls.push(url); }
   }
 
   // WooCommerce product-gallery thumbnails
   const thumbRe = /<img[^>]+src="([^"]+)"[^>]*class="[^"]*attachment-woocommerce_thumbnail[^"]*"/gi;
   while ((m = thumbRe.exec(html)) !== null) {
-    let url = m[1].replace(/-\d+x\d+(?=\.\w+$)/, '');
-    if (url && !seen.has(url)) { seen.add(url); urls.push(url); }
+    if (!m[1]) continue;
+    const url = removeSizeFromUrl(m[1]);
+    if (!seen.has(url)) { seen.add(url); urls.push(url); }
   }
 
   return urls;
@@ -108,7 +109,7 @@ function extractImages(html: string): string[] {
 function extractCategory(html: string): string {
   const catRe = /<span[^>]*class="[^"]*posted_in[^"]*"[^>]*>.*?<a[^>]+href="[^"]*product-categorie\/([^"/]+)/i;
   const m = catRe.exec(html);
-  if (!m) return '';
+  if (!m || !m[1]) return '';
   return m[1].replace(/-/g, ' ');
 }
 
@@ -127,13 +128,13 @@ async function scrapeProduct(url: string): Promise<ProductData | null> {
     // Name from <h1> or <title>
     const nameM = html.match(/<h1[^>]*class="[^"]*product_title[^"]*"[^>]*>([^<]+)<\/h1>/i)
       || html.match(/<title>([^<]+)\s*[–-].*?<\/title>/i);
-    const name = nameM ? nameM[1].trim() : '';
+    const name = nameM && nameM[1] ? nameM[1].trim() : '';
     if (!name) return null;
 
     // Price
     const priceElRe = /<p[^>]*class="[^"]*price[^"]*"[^>]*>(.*?)<\/p>/i;
     const priceM = priceElRe.exec(html);
-    const price = priceM ? parsePrice(priceM[1]) : null;
+    const price = priceM ? parsePrice(priceM[1] || '') : null;
     if (!price) return null;
 
     // Description + Specs
@@ -158,7 +159,6 @@ async function scrapeAllProductUrls(): Promise<string[]> {
   const urls: string[] = [];
   const seen = new Set<string>();
 
-  // Step 1: scrape webshop main page and all category pages
   const pages = [
     `${WP_BASE}/webshop/`,
     ...['bedrijfswagen-verlichting', 'bouwlichtslangen-en-toebehoren', 'hefbrugverlichting',
@@ -170,10 +170,10 @@ async function scrapeAllProductUrls(): Promise<string[]> {
     try {
       console.log(`\n🔍 Scrapen: ${pageUrl}`);
       const html = await fetchHtml(pageUrl);
-      // Find all product links
       const linkRe = /<a[^>]+href="([^"]+\/product\/[^"]+)"[^>]*>/gi;
       let m: RegExpExecArray | null;
       while ((m = linkRe.exec(html)) !== null) {
+        if (!m[1]) continue;
         const url = m[1].split('?')[0].split('#')[0];
         if (!seen.has(url)) { seen.add(url); urls.push(url); }
       }
@@ -187,7 +187,6 @@ async function scrapeAllProductUrls(): Promise<string[]> {
 }
 
 async function importProduct(api: string, product: ProductData): Promise<boolean> {
-  // Convert specs to JSON string
   const specsStr = product.specs.length > 0
     ? JSON.stringify(product.specs.map(s => ({ label: s.label, value: s.value })))
     : '';
@@ -223,40 +222,39 @@ async function main() {
   console.log(`║  Doel: ${API_URL}`);
   console.log('╚══════════════════════════════════════════╝');
 
-  // Step 1: Get all product URLs
   const urls = await scrapeAllProductUrls();
   if (urls.length === 0) {
     console.log('\n❌ Geen producten gevonden.');
     return;
   }
 
-  // Step 2: Scrape each product
   console.log('\n📋 Producten ophalen...');
   const products: ProductData[] = [];
   for (let i = 0; i < urls.length; i++) {
-    console.log(`[${i + 1}/${urls.length}] ${urls[i]}`);
-    const p = await scrapeProduct(urls[i]);
+    const u = urls[i];
+    if (!u) continue;
+    console.log(`[${i + 1}/${urls.length}] ${u}`);
+    const p = await scrapeProduct(u);
     if (p) products.push(p);
   }
 
   console.log(`\n✅ ${products.length}/${urls.length} producten succesvol uitgelezen`);
 
-  // Step 3: Import into API
   if (products.length === 0) {
     console.log('\n⚠️  Geen producten om te importeren.');
     return;
   }
 
-  // Ask for confirmation
   console.log('\n────────── Productoverzicht ──────────');
-  products.forEach(p => console.log(`  • ${p.name} — €${p.price.toFixed(2)}`));
+  for (const p of products) {
+    console.log(`  • ${p.name} — €${p.price.toFixed(2)}`);
+  }
   console.log(`\n🚀 Bezig met importeren van ${products.length} producten naar ${API_URL}...`);
 
   let success = 0;
   let failed = 0;
-  for (let i = 0; i < products.length; i++) {
-    const p = products[i];
-    process.stdout.write(`[${i + 1}/${products.length}] ${p.name}... `);
+  for (const p of products) {
+    process.stdout.write(`  ${p.name}... `);
     const ok = await importProduct(API_URL, p);
     if (ok) { success++; console.log('✅'); }
     else { failed++; console.log('❌'); }
