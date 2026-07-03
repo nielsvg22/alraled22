@@ -227,28 +227,61 @@ export const importWordpress = async (_req: Request, res: Response) => {
   }
 };
 
+function extractMainContent(html: string): string {
+  // Divi theme: main content is in et_pb_section rows inside the body
+  // Try common WordPress content containers
+  const patterns = [
+    /<div[^>]*class="[^"]*entry-content[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/article>/i,
+    /<div[^>]*class="[^"]*entry-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<article[^>]*>([\s\S]*?)<\/article>/i,
+    /<div[^>]*id="main-content"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/i,
+    /<div[^>]*class="[^"]*et_pb_section[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>\s*<\/div>/i,
+    /<div[^>]*class="[^"]*et_pb_row[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/i,
+  ];
+
+  for (const pattern of patterns) {
+    const m = pattern.exec(html);
+    if (m && m[1] && m[1].length > 100) {
+      return m[1];
+    }
+  }
+
+  // Fallback: strip header/footer by finding common WordPress structural elements
+  let cleaned = html
+    // Remove everything before <article> or first .et_pb_section
+    .replace(/^[\s\S]*?(?=<div[^>]*class="[^"]*(?:et_pb_section|entry-content)[^"]*")/i, '')
+    // Remove navigation, header, footer, sidebar
+    .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+    .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
+    .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
+    .replace(/<aside[^>]*>[\s\S]*?<\/aside>/gi, '');
+
+  return cleaned;
+}
+
 function extractHeadings(html: string): { level: number; text: string; content: string }[] {
+  const mainContent = extractMainContent(html);
   const sections: { level: number; text: string; content: string }[] = [];
   const headingRe = /<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi;
   let lastIndex = 0;
   let m: RegExpExecArray | null;
 
-  while ((m = headingRe.exec(html)) !== null) {
+  while ((m = headingRe.exec(mainContent)) !== null) {
     const level = parseInt(m[1] || '2', 10);
     const headingText = (m[2] || '').replace(/<[^>]+>/g, '').trim();
     if (!headingText) continue;
 
-    // Content between previous heading and this one
-    const between = html.slice(lastIndex, m.index);
+    // Only include meaningful headings (not "Menu", "Account", etc.)
+    const skipWords = ['menu', 'account', 'winkelwagen', 'afrekenen', 'volgen', 'home', 'webshop', 'contact', 'over ons', 'blog', 'nieuws', 'producten', 'categorie'];
+    if (skipWords.some(w => headingText.toLowerCase() === w) && level === 1) continue;
 
-    // Push previous section content before the heading text
+    const between = mainContent.slice(lastIndex, m.index);
     if (sections.length > 0) {
       const last = sections[sections.length - 1];
       if (last) {
         last.content = cleanHtml(between);
       }
     } else if (between.trim()) {
-      // Content before the first heading (intro)
       sections.push({ level: 0, text: '', content: cleanHtml(between) });
     }
 
@@ -256,9 +289,8 @@ function extractHeadings(html: string): { level: number; text: string; content: 
     lastIndex = headingRe.lastIndex;
   }
 
-  // Remaining content after last heading
-  if (lastIndex < html.length) {
-    const remaining = cleanHtml(html.slice(lastIndex));
+  if (lastIndex < mainContent.length) {
+    const remaining = cleanHtml(mainContent.slice(lastIndex));
     if (remaining) {
       const last = sections[sections.length - 1];
       if (last) {
@@ -293,16 +325,14 @@ function groupSectionsByH2(sections: { level: number; text: string; content: str
 }
 
 function extractIntroContent(html: string): string {
-  const bodyRe = /<body[^>]*>([\s\S]*)<\/body>/i;
-  const bodyM = bodyRe.exec(html);
-  const body = bodyM ? bodyM[1] || '' : html;
+  const mainContent = extractMainContent(html);
+  if (!mainContent) return '';
 
-  // Find the first h1 or h2 — everything before it is intro
-  const firstHeading = body.search(/<h[12][^>]*>/i);
+  const firstHeading = mainContent.search(/<h[12][^>]*>/i);
   if (firstHeading > 0) {
-    return cleanHtml(body.slice(0, firstHeading));
+    return cleanHtml(mainContent.slice(0, firstHeading));
   }
-  return '';
+  return cleanHtml(mainContent);
 }
 
 function extractPageTitle(html: string): string {
