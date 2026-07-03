@@ -23,13 +23,6 @@ const parseSpecs = (specsStr) => {
 
 const TABS = ['Specificaties', 'Productinformatie', 'Beoordelingen', 'Alternatieven', 'Vaak samen gekocht'];
 
-const TOP_TRUST = [
-  { label: 'Voor 22:00 besteld, vandaag verstuurd' },
-  { label: 'Retourneren binnen 30 dagen' },
-  { label: 'Gratis verzending vanaf €250' },
-  { label: 'Achteraf betalen' },
-];
-
 const REVIEWS = [
   { name: 'Mark de Vries', rating: 5, text: 'Uitstekende kwaliteit! Snel geleverd en goed verpakt.', date: '2 weken geleden' },
   { name: 'Anita Jansen', rating: 5, text: 'Perfect voor onze verbouwing. Professioneel product.', date: '1 maand geleden' },
@@ -125,18 +118,6 @@ const ProductDetail = () => {
 
   return (
     <div className="bg-white min-h-screen">
-
-      {/* ─── TOP TRUST BAR ─── */}
-      <div className="bg-gray-900 text-white text-[11px]">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-center gap-6 h-9 overflow-x-auto">
-          {TOP_TRUST.map((t, i) => (
-            <span key={i} className="flex items-center gap-1.5 whitespace-nowrap font-medium">
-              <svg className="w-3 h-3 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
-              {t.label}
-            </span>
-          ))}
-        </div>
-      </div>
 
       {/* ─── BREADCRUMB ─── */}
       <div className="border-b border-gray-100">
