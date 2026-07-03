@@ -35,7 +35,7 @@ const FIXED_SECTIONS = [
 
 const BLOCK_TYPES = [
   { key: 'banner',           label: 'Banner',             icon: '📣', desc: 'Brede balk met knop' },
-  { key: 'text_block',       label: 'Tekstblok',          icon: '📝', label: 'Koptekst + alinea' },
+  { key: 'text_block',       label: 'Tekstblok',          icon: '📝', desc: 'Koptekst + alinea' },
   { key: 'feature_grid',     label: 'Voordelen grid',     icon: '⊞',  desc: 'Kaartjes met icoon' },
   { key: 'image_text',       label: 'Afbeelding + tekst', icon: '🖼️', desc: "Foto + tekst naast elkaar" },
   { key: 'product_highlight', label: 'Product highlight', icon: '🏷️', desc: 'Product met afbeelding & features' },
@@ -45,6 +45,224 @@ const BLOCK_TYPES = [
   { key: 'steps',            label: 'Stappen',            icon: '🔢', desc: 'Genummerde stappen' },
   { key: 'blog_post',        label: 'Blogbericht',        icon: '📰', desc: 'Artikel met afbeelding' },
 ];
+
+// ── Editable fixed sections (stored in /api/content/home) ──
+const FIXED_SECTION_SCHEMAS = {
+  hero: {
+    contentKey: 'hero',
+    label: 'Hero',
+    fields: [
+      { key: 'titlePrefix', type: 'text', label: 'Titel prefix (bv. Verlichting voor)' },
+      { key: 'title', type: 'text', label: 'Hoofdtitel' },
+      { key: 'subtitle', type: 'textarea', label: 'Ondertekst', rows: 3 },
+      { key: 'backgroundImage', type: 'image', label: 'Achtergrondafbeelding' },
+      { key: 'primaryButtonText', type: 'text', label: 'Primaire knop' },
+      { key: 'secondaryButtonText', type: 'text', label: 'Secundaire knop' },
+      { key: 'typewriterWords', type: 'array', label: 'Typewriter woorden', subfields: [
+        { key: 'word', type: 'text', label: 'Woord' },
+      ]},
+    ],
+    mapData: (data) => ({
+      titlePrefix: data?.hero?.titlePrefix || '',
+      title: data?.hero?.title || '',
+      subtitle: data?.hero?.subtitle || '',
+      backgroundImage: data?.hero?.backgroundImage || '',
+      primaryButtonText: data?.hero?.primaryButtonText || '',
+      secondaryButtonText: data?.hero?.secondaryButtonText || '',
+      typewriterWords: (data?.hero?.typewriterWords || []).map(w => ({ word: w })),
+    }),
+    toContent: (form, existing) => ({
+      ...existing,
+      hero: {
+        ...existing.hero,
+        titlePrefix: form.titlePrefix,
+        title: form.title,
+        subtitle: form.subtitle,
+        backgroundImage: form.backgroundImage,
+        primaryButtonText: form.primaryButtonText,
+        secondaryButtonText: form.secondaryButtonText,
+        typewriterWords: (form.typewriterWords || []).map(i => i.word || i).filter(Boolean),
+      },
+    }),
+  },
+  over_ons: {
+    contentKey: 'introSection',
+    label: 'Over ALRA LED',
+    fields: [
+      { key: 'badge', type: 'text', label: 'Badge (bv. Over ALRA LED)' },
+      { key: 'heading', type: 'text', label: 'Koptekst' },
+      { key: 'description', type: 'textarea', label: 'Beschrijving', rows: 5 },
+      { key: 'image', type: 'image', label: 'Afbeelding' },
+      { key: 'linkText', type: 'text', label: 'Link tekst' },
+      { key: 'deliveryTitle', type: 'text', label: 'Titel levering' },
+      { key: 'deliverySubtitle', type: 'text', label: 'Ondertekst levering' },
+    ],
+    mapData: (data) => ({
+      badge: data?.introSection?.badge || '',
+      heading: data?.introSection?.heading || '',
+      description: data?.introSection?.description || '',
+      image: data?.introSection?.image || '',
+      linkText: data?.introSection?.linkText || '',
+      deliveryTitle: data?.introSection?.deliveryTitle || '',
+      deliverySubtitle: data?.introSection?.deliverySubtitle || '',
+    }),
+    toContent: (form, existing) => ({
+      ...existing,
+      introSection: {
+        ...existing.introSection,
+        badge: form.badge,
+        heading: form.heading,
+        description: form.description,
+        image: form.image,
+        linkText: form.linkText,
+        deliveryTitle: form.deliveryTitle,
+        deliverySubtitle: form.deliverySubtitle,
+      },
+    }),
+  },
+  highlights: {
+    contentKey: 'highlights',
+    label: 'Groothandel',
+    fields: [
+      { key: 'title', type: 'text', label: 'Sectietitel' },
+      { key: 'subtitle', type: 'textarea', label: 'Ondertekst', rows: 2 },
+      { key: 'items', type: 'array', label: 'Product items', subfields: [
+        { key: 'title', type: 'text', label: 'Titel' },
+        { key: 'description', type: 'textarea', label: 'Beschrijving', rows: 2 },
+        { key: 'image', type: 'image', label: 'Afbeelding' },
+        { key: 'link', type: 'text', label: 'Link (bv. /producten)' },
+        { key: 'linkText', type: 'text', label: 'Link tekst' },
+        { key: 'features', type: 'array', label: 'Features', subfields: [
+          { key: 'feat', type: 'text', label: 'Feature' },
+        ]},
+      ]},
+    ],
+    mapData: (data) => ({
+      title: data?.highlights?.title || '',
+      subtitle: data?.highlights?.subtitle || '',
+      items: (data?.highlights?.items || []).map(item => ({
+        title: item.title || '',
+        description: item.description || '',
+        image: item.image || '',
+        link: item.link || '',
+        linkText: item.linkText || '',
+        features: (item.features || []).map(f => ({ feat: typeof f === 'string' ? f : f.feat || '' })),
+      })),
+    }),
+    toContent: (form, existing) => ({
+      ...existing,
+      highlights: {
+        ...existing.highlights,
+        title: form.title,
+        subtitle: form.subtitle,
+        items: (form.items || []).map(item => ({
+          title: item.title,
+          description: item.description,
+          image: item.image,
+          link: item.link,
+          linkText: item.linkText,
+          features: (item.features || []).map(f => f.feat || f).filter(Boolean),
+        })),
+      },
+    }),
+  },
+  process: {
+    contentKey: 'process',
+    label: 'Proces',
+    fields: [
+      { key: 'title', type: 'text', label: 'Sectietitel' },
+      { key: 'description', type: 'textarea', label: 'Beschrijving', rows: 4 },
+      { key: 'buttonText', type: 'text', label: 'Knoptekst' },
+      { key: 'steps', type: 'array', label: 'Stappen', subfields: [
+        { key: 'title', type: 'text', label: 'Titel' },
+        { key: 'description', type: 'textarea', label: 'Beschrijving', rows: 2 },
+      ]},
+    ],
+    mapData: (data) => ({
+      title: data?.process?.title || '',
+      description: data?.process?.description || '',
+      buttonText: data?.process?.buttonText || '',
+      steps: (data?.process?.steps || []).map(s => ({ title: s.title || '', description: s.description || s.desc || '' })),
+    }),
+    toContent: (form, existing) => ({
+      ...existing,
+      process: {
+        ...existing.process,
+        title: form.title,
+        description: form.description,
+        buttonText: form.buttonText,
+        steps: (form.steps || []).map(s => ({ title: s.title, description: s.description })),
+      },
+    }),
+  },
+  cta: {
+    contentKey: 'cta',
+    label: 'Call-to-action',
+    fields: [
+      { key: 'title', type: 'text', label: 'Koptekst' },
+      { key: 'subtitle', type: 'textarea', label: 'Ondertekst', rows: 2 },
+      { key: 'primaryButton', type: 'text', label: 'Primaire knop' },
+      { key: 'secondaryButton', type: 'text', label: 'Secundaire knop' },
+    ],
+    mapData: (data) => ({
+      title: data?.cta?.title || '',
+      subtitle: data?.cta?.subtitle || '',
+      primaryButton: data?.cta?.primaryButton || '',
+      secondaryButton: data?.cta?.secondaryButton || '',
+    }),
+    toContent: (form, existing) => ({
+      ...existing,
+      cta: {
+        ...existing.cta,
+        title: form.title,
+        subtitle: form.subtitle,
+        primaryButton: form.primaryButton,
+        secondaryButton: form.secondaryButton,
+      },
+    }),
+  },
+  dealers_cta: {
+    contentKey: 'dealersCta',
+    label: 'Dealer CTA',
+    fields: [
+      { key: 'title', type: 'text', label: 'Koptekst' },
+      { key: 'subtitle', type: 'textarea', label: 'Ondertekst', rows: 2 },
+      { key: 'buttonText', type: 'text', label: 'Knoptekst' },
+    ],
+    mapData: (data) => ({
+      title: data?.dealersCta?.title || '',
+      subtitle: data?.dealersCta?.subtitle || '',
+      buttonText: data?.dealersCta?.buttonText || '',
+    }),
+    toContent: (form, existing) => ({
+      ...existing,
+      dealersCta: {
+        ...existing.dealersCta,
+        title: form.title,
+        subtitle: form.subtitle,
+        buttonText: form.buttonText,
+      },
+    }),
+  },
+  stats: {
+    contentKey: 'stats',
+    label: 'Statistieken',
+    fields: [
+      { key: 'items', type: 'array', label: 'Statistieken', subfields: [
+        { key: 'value', type: 'text', label: 'Getal' },
+        { key: 'label', type: 'text', label: 'Label' },
+        { key: 'suffix', type: 'text', label: 'Achtervoegsel (bv. +)' },
+      ]},
+    ],
+    mapData: (data) => ({
+      items: (data?.stats || []).map(s => ({ value: String(s.value || ''), label: s.label || '', suffix: s.suffix || '' })),
+    }),
+    toContent: (form, existing) => ({
+      ...existing,
+      stats: (form.items || []).map(s => ({ value: s.value, label: s.label, suffix: s.suffix })),
+    }),
+  },
+};
 
 // ── Schema per block type (for edit form) ────────────────
 const SCHEMAS = {
@@ -305,10 +523,23 @@ function BlockCard({ block, onDelete, onToggleVisible, onEdit }) {
 }
 
 // ── Sortable section item ────────────────────────────────
-function SectionItem({ item, onToggle, onInsertAfter, isHidden }) {
+function SectionItem({ item, onToggle, onInsertAfter, onEditFixed, isHidden, homeContent }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 };
   const isFixed = item._fixed;
+  const canEdit = isFixed && FIXED_SECTION_SCHEMAS[item.id];
+
+  // Show a preview of current content for fixed sections
+  const getPreview = () => {
+    if (!isFixed || !homeContent) return null;
+    const schema = FIXED_SECTION_SCHEMAS[item.id];
+    if (!schema) return null;
+    const mapped = schema.mapData(homeContent);
+    const firstVal = Object.values(mapped).find(v => v && typeof v === 'string' && v.length > 0);
+    if (firstVal) return firstVal.length > 50 ? firstVal.slice(0, 50) + '...' : firstVal;
+    return null;
+  };
+  const preview = getPreview();
 
   return (
     <>
@@ -321,10 +552,18 @@ function SectionItem({ item, onToggle, onInsertAfter, isHidden }) {
         <span className="text-lg shrink-0">{item.icon}</span>
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-semibold truncate ${isHidden ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{item.label}</p>
-          {isFixed && <p className="text-[10px] text-gray-400">Vaste sectie</p>}
+          {isFixed && !canEdit && <p className="text-[10px] text-gray-400">Vaste sectie</p>}
+          {isFixed && canEdit && preview && <p className="text-[10px] text-green-500 truncate">{preview}</p>}
+          {isFixed && canEdit && !preview && <p className="text-[10px] text-green-500">Klik op bewerken om inhoud aan te passen</p>}
           {!isFixed && <p className="text-[10px] text-violet-400">CMS blok</p>}
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          {canEdit && (
+            <button onClick={() => onEditFixed(item.id)} title="Inhoud bewerken"
+              className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors">
+              <Pencil className="w-4 h-4" />
+            </button>
+          )}
           <button onClick={() => onToggle(item.id)} title={isHidden ? 'Tonen' : 'Verbergen'}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
             {isHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -338,6 +577,65 @@ function SectionItem({ item, onToggle, onInsertAfter, isHidden }) {
         </button>
       </div>
     </>
+  );
+}
+
+// ── Fixed Section Edit Modal ─────────────────────────────
+function FixedSectionEditModal({ sectionId, homeContent, onSave, onClose }) {
+  const schema = FIXED_SECTION_SCHEMAS[sectionId];
+  const [data, setData] = useState(() => schema.mapData(homeContent));
+  const [saving, setSaving] = useState(false);
+
+  const setField = (key, val) => setData(d => ({ ...d, [key]: val }));
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const updated = schema.toContent(data, homeContent);
+      await api.put('/content/home', updated, { params: { lang: 'nl' } });
+      onSave(updated);
+    } catch (err) {
+      alert('Opslaan mislukt');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="px-6 py-4 border-b flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+              <Pencil className="w-4 h-4 text-green-600" />
+            </span>
+            <div>
+              <h2 className="font-bold text-gray-800">{schema.label} bewerken</h2>
+              <p className="text-xs text-gray-400">Pas de inhoud van deze sectie aan</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          {schema.fields.map(field => (
+            <div key={field.key}>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">{field.label}</label>
+              <FieldInput field={field} value={data[field.key]} onChange={v => setField(field.key, v)} />
+            </div>
+          ))}
+        </div>
+
+        <div className="px-6 py-4 border-t flex gap-3 shrink-0">
+          <button onClick={handleSave} disabled={saving}
+            className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl hover:bg-green-700 disabled:opacity-50 transition-all">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saving ? 'Opslaan...' : 'Inhoud opslaan'}
+          </button>
+          <button onClick={onClose} className="px-4 py-2.5 text-sm text-gray-400 hover:text-gray-600">Annuleren</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -524,6 +822,8 @@ export default function PageBuilder() {
   const [saved, setSaved] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [editBlock, setEditBlock] = useState(null);
+  const [editFixedSection, setEditFixedSection] = useState(null);
+  const [homeContent, setHomeContent] = useState(null);
   const [insertAfter, setInsertAfter] = useState(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -547,9 +847,14 @@ export default function PageBuilder() {
             setSectionOrder(FIXED_SECTIONS.map(s => s.id));
           }
         })
-        .catch(() => setSectionOrder(FIXED_SECTIONS.map(s => s.id)))
+        .catch(() => setSectionOrder(FIXED_SECTIONS.map(s => s.id)));
+
+      api.get('/content/home', { params: { lang } })
+        .then(r => setHomeContent(r.data || {}))
+        .catch(() => setHomeContent({}))
         .finally(() => setLoading(false));
     } else {
+      setHomeContent(null);
       setLoading(false);
     }
   };
@@ -761,6 +1066,8 @@ export default function PageBuilder() {
                       isHidden={hiddenSections.includes(item.id)}
                       onToggle={toggleSection}
                       onInsertAfter={setInsertAfter}
+                      onEditFixed={setEditFixedSection}
+                      homeContent={homeContent}
                     />
                   ))}
                 </div>
@@ -807,6 +1114,14 @@ export default function PageBuilder() {
       {showNew && <NewBlockModal onAdd={activeTab === 'sections' ? addBlockAtEnd : addBlockAtEnd} onClose={() => setShowNew(false)} />}
       {editBlock && <EditModal block={editBlock} onSave={(data) => saveEdit(editBlock.id, data)} onClose={() => setEditBlock(null)} />}
       {insertAfter && <InsertBlockModal onAdd={addBlock} onClose={() => setInsertAfter(null)} />}
+      {editFixedSection && homeContent && (
+        <FixedSectionEditModal
+          sectionId={editFixedSection}
+          homeContent={homeContent}
+          onSave={(updated) => { setHomeContent(updated); setEditFixedSection(null); }}
+          onClose={() => setEditFixedSection(null)}
+        />
+      )}
     </div>
   );
 }
