@@ -27,8 +27,10 @@ interface ProductData {
 
 function parsePrice(text: string): number | null {
   const m = text.match(/€\s*([0-9]+[.,][0-9]+)/);
-  if (!m || !m[1]) return null;
-  return parseFloat(m[1].replace(',', '.'));
+  if (!m) return null;
+  const val = m[1];
+  if (!val) return null;
+  return parseFloat(val.replace(',', '.'));
 }
 
 function extractBetween(text: string, start: string, end: string): string {
@@ -45,8 +47,9 @@ function parseSpecsFromHtml(html: string): Spec[] {
   let m: RegExpExecArray | null;
   while ((m = strongRe.exec(html)) !== null) {
     const label = (m[1] || '').trim();
-    let value = (m[2] || '').trim();
-    if (!label || !value) continue;
+    const rawVal = (m[2] || '').trim();
+    if (!label || !rawVal) continue;
+    let value = rawVal;
     const rest = html.slice(m.index + m[0].length, html.indexOf('<', m.index + m[0].length));
     if (rest && !rest.includes('<')) {
       const extra = rest.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('<'))[0];
@@ -81,25 +84,30 @@ function extractImages(html: string): string[] {
   // Main product image
   const mainImgRe = /<img[^>]+class="[^"]*wp-post-image[^"]*"[^>]+src="([^"]+)"/i;
   const mainM = mainImgRe.exec(html);
-  if (mainM && mainM[1]) {
-    const url = removeSizeFromUrl(mainM[1]);
-    if (!seen.has(url)) { seen.add(url); urls.push(url); }
+  if (mainM) {
+    const src = mainM[1];
+    if (src) {
+      const url = removeSizeFromUrl(src);
+      if (!seen.has(url)) { seen.add(url); urls.push(url); }
+    }
   }
 
   // WooCommerce gallery images
   const galleryRe = /<a[^>]+href="([^"]+)"[^>]*>\s*<img[^>]*class="[^"]*wp-post-image[^"]*"[^>]*>/gi;
   let m: RegExpExecArray | null;
   while ((m = galleryRe.exec(html)) !== null) {
-    if (!m[1]) continue;
-    const url = removeSizeFromUrl(m[1]);
+    const href = m[1];
+    if (!href) continue;
+    const url = removeSizeFromUrl(href);
     if (!seen.has(url)) { seen.add(url); urls.push(url); }
   }
 
   // WooCommerce product-gallery thumbnails
   const thumbRe = /<img[^>]+src="([^"]+)"[^>]*class="[^"]*attachment-woocommerce_thumbnail[^"]*"/gi;
   while ((m = thumbRe.exec(html)) !== null) {
-    if (!m[1]) continue;
-    const url = removeSizeFromUrl(m[1]);
+    const src = m[1];
+    if (!src) continue;
+    const url = removeSizeFromUrl(src);
     if (!seen.has(url)) { seen.add(url); urls.push(url); }
   }
 
@@ -109,8 +117,10 @@ function extractImages(html: string): string[] {
 function extractCategory(html: string): string {
   const catRe = /<span[^>]*class="[^"]*posted_in[^"]*"[^>]*>.*?<a[^>]+href="[^"]*product-categorie\/([^"/]+)/i;
   const m = catRe.exec(html);
-  if (!m || !m[1]) return '';
-  return m[1].replace(/-/g, ' ');
+  if (!m) return '';
+  const slug = m[1];
+  if (!slug) return '';
+  return slug.replace(/-/g, ' ');
 }
 
 async function fetchHtml(url: string): Promise<string> {
@@ -128,14 +138,20 @@ async function scrapeProduct(url: string): Promise<ProductData | null> {
     // Name from <h1> or <title>
     const nameM = html.match(/<h1[^>]*class="[^"]*product_title[^"]*"[^>]*>([^<]+)<\/h1>/i)
       || html.match(/<title>([^<]+)\s*[–-].*?<\/title>/i);
-    const name = nameM && nameM[1] ? nameM[1].trim() : '';
-    if (!name) return null;
+    const name = nameM ? (nameM[1] || '').trim() : '';
+    if (!name) {
+      console.log(`  ⚠ Geen naam gevonden voor ${url}`);
+      return null;
+    }
 
     // Price
     const priceElRe = /<p[^>]*class="[^"]*price[^"]*"[^>]*>(.*?)<\/p>/i;
     const priceM = priceElRe.exec(html);
     const price = priceM ? parsePrice(priceM[1] || '') : null;
-    if (!price) return null;
+    if (!price) {
+      console.log(`  ⚠ Geen prijs gevonden voor ${name}`);
+      return null;
+    }
 
     // Description + Specs
     const description = parseDescription(html);
@@ -173,8 +189,9 @@ async function scrapeAllProductUrls(): Promise<string[]> {
       const linkRe = /<a[^>]+href="([^"]+\/product\/[^"]+)"[^>]*>/gi;
       let m: RegExpExecArray | null;
       while ((m = linkRe.exec(html)) !== null) {
-        if (!m[1]) continue;
-        const url = m[1].split('?')[0].split('#')[0];
+        const href = m[1];
+        if (!href) continue;
+        const url = href.split('?')[0].split('#')[0];
         if (!seen.has(url)) { seen.add(url); urls.push(url); }
       }
     } catch (err: any) {
