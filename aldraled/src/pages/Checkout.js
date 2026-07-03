@@ -64,14 +64,12 @@ const Checkout = () => {
         discountCodeId: appliedDiscount?.discountId,
       });
       analytics.trackCheckoutComplete(res.data.id, cartTotal);
-
-      const paymentRes = await api.post('/payments', {
-        orderId: res.data.id,
-        redirectUrl: `${window.location.origin}/bestelling-geplaatst/${res.data.id}`,
-      });
-
       clearCart();
-      window.location.href = paymentRes.data.paymentUrl;
+      if (res.data.paymentUrl) {
+        window.location.href = res.data.paymentUrl;
+      } else {
+        navigate('/bestelling-geplaatst', { state: { order: res.data } });
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Er is een fout opgetreden bij het plaatsen van uw bestelling.');
     } finally {

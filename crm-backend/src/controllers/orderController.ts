@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { db } from '../lib/db';
-import { orders, orderItems, products, discountCodes } from '../db/schema';
+import { orders, orderItems, products, discountCodes, payments } from '../db/schema';
 import { eq, and, inArray, sql } from 'drizzle-orm';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { z } from 'zod';
@@ -8,6 +8,7 @@ import { sendOrderConfirmation, sendAdminNotification, sendStatusUpdate } from '
 import PDFDocument from 'pdfkit';
 import { getContent } from '../db/contentRepo';
 import { getEffectiveUnitPrice, getPricingContextForUser } from '../lib/pricing';
+import createMollieClient, { Payment } from '@mollie/api-client';
 
 const orderSchema = z.object({
   items: z.array(z.object({
@@ -112,7 +113,41 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     });
 
     const fullOrder = await getOrderWithRelations(newOrder.id);
-    res.status(201).json(fullOrder);
+
+    // Create Mollie payment
+    let paymentUrl;
+    try {
+      const settings = (await getContent('ai_settings')) as { mollieApiKey?: string } | null;
+      const apiKey = settings?.mollieApiKey || process.env.MOLLIE_API_KEY || '';
+      if (apiKey) {
+        const orderId = newOrder.id;
+        const mollieClient = createMollieClient({ apiKey });
+        const molliePayment = await mollieClient.payments.create({
+          amount: { currency: 'EUR', value: total.toFixed(2) },
+          description: `Order #${orderId.slice(0, 8)}`,
+          redirectUrl: `${process.env.FRONTEND_URL || ''}/bestelling-geplaatst/${orderId}`,
+          webhookUrl: `${process.env.API_BASE_URL}/api/payments/webhook`,
+          metadata: { orderId, userId },
+        });
+        const resolved = molliePayment as unknown as Payment;
+        paymentUrl = resolved.getCheckoutUrl();
+
+        await db.insert(payments).values({
+          id: crypto.randomUUID(),
+          orderId,
+          molliePaymentId: resolved.id,
+          molliePaymentUrl: paymentUrl,
+          amount: total,
+          currency: 'EUR',
+          status: 'OPEN',
+          metadata: JSON.stringify({ createdBy: userId }),
+        });
+      }
+    } catch (paymentError) {
+      console.error('[order] Failed to create Mollie payment:', paymentError);
+    }
+
+    res.status(201).json({ ...fullOrder, paymentUrl });
 
     // Send emails async — don't block response
     if (fullOrder) {
