@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import CustomBlocks from '../components/CustomBlocks';
 import { getMediaUrl, API_URL } from '../lib/api';
 
-const SeoLandingPage = () => {
+function SeoLandingPage() {
   const { slug } = useParams();
   const { i18n } = useTranslation();
   const [page, setPage] = useState(null);
@@ -24,6 +24,115 @@ const SeoLandingPage = () => {
       .catch(() => setPage(null))
       .finally(() => setLoading(false));
   }, [slug, i18n.resolvedLanguage, i18n.language]);
+
+  // Structured data JSON-LD
+  const jsonLd = useMemo(() => {
+    if (!page) return null;
+
+    const schemas = [];
+
+    // BreadcrumbList
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alra-led.com/' },
+        { '@type': 'ListItem', position: 2, name: page.title || slug, item: `https://alra-led.com/${slug}/` },
+      ],
+    });
+
+    // FAQPage
+    if (Array.isArray(page.faq) && page.faq.length > 0) {
+      schemas.push({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: page.faq.map(item => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: { '@type': 'Answer', text: item.answer },
+        })),
+      });
+    }
+
+    // LocalBusiness
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'LocalBusiness',
+      name: 'ALRA LED Solutions',
+      address: { '@type': 'PostalAddress', streetAddress: 'Dijkgraafweg 4a', addressLocality: 'Apeldoorn', postalCode: '7323WC', addressCountry: 'NL' },
+      telephone: '+31850021606',
+      email: 'info@alra-led.nl',
+      url: 'https://alra-led.com',
+      areaServed: 'NL',
+    });
+
+    return schemas;
+  }, [page, slug]);
+
+  // Inject JSON-LD into document head
+  useEffect(() => {
+    if (!jsonLd) return;
+    const scripts = jsonLd.map(schema => {
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.textContent = JSON.stringify(schema);
+      document.head.appendChild(script);
+      return script;
+    });
+    return () => { scripts.forEach(s => s.remove()); };
+  }, [jsonLd]);
+
+  // Content rendering function
+  function renderContentBlock(block, i) {
+    const trimmed = block.trim();
+    if (!trimmed) return null;
+
+    // Table: lines starting with |
+    if (trimmed.startsWith('|') && trimmed.includes('\n')) {
+      const lines = trimmed.split('\n').filter(l => l.trim());
+      const headers = lines[0].split('|').filter(c => c.trim()).map(c => c.trim());
+      const separatorLine = lines[1] && lines[1].includes('---');
+      const bodyLines = separatorLine ? lines.slice(2) : lines.slice(1);
+
+      return (
+        <div key={i} className="overflow-x-auto my-8">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-gray-100">
+                {headers.map((h, j) => <th key={j} className="px-4 py-3 text-left font-black text-secondary text-xs uppercase tracking-widest">{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {bodyLines.filter(l => l.trim()).map((line, j) => (
+                <tr key={j} className={`${j % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b border-gray-100`}>
+                  {line.split('|').filter(c => c.trim()).map((cell, k) => (
+                    <td key={k} className="px-4 py-3 text-gray-600">{cell.trim()}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    if (trimmed.startsWith('## ')) {
+      return <h2 key={i} className="text-2xl font-black text-secondary mt-10 mb-4">{trimmed.replace('## ', '')}</h2>;
+    }
+    if (trimmed.startsWith('### ')) {
+      return <h3 key={i} className="text-xl font-black text-secondary mt-8 mb-3">{trimmed.replace('### ', '')}</h3>;
+    }
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      return (
+        <ul key={i} className="list-disc pl-6 space-y-2 my-4">
+          {trimmed.split('\n').filter(l => l.trim()).map((line, j) => (
+            <li key={j} className="text-gray-600">{line.replace(/^[-*] /, '')}</li>
+          ))}
+        </ul>
+      );
+    }
+    return <p key={i} className="text-gray-600 leading-relaxed my-4">{trimmed}</p>;
+  }
 
   if (loading) {
     return (
@@ -53,7 +162,7 @@ const SeoLandingPage = () => {
         </div>
       </div>
 
-      {/* Hero */}
+      {/* Hero with image */}
       {page.heroImage && (
         <div className="relative h-64 md:h-96 overflow-hidden bg-gray-100">
           <img src={getMediaUrl(page.heroImage)} alt={page.title} className="w-full h-full object-cover" />
@@ -66,6 +175,7 @@ const SeoLandingPage = () => {
         </div>
       )}
 
+      {/* Hero without image */}
       {!page.heroImage && (
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-12">
           <h1 className="text-3xl md:text-5xl font-black text-secondary leading-tight">{page.title}</h1>
@@ -73,28 +183,11 @@ const SeoLandingPage = () => {
         </div>
       )}
 
-      {/* Content blocks */}
+      {/* Content */}
       <div className="max-w-6xl mx-auto px-6 md:px-10 py-8">
         {page.content && (
-          <div className="prose prose-lg max-w-none text-gray-600 leading-relaxed space-y-6">
-            {page.content.split('\n\n').map((block, i) => {
-              if (block.startsWith('## ')) {
-                return <h2 key={i} className="text-2xl font-black text-secondary mt-10 mb-4">{block.replace('## ', '')}</h2>;
-              }
-              if (block.startsWith('### ')) {
-                return <h3 key={i} className="text-xl font-black text-secondary mt-8 mb-3">{block.replace('### ', '')}</h3>;
-              }
-              if (block.startsWith('- ')) {
-                return (
-                  <ul key={i} className="list-disc pl-6 space-y-2">
-                    {block.split('\n').filter(l => l.trim()).map((line, j) => (
-                      <li key={j} className="text-gray-600">{line.replace('- ', '')}</li>
-                    ))}
-                  </ul>
-                );
-              }
-              return <p key={i} className="text-gray-600 leading-relaxed">{block}</p>;
-            })}
+          <div className="prose prose-lg max-w-none text-gray-600 leading-relaxed">
+            {page.content.split('\n\n').map((block, i) => renderContentBlock(block, i))}
           </div>
         )}
 
@@ -105,7 +198,7 @@ const SeoLandingPage = () => {
           </div>
         )}
 
-        {/* FAQ Section */}
+        {/* FAQ */}
         {Array.isArray(page.faq) && page.faq.length > 0 && (
           <div className="mt-16 border-t border-gray-100 pt-12">
             <h2 className="text-2xl font-black text-secondary mb-8">Veelgestelde vragen</h2>
@@ -140,6 +233,6 @@ const SeoLandingPage = () => {
       </div>
     </div>
   );
-};
+}
 
 export default SeoLandingPage;
