@@ -153,6 +153,7 @@ const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [customBlocks, setCustomBlocks] = useState([]);
   const [sectionOrder, setSectionOrder] = useState(DEFAULT_SECTION_ORDER);
+  const [hiddenSections, setHiddenSections] = useState([]);
 
   useEffect(() => {
     const lang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
@@ -166,7 +167,15 @@ const Home = () => {
       .then(res => setCustomBlocks(Array.isArray(res.data) ? res.data : []))
       .catch(() => {});
     axios.get(`${API_URL}/api/content/layout_home_sections`, { params: { lang } })
-      .then(res => setSectionOrder(Array.isArray(res.data) ? res.data : DEFAULT_SECTION_ORDER))
+      .then(res => {
+        const data = res.data;
+        if (data && data.order) {
+          setSectionOrder(data.order);
+          setHiddenSections(data.hidden || []);
+        } else if (Array.isArray(data)) {
+          setSectionOrder(data);
+        }
+      })
       .catch(() => {});
   }, [i18n.resolvedLanguage, i18n.language]);
 
@@ -176,15 +185,17 @@ const Home = () => {
   const fixed = DEFAULT_SECTION_ORDER;
   const fixedSet = new Set(fixed);
   const blockMap = new Map(customBlocks.map((b) => [b.id, b]));
+  const hiddenSet = new Set(hiddenSections);
   const raw = Array.isArray(sectionOrder) ? sectionOrder : fixed;
   const cleaned = raw
     .filter((id) => typeof id === 'string')
+    .filter((id) => !hiddenSet.has(id))
     .filter((id) => fixedSet.has(id) || (id.startsWith('block:') && blockMap.has(id.slice('block:'.length))));
-  const withMissingFixed = [...cleaned, ...fixed.filter((id) => !cleaned.includes(id))];
+  const withMissingFixed = [...cleaned, ...fixed.filter((id) => !cleaned.includes(id) && !hiddenSet.has(id))];
   const normalizedOrder = [...withMissingFixed];
   customBlocks.forEach((b) => {
     const key = `block:${b.id}`;
-    if (!normalizedOrder.includes(key)) normalizedOrder.push(key);
+    if (!normalizedOrder.includes(key) && !hiddenSet.has(key)) normalizedOrder.push(key);
   });
 
   const renderSection = (id) => {
