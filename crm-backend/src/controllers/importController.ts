@@ -454,18 +454,17 @@ function buildHomeContent(scraped: Awaited<ReturnType<typeof scrapeTextPage>>): 
   const stats: { value: number; label: string; suffix: string }[] = [];
   const process: { title: string; description: string; buttonText: string; steps: { title: string; description: string }[] } = { title: '', description: '', buttonText: '', steps: [] };
   const cta: Record<string, string> = {};
-  let description = scraped.intro;
+  let descriptionLines: string[] = [];
 
   for (const sec of sections) {
     const h2 = sec.h2.toLowerCase();
     if (h2.includes('over') || h2.includes('welkom')) {
       introSection.heading = sec.h2;
-      introSection.description = sec.subs.map(s => s.content).join('\n\n');
-      if (!description) description = introSection.description;
+      descriptionLines.push(sec.subs.map(s => cleanScrapedText(s.content)).filter(Boolean).join(' '));
     } else if (h2.includes('specialisatie') || h2.includes('product') || h2.includes('categorie')) {
       for (const sub of sec.subs) {
         if (sub.h3) {
-          specializations.push({ title: sub.h3, desc: sub.content, image: '' });
+          specializations.push({ title: sub.h3, desc: cleanScrapedText(sub.content), image: '' });
         }
       }
     } else if (h2.includes('statistiek') || h2.includes('cijfer') || h2.includes('resultaat')) {
@@ -474,16 +473,17 @@ function buildHomeContent(scraped: Awaited<ReturnType<typeof scrapeTextPage>>): 
       }
     } else if (h2.includes('proces') || h2.includes('werkwijze') || h2.includes('methode')) {
       process.title = sec.h2;
-      process.description = sec.subs.map(s => s.content).join('\n\n');
-      process.steps = sec.subs.map(s => ({ title: s.h3 || 'Stap', description: s.content }));
+      process.description = sec.subs.map(s => cleanScrapedText(s.content)).filter(Boolean).join(' ');
+      process.steps = sec.subs.map(s => ({ title: s.h3 || 'Stap', description: cleanScrapedText(s.content) }));
     } else if (h2.includes('contact') || h2.includes('vraag') || h2.includes('cta')) {
       cta.title = sec.h2;
-      cta.subtitle = sec.subs.map(s => s.content).join('\n\n');
+      cta.subtitle = sec.subs.map(s => cleanScrapedText(s.content)).filter(Boolean).join(' ');
     } else {
-      // Fall through to description
-      description += '\n\n' + sec.subs.map(s => s.content).join('\n\n');
+      descriptionLines.push(sec.subs.map(s => cleanScrapedText(s.content)).filter(Boolean).join(' '));
     }
   }
+
+  const description = descriptionLines.filter(Boolean).join('\n\n');
 
   return {
     hero: { ...hero, titlePrefix: '', primaryButtonText: 'Bekijk producten', secondaryButtonText: 'Over ons', typewriterWords: ['bedrijfswagens.', 'bouwplaatsen.', 'werkplaatsen.'] },
@@ -500,25 +500,26 @@ function buildAboutContent(scraped: Awaited<ReturnType<typeof scrapeTextPage>>):
   const sections = scraped.sections;
   const values: { icon: string; title: string; text: string }[] = [];
   const timeline: { year: string; label: string }[] = [];
-  let description = scraped.intro;
+  let description = cleanScrapedText(scraped.intro);
 
   for (const sec of sections) {
     const h2 = sec.h2.toLowerCase();
     if (h2.includes('waarde') || h2.includes('kernwaarde')) {
       for (const sub of sec.subs) {
         if (sub.h3) {
-          values.push({ icon: '⭐', title: sub.h3, text: sub.content });
+          values.push({ icon: '⭐', title: sub.h3, text: cleanScrapedText(sub.content) });
         }
       }
     } else if (h2.includes('geschiedenis') || h2.includes('tijdlijn') || h2.includes('tijdslijn')) {
       for (const sub of sec.subs) {
         const yearM = sub.h3.match(/(\d{4})/);
         if (yearM) {
-          timeline.push({ year: yearM[1] || sub.h3, label: sub.content.slice(0, 100) || sub.h3 });
+          timeline.push({ year: yearM[1] || sub.h3, label: cleanScrapedText(sub.content.slice(0, 100)) || sub.h3 });
         }
       }
     } else {
-      description += '\n\n' + sec.subs.map(s => s.content).join('\n\n');
+      const cleaned = sec.subs.map(s => cleanScrapedText(s.content)).filter(Boolean).join(' ');
+      if (cleaned) description += '\n\n' + cleaned;
     }
   }
 
@@ -539,7 +540,7 @@ function buildContactContent(scraped: Awaited<ReturnType<typeof scrapeTextPage>>
   return {
     eyebrow: 'Neem contact op',
     title: scraped.title || 'Contact',
-    description: scraped.intro || 'Neem contact met ons op voor vragen of een vrijblijvende offerte.',
+    description: cleanScrapedText(scraped.intro) || 'Neem contact met ons op voor vragen of een vrijblijvende offerte.',
     phone: contactInfo.phone || '085-0021 606',
     email: contactInfo.email || 'info@alra-led.nl',
     address: contactInfo.address || 'Dijkgraafweg 4a, 7336 AT Apeldoorn',
@@ -571,19 +572,43 @@ function buildContactContent(scraped: Awaited<ReturnType<typeof scrapeTextPage>>
   };
 }
 
+function cleanScrapedText(text: string): string {
+  return text
+    // Remove duplicate sentences
+    .replace(/([^.!?]+[.!?])\s*\1+/g, '$1')
+    // Remove lines that are only numbers/units
+    .replace(/^[\d\s.,%pxremdeg]+$/gm, '')
+    // Remove residual CSS-like fragments
+    .replace(/\b(?:px|rem|em|deg|rgba|italic)\b.*$/gi, '')
+    // Collapse multiple spaces
+    .replace(/[ \t]{2,}/g, ' ')
+    // Collapse multiple newlines
+    .replace(/\n{4,}/g, '\n\n\n')
+    .trim();
+}
+
 function buildLegalContent(scraped: Awaited<ReturnType<typeof scrapeTextPage>>): object {
   const sections = scraped.sections;
-  let content = scraped.intro;
+  const parts: string[] = [];
+
+  if (scraped.intro) parts.push(cleanScrapedText(scraped.intro));
+
   for (const sec of sections) {
-    content += '\n\n## ' + sec.h2 + '\n\n';
+    // Add heading as a single-line paragraph
+    if (sec.h2) parts.push(sec.h2);
+    // Add content paragraphs
     for (const sub of sec.subs) {
-      if (sub.h3) content += '### ' + sub.h3 + '\n\n';
-      content += sub.content + '\n\n';
+      if (sub.h3) parts.push(sub.h3);
+      if (sub.content) {
+        const cleaned = cleanScrapedText(sub.content);
+        if (cleaned) parts.push(cleaned);
+      }
     }
   }
+
   return {
     title: scraped.title || '',
-    content: content.trim(),
+    content: parts.join('\n\n'),
   };
 }
 
