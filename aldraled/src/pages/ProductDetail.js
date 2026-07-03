@@ -168,15 +168,16 @@ const ProductDetail = () => {
                 </button>
               </div>
 
-              {/* Quick specs */}
+              {/* Quick specs — stacked */}
               {(() => {
                 const s = parseSpecs(product.specs);
                 return s.length > 0 ? (
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                    {s.slice(0, 6).map((spec, i) => (
-                      <span key={i} className="text-gray-500">
-                        {spec.label}: <strong className="text-secondary">{spec.value}</strong>
-                      </span>
+                  <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
+                    {s.slice(0, 8).map((spec, i) => (
+                      <div key={i} className="flex items-center justify-between px-4 py-2">
+                        <span className="text-[11px] text-gray-500 font-medium">{spec.label}</span>
+                        <span className="text-xs font-bold text-secondary">{spec.value}</span>
+                      </div>
                     ))}
                   </div>
                 ) : null;
