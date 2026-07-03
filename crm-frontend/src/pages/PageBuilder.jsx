@@ -529,7 +529,6 @@ function SectionItem({ item, onToggle, onInsertAfter, onEditFixed, isHidden, hom
   const isFixed = item._fixed;
   const canEdit = isFixed && FIXED_SECTION_SCHEMAS[item.id];
 
-  // Show a preview of current content for fixed sections
   const getPreview = () => {
     if (!isFixed || !homeContent) return null;
     const schema = FIXED_SECTION_SCHEMAS[item.id];
@@ -542,41 +541,37 @@ function SectionItem({ item, onToggle, onInsertAfter, onEditFixed, isHidden, hom
   const preview = getPreview();
 
   return (
-    <>
-      <div ref={setNodeRef} style={style}
-        className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${isDragging ? 'shadow-xl ring-2 ring-violet-300' : isHidden ? 'bg-gray-50 border-gray-200 opacity-50' : 'bg-white border-gray-100 hover:border-violet-100'}`}>
-        <button {...attributes} {...listeners}
-          className="text-gray-200 hover:text-gray-400 cursor-grab active:cursor-grabbing touch-none shrink-0">
-          <GripVertical className="w-5 h-5" />
-        </button>
-        <span className="text-lg shrink-0">{item.icon}</span>
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm font-semibold truncate ${isHidden ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{item.label}</p>
-          {isFixed && !canEdit && <p className="text-[10px] text-gray-400">Vaste sectie</p>}
-          {isFixed && canEdit && preview && <p className="text-[10px] text-green-500 truncate">{preview}</p>}
-          {isFixed && canEdit && !preview && <p className="text-[10px] text-green-500">Klik op bewerken om inhoud aan te passen</p>}
-          {!isFixed && <p className="text-[10px] text-violet-400">CMS blok</p>}
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          {canEdit && (
-            <button onClick={() => onEditFixed(item.id)} title="Inhoud bewerken"
-              className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors">
-              <Pencil className="w-4 h-4" />
-            </button>
-          )}
-          <button onClick={() => onToggle(item.id)} title={isHidden ? 'Tonen' : 'Verbergen'}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
-            {isHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+    <div ref={setNodeRef} style={style}
+      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all ${isDragging ? 'shadow-xl ring-2 ring-violet-300' : isHidden ? 'bg-gray-50 border-gray-200 opacity-50' : 'bg-white border-gray-100 hover:border-violet-100'}`}>
+      <button {...attributes} {...listeners}
+        className="text-gray-200 hover:text-gray-400 cursor-grab active:cursor-grabbing touch-none shrink-0 p-1">
+        <GripVertical className="w-4 h-4" />
+      </button>
+      <button onClick={() => onInsertAfter(item.id)} title="Blok toevoegen na deze sectie"
+        className="text-gray-300 hover:text-violet-500 hover:bg-violet-50 rounded-lg p-1 transition-colors shrink-0">
+        <Plus className="w-4 h-4" />
+      </button>
+      <span className="text-base shrink-0">{item.icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-semibold truncate ${isHidden ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{item.label}</p>
+        {isFixed && !canEdit && <p className="text-[10px] text-gray-400">Vaste sectie</p>}
+        {isFixed && canEdit && preview && <p className="text-[10px] text-green-500 truncate">{preview}</p>}
+        {isFixed && canEdit && !preview && <p className="text-[10px] text-green-500">Bewerkbaar</p>}
+        {!isFixed && <p className="text-[10px] text-violet-400">CMS blok</p>}
+      </div>
+      <div className="flex items-center gap-0.5 shrink-0">
+        {canEdit && (
+          <button onClick={() => onEditFixed(item.id)} title="Inhoud bewerken"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors">
+            <Pencil className="w-3.5 h-3.5" />
           </button>
-        </div>
-      </div>
-      <div className="flex justify-center py-1">
-        <button onClick={() => onInsertAfter(item.id)}
-          className="text-[10px] font-bold text-violet-400 hover:text-violet-600 uppercase tracking-widest opacity-0 hover:opacity-100 transition-all flex items-center gap-1">
-          <Plus className="w-3 h-3" /> blok hier
+        )}
+        <button onClick={() => onToggle(item.id)} title={isHidden ? 'Tonen' : 'Verbergen'}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
+          {isHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
         </button>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -643,17 +638,22 @@ function FixedSectionEditModal({ sectionId, homeContent, onSave, onClose }) {
 function NewBlockModal({ onAdd, onClose }) {
   const [blockType, setBlockType] = useState('');
   const [mode, setMode] = useState('ai');
+  const [imagePos, setImagePos] = useState('right');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState('');
+
+  const hasImagePos = ['image_text', 'product_highlight', 'about_alra'].includes(blockType);
 
   const generate = async () => {
     if (!blockType || !description.trim()) return;
     setLoading(true); setPreview(null); setError('');
     try {
       const res = await api.post('/ai/new-block', { blockType, description });
-      setPreview(res.data.result);
+      const result = res.data.result;
+      if (hasImagePos && result) result.imagePosition = imagePos;
+      setPreview(result);
     } catch (err) {
       setError(errorText(err, 'Mislukt. Controleer GROQ_API_KEY.'));
     } finally { setLoading(false); }
@@ -665,6 +665,7 @@ function NewBlockModal({ onAdd, onClose }) {
     const empty = {};
     schema.forEach(f => {
       if (f.type === 'array') empty[f.key] = [];
+      else if (f.key === 'imagePosition') empty[f.key] = imagePos;
       else empty[f.key] = '';
     });
     setPreview(empty);
@@ -717,6 +718,22 @@ function NewBlockModal({ onAdd, onClose }) {
             </div>
           )}
 
+          {hasImagePos && (
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Foto positie</label>
+              <div className="flex gap-2">
+                <button onClick={() => setImagePos('left')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all text-sm font-semibold ${imagePos === 'left' ? 'border-violet-500 bg-violet-50 text-violet-700' : 'border-gray-100 text-gray-500 hover:border-gray-200'}`}>
+                  <span>🖼️</span> Links
+                </button>
+                <button onClick={() => setImagePos('right')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all text-sm font-semibold ${imagePos === 'right' ? 'border-violet-500 bg-violet-50 text-violet-700' : 'border-gray-100 text-gray-500 hover:border-gray-200'}`}>
+                  Rechts <span>🖼️</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {blockType && mode === 'ai' && (
             <div className="space-y-3">
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Opdracht *</label>
@@ -763,9 +780,12 @@ function NewBlockModal({ onAdd, onClose }) {
   );
 }
 
-// ── Insert block modal (pick type for a position) ────────
+// ── Insert block modal (pick type + position for a spot) ──
 function InsertBlockModal({ onAdd, onClose }) {
   const [blockType, setBlockType] = useState('');
+  const [imagePos, setImagePos] = useState('right');
+
+  const hasImagePos = ['image_text', 'product_highlight', 'about_alra'].includes(blockType);
 
   const add = () => {
     if (!blockType) return;
@@ -773,6 +793,7 @@ function InsertBlockModal({ onAdd, onClose }) {
     const empty = {};
     schema.forEach(f => {
       if (f.type === 'array') empty[f.key] = [];
+      else if (f.key === 'imagePosition') empty[f.key] = imagePos;
       else empty[f.key] = '';
     });
     onAdd({ type: blockType, data: empty });
@@ -783,19 +804,38 @@ function InsertBlockModal({ onAdd, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
         <div className="px-6 py-4 border-b flex items-center justify-between">
-          <h2 className="font-bold text-gray-800">Blok toevoegen op deze positie</h2>
+          <h2 className="font-bold text-gray-800">Blok toevoegen</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
         </div>
         <div className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-2">
-            {BLOCK_TYPES.map(t => (
-              <button key={t.key} onClick={() => { setBlockType(t.key); }}
-                className={`text-left px-3 py-2.5 rounded-xl border-2 transition-all ${blockType === t.key ? 'border-violet-500 bg-violet-50' : 'border-gray-100 hover:border-gray-200'}`}>
-                <span className="text-base mr-1.5">{t.icon}</span>
-                <span className="text-sm font-semibold text-gray-700">{t.label}</span>
-              </button>
-            ))}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Kies bloktype</label>
+            <div className="grid grid-cols-2 gap-2">
+              {BLOCK_TYPES.map(t => (
+                <button key={t.key} onClick={() => setBlockType(t.key)}
+                  className={`text-left px-3 py-2.5 rounded-xl border-2 transition-all ${blockType === t.key ? 'border-violet-500 bg-violet-50' : 'border-gray-100 hover:border-gray-200'}`}>
+                  <span className="text-base mr-1.5">{t.icon}</span>
+                  <span className="text-sm font-semibold text-gray-700">{t.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
+
+          {hasImagePos && (
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Foto positie</label>
+              <div className="flex gap-2">
+                <button onClick={() => setImagePos('left')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all text-sm font-semibold ${imagePos === 'left' ? 'border-violet-500 bg-violet-50 text-violet-700' : 'border-gray-100 text-gray-500 hover:border-gray-200'}`}>
+                  <span>🖼️</span> Links
+                </button>
+                <button onClick={() => setImagePos('right')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all text-sm font-semibold ${imagePos === 'right' ? 'border-violet-500 bg-violet-50 text-violet-700' : 'border-gray-100 text-gray-500 hover:border-gray-200'}`}>
+                  Rechts <span>🖼️</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         <div className="px-6 py-4 border-t flex gap-3">
           <button onClick={add} disabled={!blockType}
@@ -887,10 +927,10 @@ export default function PageBuilder() {
 
   const addBlock = ({ type, data }) => {
     const newBlock = { id: crypto.randomUUID(), type, data, visible: true };
+    const blockRef = `block:${newBlock.id}`;
     if (insertAfter) {
       const idx = sectionOrder.indexOf(insertAfter);
       if (idx !== -1) {
-        const blockRef = `block:${newBlock.id}`;
         const newOrder = [...sectionOrder];
         newOrder.splice(idx + 1, 0, blockRef);
         setSectionOrder(newOrder);
@@ -899,6 +939,8 @@ export default function PageBuilder() {
         return;
       }
     }
+    // Add to section order at the end, then add block
+    setSectionOrder(o => [...o, blockRef]);
     setBlocks(b => [...b, newBlock]);
   };
 
@@ -1050,7 +1092,7 @@ export default function PageBuilder() {
         <>
           <div className="bg-blue-50 border border-blue-100 rounded-xl px-5 py-3 text-sm text-blue-700 flex items-start gap-2">
             <span className="mt-0.5 shrink-0">i</span>
-            <span>Sleep secties om de volgorde te wijzigen. Klik op het oog om een sectie te verbergen. Klik op <strong>"+ blok hier"</strong> om een CMS-blok toe te voegen op die positie.</span>
+            <span>Sleep om de volgorde te wijzigen. Klik op <strong>+</strong> om een blok toe te voegen. Klik op het <strong>oog</strong> om te verbergen. Klik op het <strong>potlood</strong> om inhoud te bewerken.</span>
           </div>
 
           {loading ? (
@@ -1058,7 +1100,7 @@ export default function PageBuilder() {
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
               <SortableContext items={sectionList.map(s => s.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-0">
+                <div className="space-y-1.5">
                   {sectionList.map(item => (
                     <SectionItem
                       key={item.id}
