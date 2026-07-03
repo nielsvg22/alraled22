@@ -5,12 +5,10 @@ import * as productsRepo from '../db/productsRepo';
 const WP_BASE = process.env.WP_BASE || 'https://alra-led.com';
 const STOCK_DEFAULT = 999;
 
-function decodeEntities(text: string): string {
-  return text.replace(/&euro;/g, '€').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
-}
-
 function parsePrice(text: string): number | null {
-  const decoded = decodeEntities(text);
+  const decoded = text
+    .replace(/<[^>]+>/g, '')
+    .replace(/&euro;/g, '€').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
   const m = decoded.match(/€\s*([0-9]+[.,][0-9]+)/);
   if (!m) return null;
   const val = m[1];
