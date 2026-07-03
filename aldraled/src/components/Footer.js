@@ -63,8 +63,14 @@ const Footer = () => {
 
           {/* Brand */}
           <div className="md:col-span-1 space-y-4">
-            <Link to="/" className="text-xl font-black tracking-tight">
-              ALRA<span className="text-primary">LED</span>
+            <Link to="/" className="block">
+              {general.logoUrl ? (
+                <img src={general.logoUrl} alt="ALRA LED" className="h-10 w-auto" />
+              ) : (
+                <span className="text-xl font-black tracking-tight">
+                  ALRA<span className="text-primary">LED</span>
+                </span>
+              )}
             </Link>
             <p className="text-white/40 text-xs leading-relaxed">
               {general.footerDescription}
@@ -132,9 +138,15 @@ const Footer = () => {
       <div className="border-t border-white/10">
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-white/30">
           <span>© {new Date().getFullYear()} {general.bottomCopy}</span>
-          <div className="flex gap-5">
-            <a href="#!" className="hover:text-white/60 transition-colors">{general.privacyLabel}</a>
-            <a href="#!" className="hover:text-white/60 transition-colors">{general.termsLabel}</a>
+          <div className="flex gap-5 items-center">
+            <Link to="/algemene-voorwaarden" className="hover:text-white/60 transition-colors">{general.termsLabel || 'Algemene Voorwaarden'}</Link>
+            <Link to="/privacy-policy" className="hover:text-white/60 transition-colors">{general.privacyLabel || 'Privacy Policy'}</Link>
+            <Link to="/retourbeleid" className="hover:text-white/60 transition-colors">Retourbeleid</Link>
+            {general.webkeurmerkId && (
+              <a href={`https://www.webkeurmerk.nl/keurmerk/${general.webkeurmerkId}`} target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors">
+                <img src="https://www.webkeurmerk.nl/images/keurmerk.png" alt="Webkeurmerk" className="h-6 w-auto inline-block" />
+              </a>
+            )}
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { 
+import {
   LayoutDashboard, 
   Package, 
   ShoppingCart, 
@@ -18,7 +18,9 @@ import {
   RotateCcw,
   Link2,
   Ticket,
-  CreditCard
+  CreditCard,
+  Scale,
+  Globe
 } from 'lucide-react';
 
 export default function DashboardLayout() {
@@ -50,6 +52,8 @@ export default function DashboardLayout() {
     navigation.push({ name: 'Email Instellingen', href: '/email', icon: Mail });
     navigation.push({ name: 'Snelstart', href: '/snelstart', icon: Link2 });
     navigation.push({ name: 'Kortingscodes', href: '/discounts', icon: Ticket });
+    navigation.push({ name: 'Juridisch', href: '/legal', icon: Scale });
+    navigation.push({ name: 'SEO Pagina\'s', href: '/seo', icon: Globe });
   }
 
   return (

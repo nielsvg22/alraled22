@@ -14,6 +14,10 @@ import {
   deleteProductRelation,
   importProducts,
   improveImage,
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
 } from '../controllers/productController';
 import { adminMiddleware, authMiddleware } from '../middleware/authMiddleware';
 
@@ -37,5 +41,11 @@ router.delete('/:id/relations/:relationId', authMiddleware, adminMiddleware, del
 router.delete('/:id', authMiddleware, adminMiddleware, deleteProduct);
 router.post('/import', authMiddleware, adminMiddleware, upload.single('file'), importProducts);
 router.post('/improve-image', authMiddleware, adminMiddleware, improveImage);
+
+// Category routes
+router.get('/categories/all', getCategories);
+router.post('/categories', authMiddleware, adminMiddleware, createCategory);
+router.put('/categories/:id', authMiddleware, adminMiddleware, updateCategory);
+router.delete('/categories/:id', authMiddleware, adminMiddleware, deleteCategory);
 
 export default router;

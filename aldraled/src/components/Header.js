@@ -11,6 +11,7 @@ const DEFAULT_GENERAL = {
   tagline: '',
   footerPhone: '085-0021 606',
   footerEmail: 'info@alra-led.nl',
+  logoUrl: '',
 };
 
 /* ── Live Search ─────────────────────────────── */
@@ -125,6 +126,8 @@ const Header = () => {
   const [languageOpen, setLanguageOpen] = useState(false);
   const languageRef = useRef(null);
   const [general, setGeneral] = useState(DEFAULT_GENERAL);
+  const [categories, setCategories] = useState([]);
+  const [showCategories, setShowCategories] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -138,6 +141,9 @@ const Header = () => {
     const lang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
     axios.get(`${API_URL}/api/content/general`, { params: { lang } })
       .then(res => setGeneral({ ...DEFAULT_GENERAL, ...res.data }))
+      .catch(() => {});
+    axios.get(`${API_URL}/api/products/categories/all`)
+      .then(res => setCategories(Array.isArray(res.data) ? res.data : []))
       .catch(() => {});
   }, [i18n.resolvedLanguage, i18n.language]);
 
@@ -231,8 +237,14 @@ const Header = () => {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <span className="text-xl font-black text-secondary tracking-tight">ALRA<span className="text-primary">LED</span></span>
-            <span className="hidden sm:block text-[10px] font-medium text-gray-400 uppercase tracking-wider border-l border-gray-200 pl-2 ml-0.5">Solutions</span>
+            {general.logoUrl ? (
+              <img src={general.logoUrl} alt="ALRA LED" className="h-8 w-auto" />
+            ) : (
+              <>
+                <span className="text-xl font-black text-secondary tracking-tight">ALRA<span className="text-primary">LED</span></span>
+                <span className="hidden sm:block text-[10px] font-medium text-gray-400 uppercase tracking-wider border-l border-gray-200 pl-2 ml-0.5">Solutions</span>
+              </>
+            )}
           </Link>
 
           {/* Desktop nav */}
@@ -245,6 +257,30 @@ const Header = () => {
                 </Link>
               </li>
             ))}
+            {categories.length > 0 && (
+              <li className="relative" onMouseEnter={() => setShowCategories(true)} onMouseLeave={() => setShowCategories(false)}>
+                <button className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-secondary hover:bg-gray-50 transition-all flex items-center gap-1">
+                  Categorieën
+                  <svg className={`w-3 h-3 transition-transform ${showCategories ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {showCategories && (
+                  <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
+                    {categories.map(cat => (
+                      <Link
+                        key={cat.id}
+                        to={`/producten?categorie=${cat.slug || cat.id}`}
+                        onClick={() => setShowCategories(false)}
+                        className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-secondary transition-colors border-b border-gray-50 last:border-0"
+                      >
+                        {cat.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </li>
+            )}
           </ul>
 
           {/* Live search */}

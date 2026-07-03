@@ -63,7 +63,7 @@ const DEFAULTS = {
 
 const TRUST_ITEMS = [
   { icon: "🚚", label: "Gratis verzending", sub: "boven €250,-" },
-  { icon: "🛡️", label: "5 jaar garantie", sub: "op alle producten" },
+  { icon: "🛡️", label: "1 jaar garantie", sub: "op alle producten" },
   { icon: "✅", label: "CE & RoHS", sub: "gecertificeerd" },
   { icon: "⚡", label: "Snel geleverd", sub: "direct uit voorraad" },
   { icon: "💬", label: "Expert advies", sub: "085-0021 606" },

@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import api, { getMediaUrl } from '../lib/api';
-import { Plus, Edit, Trash2, Search, Upload, X, Copy, Sparkles, Loader2, Package, TrendingUp, AlertTriangle, CheckCircle, Wand2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Upload, X, Copy, Sparkles, Loader2, Package, TrendingUp, AlertTriangle, CheckCircle, Wand2, FileText, Video, List } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { errorText } from '../lib/errorText';
 import ImageUploader from '../components/ImageUploader';
 
 const euro = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
-const emptyForm = { name: '', description: '', price: '', stock: '', category: '', imageUrl: '', imageUrls: [] };
+const emptyForm = { name: '', description: '', specs: '', price: '', stock: '', category: '', categoryId: '', imageUrl: '', imageUrls: [], pdfUrl: '', videoUrl: '' };
 
 const getProductImages = (product) => {
   const urls = Array.isArray(product?.images) ? product.images.map((image) => image.url || image).filter(Boolean) : [];
@@ -52,7 +52,13 @@ export default function Products() {
   const [importResult, setImportResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [specsList, setSpecsList]   = useState([]);
   const { isAdmin } = useAuth();
+
+  useEffect(() => {
+    api.get('/products/categories/all').then(r => setCategories(r.data)).catch(() => {});
+  }, []);
 
   const fetchProducts = async () => {
     try { const r = await api.get('/products'); setProducts(r.data); }
@@ -61,12 +67,12 @@ export default function Products() {
   };
   useEffect(() => { fetchProducts(); }, []);
 
-  const categories = useMemo(() => ['ALL', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))], [products]);
+  const categoryOptions = useMemo(() => ['ALL', ...categories], [categories]);
 
   const filtered = useMemo(() => products.filter(p => {
     const q = search.toLowerCase();
     return ([p.name, p.category, p.description].filter(Boolean).some(v => v.toLowerCase().includes(q)))
-      && (catFilter === 'ALL' || p.category === catFilter);
+      && (catFilter === 'ALL' || p.categoryId === catFilter || p.category === catFilter);
   }), [products, search, catFilter]);
 
   const stats = useMemo(() => ({
@@ -76,10 +82,31 @@ export default function Products() {
     outOfStock: products.filter(p => p.stock <= 0).length,
   }), [products]);
 
+  const parseSpecs = (specsStr) => {
+    if (!specsStr) return [];
+    try {
+      const parsed = JSON.parse(specsStr);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return specsStr.split('\n').filter(Boolean).map(line => {
+        const [key, ...vals] = line.split(':');
+        return { label: key.trim(), value: vals.join(':').trim() };
+      });
+    }
+  };
+
   const openModal = async (product = null) => {
     setEditing(product);
     const imageUrls = product ? getProductImages(product) : [];
-    setFormData(product ? { name: product.name, description: product.description||'', price: String(product.price), stock: String(product.stock), category: product.category||'', imageUrl: imageUrls[0] || '', imageUrls } : emptyForm);
+    const specs = product?.specs || '';
+    setSpecsList(parseSpecs(specs));
+    setFormData(product ? {
+      name: product.name, description: product.description||'', specs,
+      price: String(product.price), stock: String(product.stock),
+      category: product.category||'', categoryId: product.categoryId||'',
+      imageUrl: imageUrls[0] || '', imageUrls,
+      pdfUrl: product.pdfUrl||'', videoUrl: product.videoUrl||'',
+    } : emptyForm);
     setError('');
     setModalOpen(true);
     
@@ -114,7 +141,14 @@ export default function Products() {
     e.preventDefault();
     setSaving(true);
     const imageUrls = Array.isArray(formData.imageUrls) ? formData.imageUrls : [];
-    const data = { ...formData, imageUrl: imageUrls[0] || formData.imageUrl || '', imageUrls, price: parseFloat(formData.price), stock: parseInt(formData.stock, 10) };
+    const specsStr = specsList.length > 0 ? JSON.stringify(specsList.filter(s => s.label || s.value)) : (formData.specs || '');
+    const data = {
+      ...formData, specs: specsStr,
+      imageUrl: imageUrls[0] || formData.imageUrl || '', imageUrls,
+      price: parseFloat(formData.price), stock: parseInt(formData.stock, 10),
+      categoryId: formData.categoryId || null,
+      pdfUrl: formData.pdfUrl || null, videoUrl: formData.videoUrl || null,
+    };
     try {
       editing ? await api.put(`/products/${editing.id}`, data) : await api.post('/products', data);
       await fetchProducts();
@@ -132,7 +166,12 @@ export default function Products() {
   const handleDuplicate = async (p) => {
     try {
       const imageUrls = getProductImages(p);
-      await api.post('/products', { name: p.name+' (kopie)', description: p.description||'', price: p.price, stock: p.stock, category: p.category||'', imageUrl: imageUrls[0] || '', imageUrls });
+      await api.post('/products', {
+        name: p.name+' (kopie)', description: p.description||'', specs: p.specs||'',
+        price: p.price, stock: p.stock, category: p.category||'', categoryId: p.categoryId||'',
+        pdfUrl: p.pdfUrl||'', videoUrl: p.videoUrl||'',
+        imageUrl: imageUrls[0] || '', imageUrls,
+      });
       await fetchProducts();
     } catch { setError('Dupliceren mislukt'); }
   };
@@ -235,18 +274,22 @@ export default function Products() {
             placeholder="Zoek product, categorie…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {categories.map(c => (
-            <button key={c} onClick={() => setCatFilter(c)}
-              className="px-3 py-2 rounded-xl text-xs font-bold border transition-all"
-              style={{
-                background: catFilter === c ? '#1e40af' : '#fff',
-                color: catFilter === c ? '#fff' : '#6b7280',
-                borderColor: catFilter === c ? '#1e40af' : '#e5e7eb',
-                boxShadow: catFilter === c ? '0 4px 12px rgba(30,64,175,0.3)' : 'none',
-              }}>
-              {c === 'ALL' ? 'Alle' : c}
-            </button>
-          ))}
+          {['ALL', ...categories].map(c => {
+            const label = c === 'ALL' ? 'Alle' : (typeof c === 'string' ? c : c.name);
+            const value = typeof c === 'string' ? c : c.id;
+            return (
+              <button key={value} onClick={() => setCatFilter(value)}
+                className="px-3 py-2 rounded-xl text-xs font-bold border transition-all"
+                style={{
+                  background: catFilter === value ? '#1e40af' : '#fff',
+                  color: catFilter === value ? '#fff' : '#6b7280',
+                  borderColor: catFilter === value ? '#1e40af' : '#e5e7eb',
+                  boxShadow: catFilter === value ? '0 4px 12px rgba(30,64,175,0.3)' : 'none',
+                }}>
+                {label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -411,12 +454,76 @@ export default function Products() {
                   </div>
                 </div>
 
-                {/* Category */}
+                {/* Category dropdown */}
                 <div>
                   <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">Categorie</label>
-                  <input className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Bijv. Bedrijfswagens, Bouwplaats…"
-                    value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} />
+                  <select className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    value={formData.categoryId || ''}
+                    onChange={e => {
+                      const catId = e.target.value;
+                      const cat = categories.find(c => c.id === catId);
+                      setFormData({ ...formData, categoryId: catId, category: cat?.name || '' });
+                    }}>
+                    <option value="">Geen categorie</option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Specs editor */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Specificaties</label>
+                    <button type="button" onClick={() => setSpecsList([...specsList, { label: '', value: '' }])}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-800 px-2 py-1">
+                      + Rij toevoegen
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {specsList.map((spec, i) => (
+                      <div key={i} className="flex gap-2 items-center">
+                        <input className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Label (bv. Lichtopbrengst)" value={spec.label}
+                          onChange={e => {
+                            const updated = [...specsList];
+                            updated[i] = { ...updated[i], label: e.target.value };
+                            setSpecsList(updated);
+                          }} />
+                        <input className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Waarde (bv. 12.000 Lumen)" value={spec.value}
+                          onChange={e => {
+                            const updated = [...specsList];
+                            updated[i] = { ...updated[i], value: e.target.value };
+                            setSpecsList(updated);
+                          }} />
+                        <button type="button" onClick={() => setSpecsList(specsList.filter((_, j) => j !== i))}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* PDF + Video URLs */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">
+                      <FileText size={12} className="inline mr-1" /> PDF URL
+                    </label>
+                    <input className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="/uploads/product.pdf" value={formData.pdfUrl || ''}
+                      onChange={e => setFormData({ ...formData, pdfUrl: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">
+                      <Video size={12} className="inline mr-1" /> YouTube URL
+                    </label>
+                    <input className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="https://youtube.com/watch?v=..." value={formData.videoUrl || ''}
+                      onChange={e => setFormData({ ...formData, videoUrl: e.target.value })} />
+                  </div>
                 </div>
 
                 {/* Relations (Upsells) */}

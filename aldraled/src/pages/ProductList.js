@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
 import { getMediaUrl, API_URL } from '../lib/api';
 import { getImageSrc } from '../lib/productHelpers';
 
-const CATEGORIES = ['Alle', 'Bedrijfswagens', 'Bouwverlichting', 'Werkplaats', 'Accessoires'];
+const VAT_RATE = 0.21;
 
 /* ── QUICK-VIEW MODAL ─────────────────────────── */
 function QuickViewModal({ product, onClose }) {
   const { addToCart } = useCart();
   const [added, setAdded] = useState(false);
   const [qty, setQty] = useState(1);
+  const [showInclVat, setShowInclVat] = useState(false);
+  const displayPrice = showInclVat ? Number(product?.price || 0) * (1 + VAT_RATE) : Number(product?.price || 0);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -41,8 +43,13 @@ function QuickViewModal({ product, onClose }) {
             {product.category && <span className="text-xs font-bold text-primary uppercase tracking-widest">{product.category}</span>}
             <h2 className="text-xl font-black text-secondary leading-tight">{product.name}</h2>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-secondary">€{product.price}</span>
-              <span className="text-xs text-gray-400">excl. btw</span>
+              <span className="text-3xl font-black text-secondary">€{displayPrice.toFixed(2)}</span>
+              <button onClick={() => setShowInclVat(v => !v)}
+                className={`text-xs font-bold px-2 py-0.5 rounded-full border transition-all ${
+                  showInclVat ? 'bg-primary/10 text-primary border-primary/30' : 'text-gray-400 border-gray-200'
+                }`}>
+                {showInclVat ? 'incl. BTW' : 'excl. BTW'}
+              </button>
             </div>
             {product.description && <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">{product.description}</p>}
             <div className="flex items-center gap-2 mt-auto">
@@ -167,19 +174,34 @@ const ProductList = () => {
   const [loading, setLoading]         = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Alle');
+  const [categories, setCategories]   = useState([]);
   const [quickView, setQuickView]     = useState(null);
   const [compareList, setCompareList] = useState([]);
   const [showCompare, setShowCompare] = useState(false);
+  const [showInclVat, setShowInclVat] = useState(false);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products`)
       .then(res => { setProducts(res.data); setLoading(false); })
       .catch((err) => { console.error('Failed to load products:', err); setLoading(false); });
+    axios.get(`${API_URL}/api/products/categories/all`)
+      .then(res => setCategories(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
   }, []);
+
+  // Read category from URL params
+  useEffect(() => {
+    const catParam = searchParams.get('categorie');
+    if (catParam) {
+      const matched = categories.find(c => c.slug === catParam || c.id === catParam);
+      if (matched) setActiveCategory(matched.id);
+    }
+  }, [searchParams, categories]);
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCat = activeCategory === 'Alle' || (p.category || '').toLowerCase() === activeCategory.toLowerCase();
+    const matchesCat = activeCategory === 'Alle' || p.categoryId === activeCategory || (p.category || '').toLowerCase() === String(activeCategory).toLowerCase();
     return matchesSearch && matchesCat;
   });
 
@@ -206,20 +228,34 @@ const ProductList = () => {
         {/* Filters */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pb-6 border-b border-gray-100 mb-8">
           <div className="flex flex-wrap gap-2 flex-1">
-            {CATEGORIES.map(cat => (
-              <button key={cat} onClick={() => setActiveCategory(cat)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeCategory === cat ? 'bg-secondary text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-                {cat}
+            <button onClick={() => setActiveCategory('Alle')}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeCategory === 'Alle' ? 'bg-secondary text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+              Alle
+            </button>
+            {categories.map(cat => (
+              <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeCategory === cat.id ? 'bg-secondary text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                {cat.name}
               </button>
             ))}
           </div>
-          <div className="relative w-full sm:w-56">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input type="text" placeholder="Zoek product..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-full pl-9 pr-4 py-2 text-sm focus:border-primary focus:outline-none transition-colors"
-              value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowInclVat(v => !v)}
+              className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-all shrink-0 ${
+                showInclVat ? 'bg-primary/10 text-primary border-primary/30' : 'text-gray-400 border-gray-200'
+              }`}
+            >
+              {showInclVat ? 'incl. BTW' : 'excl. BTW'}
+            </button>
+            <div className="relative w-full sm:w-56">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input type="text" placeholder="Zoek product..."
+                className="w-full bg-gray-50 border border-gray-200 rounded-full pl-9 pr-4 py-2 text-sm focus:border-primary focus:outline-none transition-colors"
+                value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+            </div>
           </div>
         </div>
 
@@ -293,7 +329,9 @@ const ProductList = () => {
                     </div>
                     <h3 className="text-sm font-bold text-secondary group-hover:text-primary transition-colors leading-snug truncate">{product.name}</h3>
                     <div className="flex items-center justify-between mt-1">
-                      <span className="text-sm font-black text-secondary">€{product.price}</span>
+                      <span className="text-sm font-black text-secondary">
+                        €{showInclVat ? (product.price * (1 + VAT_RATE)).toFixed(2) : product.price}
+                      </span>
                       <span className="text-[10px] text-gray-400 uppercase tracking-wide">excl. btw</span>
                     </div>
                   </Link>
@@ -307,7 +345,7 @@ const ProductList = () => {
         <div className="mt-16 bg-secondary rounded-2xl p-8 grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { icon: '🚚', title: 'Snelle levering', text: 'Gratis verzending boven €250,-' },
-            { icon: '🛡️', title: '5 jaar garantie', text: 'Op alle producten' },
+            { icon: '🛡️', title: '1 jaar garantie', text: 'Op alle producten' },
             { icon: '💬', title: 'Expert advies', text: 'Bel 085-0021 606' },
           ].map(({ icon, title, text }) => (
             <div key={title} className="flex items-center gap-4">

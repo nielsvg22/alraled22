@@ -6,12 +6,20 @@ import { getMediaUrl, API_URL } from '../lib/api';
 import analytics from '../lib/analytics';
 import { getProductImages, getImageSrc } from '../lib/productHelpers';
 
-const SPECS = [
-  { label: "Lichtopbrengst", value: "12.000 Lumen" },
-  { label: "IP-Rating", value: "IP67 Waterdicht" },
-  { label: "Levensduur", value: "50.000 uur" },
-  { label: "Garantie", value: "5 Jaar Full-Service" },
-];
+const VAT_RATE = 0.21;
+
+const parseSpecs = (specsStr) => {
+  if (!specsStr) return [];
+  try {
+    const parsed = JSON.parse(specsStr);
+    return Array.isArray(parsed) ? parsed.filter(s => s.label && s.value) : [];
+  } catch {
+    return specsStr.split('\n').filter(Boolean).map(line => {
+      const [key, ...vals] = line.split(':');
+      return { label: key.trim(), value: vals.join(':').trim() };
+    }).filter(s => s.label && s.value);
+  }
+};
 
 const TRUST = [
   { icon: "🚚", title: "Gratis verzending", sub: "Boven €250,-" },
@@ -31,8 +39,13 @@ const ProductDetail = () => {
   const [added, setAdded]               = useState(false);
   const [stickyVisible, setStickyVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [showInclVat, setShowInclVat] = useState(false);
   const mainBtnRef = useRef(null);
   const { addToCart } = useCart();
+
+  const displayPrice = showInclVat
+    ? Number(product?.price || 0) * (1 + VAT_RATE)
+    : Number(product?.price || 0);
 
   useEffect(() => {
     setLoading(true);
@@ -138,8 +151,15 @@ const ProductDetail = () => {
               {product.category && <span className="text-xs font-bold text-primary uppercase tracking-widest">{product.category}</span>}
               <h1 className="text-2xl md:text-3xl font-black text-secondary leading-tight">{product.name}</h1>
               <div className="flex items-baseline gap-3 pt-1">
-                <span className="text-3xl font-black text-secondary">€{product.price}</span>
-                <span className="text-xs text-gray-400 font-medium">excl. btw</span>
+                <span className="text-3xl font-black text-secondary">€{displayPrice.toFixed(2)}</span>
+                <button
+                  onClick={() => setShowInclVat(v => !v)}
+                  className={`text-xs font-bold px-2 py-0.5 rounded-full border transition-all ${
+                    showInclVat ? 'bg-primary/10 text-primary border-primary/30' : 'text-gray-400 border-gray-200'
+                  }`}
+                >
+                  {showInclVat ? 'incl. BTW' : 'excl. BTW'}
+                </button>
               </div>
             </div>
 
@@ -148,17 +168,50 @@ const ProductDetail = () => {
             )}
 
             {/* Specs */}
-            <div className="bg-gray-50 rounded-xl p-5 space-y-3">
-              <p className="text-xs font-bold text-secondary uppercase tracking-widest">Specificaties</p>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                {SPECS.map(spec => (
-                  <div key={spec.label} className="flex flex-col">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{spec.label}</span>
-                    <span className="text-sm font-bold text-secondary mt-0.5">{spec.value}</span>
+            {(() => {
+              const specs = parseSpecs(product.specs);
+              return specs.length > 0 ? (
+                <div className="bg-gray-50 rounded-xl p-5 space-y-3">
+                  <p className="text-xs font-bold text-secondary uppercase tracking-widest">Specificaties</p>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                    {specs.map((spec, i) => (
+                      <div key={i} className="flex flex-col">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{spec.label}</span>
+                        <span className="text-sm font-bold text-secondary mt-0.5">{spec.value}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+              ) : null;
+            })()}
+
+            {/* PDF download */}
+            {product.pdfUrl && (
+              <a href={product.pdfUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm font-bold text-primary hover:text-primary/80 transition-colors border-t border-gray-100 pt-5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                Productinformatie (PDF)
+              </a>
+            )}
+
+            {/* Video embed */}
+            {product.videoUrl && (
+              <div className="border-t border-gray-100 pt-5">
+                <div className="aspect-video rounded-xl overflow-hidden bg-gray-100">
+                  <iframe
+                    src={product.videoUrl.includes('youtube.com/watch?v=')
+                      ? product.videoUrl.replace('watch?v=', 'embed/')
+                      : product.videoUrl.includes('youtu.be/')
+                        ? product.videoUrl.replace('youtu.be/', 'youtube.com/embed/')
+                        : product.videoUrl
+                    }
+                    title="Product video"
+                    className="w-full h-full"
+                    allowFullScreen
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Qty + Add to cart */}
             <div className="space-y-3 border-t border-gray-100 pt-5">
@@ -327,7 +380,7 @@ const ProductDetail = () => {
           <img src={getImageSrc(product)} alt={product.name} className="w-10 h-10 object-contain rounded-lg bg-gray-50 border border-gray-100 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="font-bold text-secondary text-sm truncate">{product.name}</p>
-            <p className="text-primary font-black text-sm">€{product.price} <span className="text-gray-400 font-normal text-xs">excl. btw</span></p>
+            <p className="text-primary font-black text-sm">€{displayPrice.toFixed(2)} <span className="text-gray-400 font-normal text-xs">{showInclVat ? 'incl. btw' : 'excl. btw'}</span></p>
           </div>
           <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden shrink-0">
             <button onClick={() => setQty(q => Math.max(1, q - 1))} className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-base">−</button>

@@ -18,6 +18,8 @@ import Blog from './pages/Blog';
 import BlogDetail from './pages/BlogDetail';
 import DealersMap from './pages/DealersMap';
 import Returns from './pages/Returns';
+import LegalPage from './pages/LegalPage';
+import SeoLandingPage from './pages/SeoLandingPage';
 import ChatBubble from './components/ChatBubble';
 import PasswordWall from './components/PasswordWall';
 import analytics from './lib/analytics';
@@ -93,6 +95,8 @@ function App() {
                   <Route path="/blog/:id" element={<BlogDetail />} />
                   <Route path="/verkooppunten" element={<DealersMap />} />
                   <Route path="/retouren" element={<Returns />} />
+                  <Route path="/:slug(algemene-voorwaarden|privacy-policy|retourbeleid|klachten)" element={<LegalPage />} />
+                  <Route path="/:slug(led-bouwlichtslang|professionele-bouwplaatsverlichting|led-lichtslang|bouwverlichting-huren|bedrijfswagenverlichting)" element={<SeoLandingPage />} />
                   <Route path="*" element={<Home />} />
                 </Routes>
               </Layout>

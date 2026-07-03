@@ -23,14 +23,29 @@ export const users = mysqlTable('User', {
   updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
 
+export const categories = mysqlTable('Category', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  name: varchar('name', { length: 255 }).notNull().unique(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
+  description: text('description'),
+  imageUrl: varchar('imageUrl', { length: 512 }),
+  sortOrder: int('sortOrder').notNull().default(0),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
+});
+
 export const products = mysqlTable('Product', {
   id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
+  specs: text('specs'),
   price: double('price').notNull(),
   stock: int('stock').notNull().default(0),
   imageUrl: varchar('imageUrl', { length: 512 }),
   category: varchar('category', { length: 255 }),
+  categoryId: varchar('categoryId', { length: 36 }).references(() => categories.id, { onDelete: 'set null' }),
+  pdfUrl: varchar('pdfUrl', { length: 512 }),
+  videoUrl: varchar('videoUrl', { length: 512 }),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
@@ -121,12 +136,17 @@ export const customerGroupsRelations = relations(customerGroups, ({ many }) => (
   users: many(users),
 }));
 
-export const productsRelations = relations(products, ({ many }) => ({
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  products: many(products),
+}));
+
+export const productsRelations = relations(products, ({ one, many }) => ({
   orderItems: many(orderItems),
   priceTiers: many(productPriceTiers),
   images: many(productImages),
   relatedProducts: many(productRelations, { relationName: 'productToRelated' }),
   isRelatedTo: many(productRelations, { relationName: 'relatedToProduct' }),
+  categoryRef: one(categories, { fields: [products.categoryId], references: [categories.id] }),
 }));
 
 export const productImagesRelations = relations(productImages, ({ one }) => ({

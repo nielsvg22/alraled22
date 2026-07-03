@@ -1,7 +1,7 @@
 import { eq, sql, desc, lte, gt, and, or, inArray, asc } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { db } from '../lib/db';
-import { productImages, products } from './schema';
+import { categories, productImages, products } from './schema';
 
 type ProductFilters = {
   search?: string;
@@ -17,11 +17,15 @@ type ProductImageInput = {
 type ProductInput = {
   name: string;
   description?: string | null;
+  specs?: string | null;
   price: number;
   stock: number;
   imageUrl?: string | null;
   imageUrls?: string[] | null;
   category?: string | null;
+  categoryId?: string | null;
+  pdfUrl?: string | null;
+  videoUrl?: string | null;
 };
 
 function normalizeImageUrls(imageUrls?: string[] | null, imageUrl?: string | null) {
@@ -123,10 +127,14 @@ export async function createProduct(input: ProductInput) {
     id,
     name: input.name,
     description: input.description ?? null,
+    specs: input.specs ?? null,
     price: input.price,
     stock: input.stock,
     imageUrl: imageUrls[0] ?? null,
     category: input.category ?? null,
+    categoryId: input.categoryId ?? null,
+    pdfUrl: input.pdfUrl ?? null,
+    videoUrl: input.videoUrl ?? null,
   });
   await replaceProductImages(id, imageUrls);
   return await getProduct(id);
@@ -146,10 +154,14 @@ export async function updateProduct(id: string, patch: Partial<ProductInput>) {
     .set({
       ...(patch.name !== undefined ? { name: patch.name } : {}),
       ...(patch.description !== undefined ? { description: patch.description } : {}),
+      ...(patch.specs !== undefined ? { specs: patch.specs } : {}),
       ...(patch.price !== undefined ? { price: patch.price } : {}),
       ...(patch.stock !== undefined ? { stock: patch.stock } : {}),
       ...(imageUrl !== undefined ? { imageUrl } : {}),
       ...(patch.category !== undefined ? { category: patch.category } : {}),
+      ...(patch.categoryId !== undefined ? { categoryId: patch.categoryId } : {}),
+      ...(patch.pdfUrl !== undefined ? { pdfUrl: patch.pdfUrl } : {}),
+      ...(patch.videoUrl !== undefined ? { videoUrl: patch.videoUrl } : {}),
       updatedAt: new Date(),
     })
     .where(eq(products.id, id));
@@ -167,6 +179,35 @@ export async function deleteProduct(id: string): Promise<boolean> {
   const existing = await getProduct(id);
   if (!existing) return false;
   await db.delete(products).where(eq(products.id, id));
+  return true;
+}
+
+// ── Categories ──────────────────────────────────────────────
+
+export async function listCategories() {
+  return await db.select().from(categories).orderBy(asc(categories.sortOrder), asc(categories.name));
+}
+
+export async function getCategory(id: string) {
+  const result = await db.select().from(categories).where(eq(categories.id, id));
+  return result[0] ?? null;
+}
+
+export async function createCategory(input: { name: string; slug: string; description?: string | null; imageUrl?: string | null; sortOrder?: number }) {
+  const id = randomUUID();
+  await db.insert(categories).values({ id, ...input, sortOrder: input.sortOrder ?? 0 });
+  return await getCategory(id);
+}
+
+export async function updateCategory(id: string, patch: Partial<{ name: string; slug: string; description: string | null; imageUrl: string | null; sortOrder: number }>) {
+  await db.update(categories).set({ ...patch, updatedAt: new Date() }).where(eq(categories.id, id));
+  return await getCategory(id);
+}
+
+export async function deleteCategory(id: string): Promise<boolean> {
+  const existing = await getCategory(id);
+  if (!existing) return false;
+  await db.delete(categories).where(eq(categories.id, id));
   return true;
 }
 

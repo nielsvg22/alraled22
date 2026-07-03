@@ -27,6 +27,10 @@ const Checkout = () => {
   const [appliedDiscount, setAppliedDiscount] = useState(null);
   const [discountError, setDiscountError] = useState('');
   const [validatingDiscount, setValidatingDiscount] = useState(false);
+  const [showInclVat, setShowInclVat] = useState(true);
+
+  const VAT_RATE = 0.21;
+  const vatMultiplier = showInclVat ? (1 + VAT_RATE) : 1;
 
   const applyDiscount = async () => {
     if (!discountCode) return;
@@ -185,7 +189,7 @@ const Checkout = () => {
                       <p className="text-gray-400 font-bold text-xs uppercase tracking-widest">Aantal: {item.quantity}</p>
                     </div>
                   </div>
-                  <p className="font-black text-secondary italic text-lg">€{(item.price * item.quantity).toFixed(2)}</p>
+                  <p className="font-black text-secondary italic text-lg">€{(item.price * item.quantity * vatMultiplier).toFixed(2)}</p>
                 </div>
               ))}
             </div>
@@ -224,11 +228,11 @@ const Checkout = () => {
 
             <div className="space-y-4 pt-8 border-t-2 border-dashed border-gray-200">
               <div className="flex justify-between text-gray-400 font-bold uppercase tracking-widest text-xs">
-                <span>Subtotaal</span><span>€{cartTotal.toFixed(2)}</span>
+                <span>Subtotaal</span><span>€{(cartTotal * vatMultiplier).toFixed(2)}</span>
               </div>
               {appliedDiscount && (
                 <div className="flex justify-between text-emerald-600 font-bold uppercase tracking-widest text-xs italic">
-                  <span>Korting</span><span>-€{appliedDiscount.discountAmount.toFixed(2)}</span>
+                  <span>Korting</span><span>-€{(appliedDiscount.discountAmount * vatMultiplier).toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between text-gray-400 font-bold uppercase tracking-widest text-xs">
@@ -237,8 +241,16 @@ const Checkout = () => {
               <div className="flex justify-between items-end pt-4">
                 <span className="text-secondary font-black uppercase italic text-xl">Totaal</span>
                 <div className="text-right">
-                  <p className="text-5xl font-black text-secondary italic tracking-tighter">€{finalTotal.toFixed(2)}</p>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 italic">Inclusief BTW</p>
+                  <p className="text-5xl font-black text-secondary italic tracking-tighter">€{(finalTotal * vatMultiplier).toFixed(2)}</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowInclVat(v => !v)}
+                    className={`text-[10px] font-bold uppercase tracking-widest mt-1 italic px-2 py-0.5 rounded-full border transition-all ${
+                      showInclVat ? 'text-primary border-primary/30 bg-primary/5' : 'text-gray-400 border-gray-200'
+                    }`}
+                  >
+                    {showInclVat ? 'Incl. BTW' : 'Excl. BTW'}
+                  </button>
                 </div>
               </div>
             </div>

@@ -16,11 +16,15 @@ import { InferenceClient } from '@huggingface/inference';
 const productSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().optional().nullable(),
+  specs: z.string().trim().optional().nullable(),
   price: z.coerce.number().nonnegative(),
   stock: z.coerce.number().int().nonnegative(),
   imageUrl: z.string().trim().optional().nullable().or(z.literal('')),
   imageUrls: z.array(z.string().trim()).optional().nullable(),
   category: z.string().trim().optional().nullable(),
+  categoryId: z.string().trim().optional().nullable().or(z.literal('')),
+  pdfUrl: z.string().trim().optional().nullable().or(z.literal('')),
+  videoUrl: z.string().trim().optional().nullable().or(z.literal('')),
 });
 
 const listProductsSchema = z.object({
@@ -95,11 +99,15 @@ export const createProduct = async (req: Request, res: Response) => {
     const product = await productsRepo.createProduct({
       name: validatedData.name,
       description: normalizeOptionalString(validatedData.description),
+      specs: normalizeOptionalString(validatedData.specs),
       price: validatedData.price,
       stock: validatedData.stock,
       imageUrl,
       imageUrls,
       category: normalizeOptionalString(validatedData.category),
+      categoryId: normalizeOptionalString(validatedData.categoryId),
+      pdfUrl: normalizeOptionalString(validatedData.pdfUrl),
+      videoUrl: normalizeOptionalString(validatedData.videoUrl),
     });
     res.status(201).json(product);
   } catch (error) {
@@ -125,12 +133,24 @@ export const updateProduct = async (req: Request, res: Response) => {
       ...(validatedData.description !== undefined
         ? { description: normalizeOptionalString(validatedData.description) }
         : {}),
+      ...(validatedData.specs !== undefined
+        ? { specs: normalizeOptionalString(validatedData.specs) }
+        : {}),
       ...(validatedData.price !== undefined ? { price: validatedData.price } : {}),
       ...(validatedData.stock !== undefined ? { stock: validatedData.stock } : {}),
       ...(imageUrl !== undefined ? { imageUrl } : {}),
       ...(imageUrls !== undefined ? { imageUrls } : {}),
       ...(validatedData.category !== undefined
         ? { category: normalizeOptionalString(validatedData.category) }
+        : {}),
+      ...(validatedData.categoryId !== undefined
+        ? { categoryId: normalizeOptionalString(validatedData.categoryId) }
+        : {}),
+      ...(validatedData.pdfUrl !== undefined
+        ? { pdfUrl: normalizeOptionalString(validatedData.pdfUrl) }
+        : {}),
+      ...(validatedData.videoUrl !== undefined
+        ? { videoUrl: normalizeOptionalString(validatedData.videoUrl) }
         : {}),
     });
     if (!product) return res.status(404).json({ error: 'Product not found' });
@@ -450,6 +470,52 @@ export const setProductPriceTiers = async (req: Request, res: Response) => {
     res.json(updated);
   } catch (error: any) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.issues });
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// ── Categories ──────────────────────────────────────────────
+
+export const getCategories = async (_req: Request, res: Response) => {
+  try {
+    const result = await productsRepo.listCategories();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const createCategory = async (req: Request, res: Response) => {
+  try {
+    const { name, slug, description, imageUrl, sortOrder } = req.body;
+    if (!name || !slug) return res.status(400).json({ error: 'Name and slug are required' });
+    const category = await productsRepo.createCategory({ name, slug, description, imageUrl, sortOrder });
+    res.status(201).json(category);
+  } catch (error: any) {
+    if (error?.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Category already exists' });
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const updateCategory = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const { name, slug, description, imageUrl, sortOrder } = req.body;
+    const category = await productsRepo.updateCategory(id, { name, slug, description, imageUrl, sortOrder });
+    if (!category) return res.status(404).json({ error: 'Category not found' });
+    res.json(category);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const deleteCategory = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const ok = await productsRepo.deleteCategory(id);
+    if (!ok) return res.status(404).json({ error: 'Category not found' });
+    res.status(204).send();
+  } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
 };

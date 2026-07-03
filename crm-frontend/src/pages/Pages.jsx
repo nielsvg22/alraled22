@@ -1083,6 +1083,8 @@ export default function Pages() {
     privacyLabel: '',
     termsLabel: '',
     bottomCopy: '',
+    logoUrl: '',
+    webkeurmerkId: '',
   });
   const [logos, setLogos]     = useState([]);
   const [logoUploading, setLogoUploading] = useState(false);
@@ -2124,9 +2126,17 @@ export default function Pages() {
 
           {/* ══ GENERAL ══ */}
           {tab === 'general' && (<>
-            <Section title="Header" icon={Settings}>
+            <Section title="Header & Logo" icon={Settings}>
+              <Field label="Logo afbeelding URL">
+                <ImageField value={general.logoUrl||''} onChange={v => setGeneral({ ...general, logoUrl: v })} height={16} />
+              </Field>
               <Field label="Tagline (top bar)">
                 <input className={`${iCls} ${iBdr}`} value={general.tagline||''} onChange={e => setGeneral({ ...general, tagline:e.target.value })} />
+              </Field>
+            </Section>
+            <Section title="Webkeurmerk" defaultOpen={false}>
+              <Field label="Webkeurmerk ID (optioneel)" hint="Vul hier je Webkeurmerk klant-ID in om het keurmerk op de site te tonen.">
+                <input className={`${iCls} ${iBdr}`} value={general.webkeurmerkId||''} onChange={e => setGeneral({ ...general, webkeurmerkId:e.target.value })} placeholder="bv. WK-123456" />
               </Field>
             </Section>
             <Section title="Newsletter" defaultOpen={false}>

@@ -22,6 +22,7 @@ import { db } from './lib/db';
 import { users } from './db/schema';
 import { ensureAnalyticsTables } from './db/ensureAnalyticsTables';
 import { ensureProductImageTable } from './db/ensureProductImageTable';
+import { runMigrations } from './db/migrate';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
 
@@ -65,6 +66,7 @@ async function ensureAdmin() {
   }
 }
 async function bootstrap() {
+  await runMigrations();
   await ensureAnalyticsTables();
   await ensureProductImageTable();
   await ensureAdmin();
