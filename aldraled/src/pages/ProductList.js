@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
-import { getMediaUrl, API_URL } from '../lib/api';
+import { API_URL } from '../lib/api';
 import { getImageSrc } from '../lib/productHelpers';
 
 const VAT_RATE = 0.21;

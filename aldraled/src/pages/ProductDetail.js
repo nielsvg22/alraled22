@@ -227,8 +227,6 @@ const ProductDetail = () => {
           {/* Tab bar */}
           <div className="flex gap-0 -mb-px overflow-x-auto">
             {TABS.map(tab => {
-              const isDisabled = tab === 'Downloads' && !product.pdfUrl;
-              const isVideoDisabled = tab === 'Video' && !product.videoUrl;
               if ((tab === 'Downloads' && !product.pdfUrl) || (tab === 'Video' && !product.videoUrl)) return null;
               return (
                 <button
