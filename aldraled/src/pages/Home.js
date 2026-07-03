@@ -41,6 +41,37 @@ const DEFAULTS = {
     linkText: "Meer over ons",
     deliveryTitle: "Direct leverbaar uit voorraad",
     deliverySubtitle: "Snelle levering in heel Nederland en België",
+    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600",
+  },
+  highlights: {
+    title: "Voor de Groothandel",
+    subtitle: "Professionele LED-verlichting voor wederverkopers — direct uit voorraad leverbaar.",
+    items: [
+      {
+        title: "LED Werkverlichting",
+        description: "Hoogwaardige LED-werkverlichting voor bedrijfswagens, trucks en bestelwagens. Optimale lichtopbrengst en laag stroomverbruik.",
+        features: ["IP67 waterdicht", "3-jaar garantie", "ECE R10 gecertificeerd"],
+        image: "https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80&w=1600",
+        link: "/producten",
+        linkText: "Bekijk assortiment",
+      },
+      {
+        title: "LED Bouwlichtslangen",
+        description: "Robuuste LED-verlichting speciaal ontwikkeld voor zware bouwplaatsomstandigheden. Stof- en waterbestendig met IP65-certificering.",
+        features: ["IP65 stofdicht", "Schokbestendig", "50.000+ branduren"],
+        image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=1600",
+        link: "/producten",
+        linkText: "Bekijk assortiment",
+      },
+      {
+        title: "LED Hefbrugverlichting",
+        description: "Perfecte lichtopbrengst onder het voertuig voor een veilige en efficiënte werkplaatsomgeving. Eenvoudig te monteren.",
+        features: ["Montage in 15 min", "Universele pasvorm", "CAN-bus compatibel"],
+        image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&q=80&w=1600",
+        link: "/producten",
+        linkText: "Bekijk assortiment",
+      },
+    ],
   },
   process: {
     title: "De ontwikkeling van ALRA Led Solutions",
@@ -79,6 +110,7 @@ const DEFAULT_SECTION_ORDER = [
   'featured',
   'testimonials',
   'process',
+  'highlights',
   'cta',
   'dealers_cta',
 ];
@@ -138,7 +170,7 @@ const Home = () => {
       .catch(() => {});
   }, [i18n.resolvedLanguage, i18n.language]);
 
-  const { hero, introduction: intro, specializations, stats, process, cta, dealersCta = DEFAULTS.dealersCta, introSection: is = DEFAULTS.introSection } = content;
+  const { hero, introduction: intro, specializations, stats, process, cta, dealersCta = DEFAULTS.dealersCta, introSection: is = DEFAULTS.introSection, highlights = DEFAULTS.highlights } = content;
   const typeword = useTypewriter(hero.typewriterWords || []);
 
   const fixed = DEFAULT_SECTION_ORDER;
@@ -158,46 +190,64 @@ const Home = () => {
   const renderSection = (id) => {
     if (id === 'hero') {
       return (
-        <section className="relative min-h-[75vh] flex flex-col justify-end overflow-hidden">
+        <section className="relative min-h-[90vh] flex flex-col justify-end overflow-hidden bg-secondary">
           <div className="absolute inset-0">
-            <img src={hero.backgroundImage} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/60 to-secondary/10" />
+            <img src={hero.backgroundImage} alt="" className="w-full h-full object-cover opacity-60" />
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary via-secondary/80 to-secondary/40" />
+            <div className="absolute inset-0 bg-gradient-to-t from-secondary via-transparent to-transparent" />
           </div>
 
-          <div className="relative z-10 max-w-6xl mx-auto px-6 md:px-10 pb-20 pt-32 w-full">
-            <div className="max-w-3xl space-y-6">
-              <span className="inline-flex items-center gap-2 bg-primary/20 border border-primary/30 text-primary text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest">
-                <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-                {intro.badge}
-              </span>
+          <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 pb-24 pt-32 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-end">
+              <div className="lg:col-span-7 space-y-8">
+                <div className="inline-flex items-center gap-3 bg-white/5 backdrop-blur-sm border border-white/10 text-white/80 text-[11px] font-bold px-5 py-2 rounded-full uppercase tracking-[0.25em]">
+                  <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                  {intro.badge}
+                </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">
-                <span className="block">{hero.titlePrefix || 'Verlichting voor'}</span>
-                <span className="text-primary flex items-center gap-1" style={{ minHeight: '1.2em' }}>
-                  <span style={{ display: 'inline-block', minWidth: '14ch' }}>{typeword}</span>
-                  <span className="inline-block w-0.5 h-[0.8em] bg-primary align-middle animate-pulse flex-shrink-0" />
-                </span>
-              </h1>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[0.95] tracking-tight">
+                  <span className="block text-white/90 text-2xl sm:text-3xl md:text-4xl font-light tracking-normal mb-2">{hero.titlePrefix || 'Verlichting voor'}</span>
+                  <span className="text-accent flex items-center gap-1" style={{ minHeight: '1.1em' }}>
+                    <span style={{ display: 'inline-block', minWidth: '14ch' }}>{typeword}</span>
+                    <span className="inline-block w-[3px] h-[0.85em] bg-accent align-middle animate-pulse flex-shrink-0 rounded-full" />
+                  </span>
+                </h1>
 
-              <p className="text-white/70 text-base md:text-lg max-w-xl leading-relaxed font-light">
-                {hero.subtitle}
-              </p>
+                <p className="text-white/50 text-base md:text-lg max-w-lg leading-relaxed font-light">
+                  {hero.subtitle}
+                </p>
 
-              <div className="flex flex-wrap gap-3 pt-2">
-                <Link to="/producten" className="bg-primary text-white px-7 py-3 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
-                  {hero.primaryButtonText}
-                </Link>
-                <Link to="/over-ons" className="bg-white/10 backdrop-blur border border-white/20 text-white px-7 py-3 rounded-full font-bold text-sm hover:bg-white/20 transition-all">
-                  {hero.secondaryButtonText}
-                </Link>
+                <div className="flex flex-wrap gap-4 pt-2">
+                  <Link to="/producten" className="group bg-accent text-secondary px-8 py-4 rounded-full font-black text-sm hover:shadow-2xl hover:shadow-accent/20 transition-all duration-300 inline-flex items-center gap-2">
+                    {hero.primaryButtonText}
+                    <span className="group-hover:translate-x-1 transition-transform duration-300">&rarr;</span>
+                  </Link>
+                  <Link to="/over-ons" className="group bg-white/5 backdrop-blur-sm border border-white/15 text-white px-8 py-4 rounded-full font-bold text-sm hover:bg-white/10 transition-all duration-300 inline-flex items-center gap-2">
+                    {hero.secondaryButtonText}
+                    <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] group-hover:bg-white/20 transition-all">&rarr;</span>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="hidden lg:block lg:col-span-5">
+                <div className="space-y-5">
+                  {(hero.typewriterWords || ['bedrijfswagens.', 'bouwplaatsen.', 'werkplaatsen.']).slice(0, 3).map((word, i) => (
+                    <div key={i} className="flex items-center gap-4 group">
+                      <span className="w-10 h-px bg-white/15 group-hover:bg-accent/50 group-hover:w-16 transition-all duration-500" />
+                      <span className="text-white/30 text-sm font-light tracking-wide">{word.replace('.', '')}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="absolute bottom-6 right-10 flex flex-col items-center gap-1.5 text-white/30">
-            <span className="text-[10px] font-bold uppercase tracking-widest rotate-90 origin-center translate-y-4">Scroll</span>
-            <div className="w-px h-12 bg-gradient-to-b from-white/30 to-transparent" />
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/20">
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em]">Scroll</span>
+            <div className="w-px h-16 bg-gradient-to-b from-white/20 to-transparent" />
           </div>
+
+          <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-accent/5 to-transparent pointer-events-none" />
         </section>
       );
     }
@@ -240,19 +290,49 @@ const Home = () => {
 
     if (id === 'over_ons') {
       return (
-        <section className="py-20 px-6 md:px-10">
+        <section className="py-20 md:py-28 px-6 md:px-10 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-72 h-72 bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
           <div className="max-w-6xl mx-auto">
-            <div className="space-y-5 max-w-2xl">
-              <p className="text-xs font-bold text-primary uppercase tracking-widest">{is.badge}</p>
-              <h2 className="text-3xl md:text-4xl font-black text-secondary leading-tight">
-                {is.heading}
-              </h2>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                {is.description}
-              </p>
-              <Link to="/over-ons" className="inline-flex items-center gap-2 text-secondary font-bold text-sm border-b-2 border-secondary pb-0.5 hover:text-primary hover:border-primary transition-colors">
-                {is.linkText} <span>→</span>
-              </Link>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
+              <div className="space-y-6 relative z-10">
+                <p className="text-xs font-bold text-primary uppercase tracking-[0.2em]">{is.badge}</p>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-secondary leading-[1.1] tracking-tight">
+                  {is.heading}
+                </h2>
+                <div className="w-12 h-1 bg-primary rounded-full" />
+                <p className="text-gray-500 text-sm md:text-base leading-relaxed max-w-lg">
+                  {is.description}
+                </p>
+                <div className="flex items-center gap-4 pt-2">
+                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-secondary">{is.deliveryTitle}</p>
+                    <p className="text-xs text-gray-400">{is.deliverySubtitle}</p>
+                  </div>
+                </div>
+                <Link to="/over-ons" className="inline-flex items-center gap-3 text-secondary font-bold text-sm group">
+                  <span className="border-b-2 border-secondary pb-0.5 group-hover:text-primary group-hover:border-primary transition-colors">{is.linkText}</span>
+                  <span className="w-8 h-8 rounded-full bg-secondary group-hover:bg-primary flex items-center justify-center text-white text-xs transition-colors">→</span>
+                </Link>
+              </div>
+              <div className="relative">
+                <div className="absolute -inset-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-3xl blur-2xl" />
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
+                  <img
+                    src={is.image || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600"}
+                    alt={is.heading}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-secondary/20 to-transparent" />
+                </div>
+                <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg px-5 py-3 border border-gray-100 hidden md:block">
+                  <p className="text-2xl font-black text-primary">10+</p>
+                  <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Jaar ervaring</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -445,6 +525,66 @@ const Home = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    if (id === 'highlights') {
+      const hItems = highlights.items || [];
+      if (hItems.length === 0) return null;
+      return (
+        <section className="py-24 md:py-32 px-6 md:px-12 bg-white">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-20 space-y-5">
+              <span className="inline-flex items-center gap-2 text-[11px] font-bold text-primary uppercase tracking-[0.3em]">
+                <span className="w-8 h-px bg-primary" />
+                Groothandel
+                <span className="w-8 h-px bg-primary" />
+              </span>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-secondary leading-[1.05] tracking-tight">{highlights.title}</h2>
+              <p className="text-gray-400 text-base md:text-lg max-w-2xl mx-auto font-light leading-relaxed">{highlights.subtitle}</p>
+            </div>
+            <div className="space-y-0">
+              {hItems.map((item, idx) => (
+                <div key={idx} className={`grid grid-cols-1 lg:grid-cols-2 gap-0 items-stretch border-t border-gray-100 ${idx === hItems.length - 1 ? 'border-b' : ''}`}>
+                  <div className={`relative overflow-hidden group ${idx % 2 === 1 ? 'lg:order-2' : ''}`}>
+                    <div className="aspect-[4/3] lg:aspect-auto lg:h-full">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-secondary/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-sm text-secondary text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">
+                      {String(idx + 1).padStart(2, '0')}
+                    </div>
+                  </div>
+                  <div className={`flex flex-col justify-center px-8 py-12 lg:px-16 ${idx % 2 === 1 ? 'lg:order-1' : ''}`}>
+                    <span className="text-[10px] font-bold text-primary uppercase tracking-[0.3em] mb-3">Productgroep</span>
+                    <h3 className="text-3xl md:text-4xl font-black text-secondary leading-tight mb-4">{item.title}</h3>
+                    <p className="text-gray-500 text-sm md:text-base leading-relaxed mb-6 max-w-md">{item.description}</p>
+                    {item.features && item.features.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-8">
+                        {item.features.map((feat, fi) => (
+                          <span key={fi} className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-100 text-secondary text-[11px] font-bold px-3 py-1.5 rounded-full">
+                            <span className="w-1 h-1 bg-primary rounded-full" />
+                            {feat}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {item.link && (
+                      <Link to={item.link} className="group inline-flex items-center gap-3 text-primary font-bold text-sm">
+                        <span className="border-b-2 border-primary/30 pb-0.5 group-hover:border-primary transition-colors">{item.linkText || 'Bekijk producten'}</span>
+                        <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs group-hover:bg-primary group-hover:text-white transition-all duration-300">&rarr;</span>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>

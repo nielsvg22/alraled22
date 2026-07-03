@@ -18,14 +18,15 @@ const PAGES = [
 ];
 
 const BLOCK_TYPES = [
-  { key: 'banner',       label: 'Banner',             icon: '📣', desc: 'Brede balk met knop' },
-  { key: 'text_block',   label: 'Tekstblok',          icon: '📝', desc: 'Koptekst + alinea' },
-  { key: 'feature_grid', label: 'Voordelen grid',     icon: '⊞',  desc: 'Kaartjes met icoon' },
-  { key: 'image_text',   label: 'Afbeelding + tekst', icon: '🖼️', desc: "Foto + tekst naast elkaar" },
-  { key: 'stats_row',    label: 'Statistieken',       icon: '📊', desc: 'Rij met cijfers' },
-  { key: 'cta_block',    label: 'Call-to-action',     icon: '🎯', desc: 'Knop sectie' },
-  { key: 'steps',        label: 'Stappen',            icon: '🔢', desc: 'Genummerde stappen' },
-  { key: 'blog_post',    label: 'Blogbericht',        icon: '📰', desc: 'Artikel met afbeelding' },
+  { key: 'banner',           label: 'Banner',             icon: '📣', desc: 'Brede balk met knop' },
+  { key: 'text_block',       label: 'Tekstblok',          icon: '📝', desc: 'Koptekst + alinea' },
+  { key: 'feature_grid',     label: 'Voordelen grid',     icon: '⊞',  desc: 'Kaartjes met icoon' },
+  { key: 'image_text',       label: 'Afbeelding + tekst', icon: '🖼️', desc: "Foto + tekst naast elkaar" },
+  { key: 'product_highlight', label: 'Product highlight', icon: '🏷️', desc: 'Product met afbeelding & features' },
+  { key: 'stats_row',        label: 'Statistieken',       icon: '📊', desc: 'Rij met cijfers' },
+  { key: 'cta_block',        label: 'Call-to-action',     icon: '🎯', desc: 'Knop sectie' },
+  { key: 'steps',            label: 'Stappen',            icon: '🔢', desc: 'Genummerde stappen' },
+  { key: 'blog_post',        label: 'Blogbericht',        icon: '📰', desc: 'Artikel met afbeelding' },
 ];
 
 // ── Schema per block type (for edit form) ────────────────
@@ -54,6 +55,19 @@ const SCHEMAS = {
     { key: 'body',          type: 'textarea', label: 'Tekst', rows: 4 },
     { key: 'imageUrl',      type: 'image',    label: 'Afbeelding' },
     { key: 'imagePosition', type: 'select',   label: 'Afbeeldingspositie', options: ['left', 'right'] },
+  ],
+  product_highlight: [
+    { key: 'label',         type: 'text',     label: 'Label (bv. Productgroep)' },
+    { key: 'heading',       type: 'text',     label: 'Producttitel' },
+    { key: 'body',          type: 'textarea', label: 'Beschrijving', rows: 4 },
+    { key: 'imageUrl',      type: 'image',    label: 'Productafbeelding' },
+    { key: 'imagePosition', type: 'select',   label: 'Afbeeldingspositie', options: ['left', 'right'] },
+    { key: 'badge',         type: 'text',     label: 'Badge tekst (bv. NIEUW)' },
+    { key: 'features',      type: 'array',    label: 'Kenmerken / features', subfields: [
+      { key: 'text', type: 'text', label: 'Feature tekst' },
+    ]},
+    { key: 'buttonText',    type: 'text',     label: 'Knoptekst' },
+    { key: 'buttonLink',    type: 'text',     label: 'Knop link (bv. /producten)' },
   ],
   stats_row:    [
     { key: 'items', type: 'array', label: 'Statistieken', subfields: [

@@ -366,6 +366,76 @@ function LayoutBuilderBlock({ data }) {
   );
 }
 
+/* ── Product Highlight ───────────────────────────────── */
+function ProductHighlightBlock({ data }) {
+  const isRight = data.imagePosition === 'right';
+  const features = Array.isArray(data.features) ? data.features : [];
+
+  return (
+    <section className="py-0 bg-white">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-stretch">
+        <div className={`relative overflow-hidden group ${isRight ? 'lg:order-2' : ''}`}>
+          {data.imageUrl ? (
+            <div className="aspect-[4/3] lg:aspect-auto lg:h-full min-h-[320px]">
+              <img
+                src={getMediaUrl(data.imageUrl)}
+                alt={data.heading || ''}
+                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+              />
+            </div>
+          ) : (
+            <div className="aspect-[4/3] lg:aspect-auto lg:h-full min-h-[320px] bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center">
+              <span className="text-primary/20 text-6xl">📦</span>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-secondary/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          {data.badge && (
+            <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-sm text-secondary text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">
+              {data.badge}
+            </div>
+          )}
+        </div>
+        <div className={`flex flex-col justify-center px-8 py-12 lg:px-16 ${isRight ? 'lg:order-1' : ''}`}>
+          {data.label && (
+            <span className="text-[10px] font-bold text-primary uppercase tracking-[0.3em] mb-3">{data.label}</span>
+          )}
+          {data.heading && (
+            <h3 className="text-3xl md:text-4xl font-black text-secondary leading-tight mb-4">{data.heading}</h3>
+          )}
+          {data.body && (
+            <p className="text-gray-500 text-sm md:text-base leading-relaxed mb-6 max-w-md whitespace-pre-wrap">{data.body}</p>
+          )}
+          {features.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-8">
+              {features.map((feat, i) => (
+                <span key={i} className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-100 text-secondary text-[11px] font-bold px-3 py-1.5 rounded-full">
+                  <span className="w-1 h-1 bg-primary rounded-full" />
+                  {typeof feat === 'string' ? feat : feat.text || feat.label || ''}
+                </span>
+              ))}
+            </div>
+          )}
+          {data.buttonText && (
+            <div>
+              {(data.buttonLink || '').startsWith('/') ? (
+                <Link to={data.buttonLink || '/producten'} className="group inline-flex items-center gap-3 text-primary font-bold text-sm">
+                  <span className="border-b-2 border-primary/30 pb-0.5 group-hover:border-primary transition-colors">{data.buttonText}</span>
+                  <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs group-hover:bg-primary group-hover:text-white transition-all duration-300">&rarr;</span>
+                </Link>
+              ) : (
+                <a href={data.buttonLink || '#'} className="group inline-flex items-center gap-3 text-primary font-bold text-sm">
+                  <span className="border-b-2 border-primary/30 pb-0.5 group-hover:border-primary transition-colors">{data.buttonText}</span>
+                  <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs group-hover:bg-primary group-hover:text-white transition-all duration-300">&rarr;</span>
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ── Main Renderer ───────────────────────────────────── */
 export default function CustomBlocks({ blocks = [] }) {
   const visible = blocks.filter(b => b.visible !== false);
@@ -388,6 +458,7 @@ export default function CustomBlocks({ blocks = [] }) {
           case 'cta_block':    return <CtaBlock         key={id} data={data} />;
           case 'steps':        return <StepsBlock       key={id} data={data} />;
           case 'layout_builder': return <LayoutBuilderBlock key={id} data={data} />;
+          case 'product_highlight': return <ProductHighlightBlock key={id} data={data} />;
           default:             return null;
         }
       })}
