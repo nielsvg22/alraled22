@@ -147,6 +147,24 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const getOrderById = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const role = req.user?.role;
+    const id = req.params.id as string;
+
+    const order = await getOrderWithRelations(id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.userId !== userId && role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;

@@ -89,7 +89,7 @@ function App() {
                   <Route path="/registreren" element={<Register />} />
                   <Route path="/account" element={<Account />} />
                   <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/bestelling-geplaatst" element={<OrderSuccess />} />
+                  <Route path="/bestelling-geplaatst/:orderId?" element={<OrderSuccess />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:id" element={<BlogDetail />} />

@@ -1,11 +1,19 @@
-import React, { useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
+import api from '../lib/api';
 import confetti from 'canvas-confetti';
 
 const OrderSuccess = () => {
+  const { orderId: paramOrderId } = useParams();
   const location = useLocation();
-  const order = location.state?.order || null;
+  const [order, setOrder] = useState(location.state?.order || null);
   const firedRef = useRef(false);
+
+  useEffect(() => {
+    if (order) return;
+    if (!paramOrderId) return;
+    api.get(`/orders/${paramOrderId}`).then((res) => setOrder(res.data)).catch(() => {});
+  }, [paramOrderId, order]);
 
   useEffect(() => {
     if (firedRef.current) return;
@@ -30,7 +38,7 @@ const OrderSuccess = () => {
     }, 900);
   }, []);
 
-  const orderId = order?.id || ('ORD-' + Math.random().toString(36).slice(2, 8).toUpperCase());
+  const orderId = order?.id || paramOrderId || ('ORD-' + Math.random().toString(36).slice(2, 8).toUpperCase());
   const total   = order?.total ?? null;
 
   return (
