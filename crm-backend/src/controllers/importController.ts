@@ -5,8 +5,13 @@ import * as productsRepo from '../db/productsRepo';
 const WP_BASE = process.env.WP_BASE || 'https://alra-led.com';
 const STOCK_DEFAULT = 999;
 
+function decodeEntities(text: string): string {
+  return text.replace(/&euro;/g, '€').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+}
+
 function parsePrice(text: string): number | null {
-  const m = text.match(/€\s*([0-9]+[.,][0-9]+)/);
+  const decoded = decodeEntities(text);
+  const m = decoded.match(/€\s*([0-9]+[.,][0-9]+)/);
   if (!m) return null;
   const val = m[1];
   if (!val) return null;
@@ -60,7 +65,7 @@ function extractImages(html: string): string[] {
   const urls: string[] = [];
   const seen = new Set<string>();
 
-  const mainRe = /<img[^>]+class="[^"]*wp-post-image[^"]*"[^>]+src="([^"]+)"/i;
+  const mainRe = /<img[^>]+src="([^"]+)"[^>]*class="[^"]*wp-post-image[^"]*"/i;
   const mainM = mainRe.exec(html);
   if (mainM && mainM[1]) {
     const url = removeSizeFromUrl(mainM[1]);
