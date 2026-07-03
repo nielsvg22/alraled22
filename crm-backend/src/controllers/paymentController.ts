@@ -47,7 +47,7 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Order already paid' });
     }
 
-    const webhookUrl = `${process.env.API_BASE_URL}/api/payments/webhook`;
+    const webhookUrl = `${process.env.API_BASE_URL || `${req.protocol}://${req.get('host') || 'localhost:5000'}`}/api/payments/webhook`;
 
     const mollieClient = await getMollieClient();
     const molliePayment = await mollieClient.payments.create({
