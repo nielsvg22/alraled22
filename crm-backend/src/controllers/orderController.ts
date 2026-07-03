@@ -85,7 +85,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         id: orderId,
         userId, 
         total, 
-        discountCodeId, 
+        discountCodeId: discountCodeId ?? null, 
         discountAmount 
       });
       
