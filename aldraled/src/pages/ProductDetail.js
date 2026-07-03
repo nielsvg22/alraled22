@@ -185,19 +185,10 @@ const ProductDetail = () => {
                 </button>
               </div>
 
-              {/* Stock + Shipping */}
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm">
-                <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                  Op voorraad
-                </span>
-                <span className="text-gray-500">Voor 22:00 besteld, vandaag verstuurd</span>
-              </div>
-
-              {/* Recycling */}
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                <span>Recyclingbijdrage: <strong className="text-gray-700">€ 0,07</strong> (incl. BTW)</span>
+              {/* Stock */}
+              <div className="flex items-center gap-1.5 text-emerald-700 font-semibold text-sm">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                Op voorraad
               </div>
 
               {/* Qty + CTA */}
@@ -251,20 +242,27 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Specs preview */}
+            {/* Specs preview — high-end */}
             {specs.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
-                {specs.slice(0, 4).map((spec, i) => (
-                  <div key={i} className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-sm text-gray-500">{spec.label}</span>
-                    <span className="text-sm font-semibold text-gray-900">{spec.value}</span>
+              <div className="bg-gradient-to-b from-gray-50 to-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm">
+                <div className="px-5 py-3.5 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Specificaties</h3>
+                    {specs.length > 4 && (
+                      <button onClick={() => setActiveTab('Specificaties')} className="text-xs font-medium text-gray-900 hover:text-gray-600 transition-colors">
+                        Alle {specs.length} bekijken
+                      </button>
+                    )}
                   </div>
-                ))}
-                {specs.length > 4 && (
-                  <button onClick={() => setActiveTab('Specificaties')} className="w-full px-4 py-2.5 text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors">
-                    Bekijk alle specificaties ({specs.length})
-                  </button>
-                )}
+                </div>
+                <div className="divide-y divide-gray-100/80">
+                  {specs.slice(0, 4).map((spec, i) => (
+                    <div key={i} className="flex items-center justify-between px-5 py-3">
+                      <span className="text-[13px] text-gray-500 font-medium">{spec.label}</span>
+                      <span className="text-[13px] font-semibold text-gray-900 text-right ml-6">{spec.value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -298,22 +296,39 @@ const ProductDetail = () => {
             {/* Specificaties tab */}
             {activeTab === 'Specificaties' && (
               <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-6">Technische specificaties</h2>
+                <div className="flex items-center gap-3 mb-7">
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">Technische specificaties</h2>
+                    <p className="text-xs text-gray-400 font-medium mt-0.5">{specs.length} eigenschappen</p>
+                  </div>
+                </div>
                 {specs.length > 0 ? (
-                  <div className="overflow-hidden rounded-2xl border border-gray-100 shadow-sm">
-                    <table className="w-full text-sm">
+                  <div className="overflow-hidden rounded-2xl border border-gray-200/80 shadow-sm bg-white">
+                    <table className="w-full">
                       <tbody>
                         {specs.map((spec, i) => (
-                          <tr key={i} className={`${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'} transition-colors hover:bg-gray-100/50`}>
-                            <td className="px-5 py-3.5 text-gray-500 font-medium w-2/5 border-b border-gray-50">{spec.label}</td>
-                            <td className="px-5 py-3.5 text-gray-900 font-semibold border-b border-gray-50">{spec.value}</td>
+                          <tr key={i} className="transition-colors hover:bg-gray-50/80">
+                            <td className={`px-5 md:px-6 py-3.5 text-sm text-gray-500 w-2/5 ${i < specs.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                              {spec.label}
+                            </td>
+                            <td className={`px-5 md:px-6 py-3.5 text-sm font-semibold text-gray-900 ${i < specs.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                              {spec.value}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-400">Geen specificaties beschikbaar.</p>
+                  <div className="text-center py-16">
+                    <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    </div>
+                    <p className="text-sm text-gray-400 font-medium">Geen specificaties beschikbaar</p>
+                  </div>
                 )}
               </div>
             )}
