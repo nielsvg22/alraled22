@@ -111,11 +111,14 @@ async function scrapeProduct(url: string) {
   const nameM = html.match(/<h1[^>]*class="[^"]*product_title[^"]*"[^>]*>([^<]+)<\/h1>/i)
     || html.match(/<title>([^<]+)\s*[–-].*?<\/title>/i);
   const name = nameM ? (nameM[1] || '').trim() : '';
-  if (!name) return null;
+  if (!name) return { error: 'title_not_found' };
 
-  const priceM = /<p[^>]*class="[^"]*price[^"]*"[^>]*>(.*?)<\/p>/i.exec(html);
-  const price = priceM ? parsePrice(priceM[1] || '') : null;
-  if (!price) return null;
+  const priceSection = /<p[^>]*class="[^"]*price[^"]*"[^>]*>(.*?)<\/p>/i.exec(html);
+  if (!priceSection) return { error: 'price_section_not_found' };
+  const priceRaw = priceSection[1] || '';
+  if (!priceRaw) return { error: 'price_section_empty' };
+  const price = parsePrice(priceRaw);
+  if (!price) return { error: 'price_parse_failed', raw: priceRaw };
 
   const specList = parseSpecsFromHtml(html);
   const specs = specList.length > 0 ? JSON.stringify(specList) : '';
@@ -180,10 +183,10 @@ export const importWordpress = async (_req: Request, res: Response) => {
       if (!url) continue;
       try {
         const product = await scrapeProduct(url);
-        if (product) {
+        if (product && !product.error) {
           scraped.push(product);
         } else {
-          scrapeErrors.push(`Kon niet uitlezen: ${url}`);
+          scrapeErrors.push(`Kon niet uitlezen: ${url}${product?.error ? ` (${product.error}${product.raw ? ': ' + product.raw.substring(0, 100) : ''})` : ''}`);
         }
       } catch (err: any) {
         scrapeErrors.push(`Fout bij ${url}: ${err.message}`);
