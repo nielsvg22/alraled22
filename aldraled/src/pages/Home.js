@@ -190,64 +190,46 @@ const Home = () => {
   const renderSection = (id) => {
     if (id === 'hero') {
       return (
-        <section className="relative min-h-[90vh] flex flex-col justify-end overflow-hidden bg-secondary">
+        <section className="relative min-h-[75vh] flex flex-col justify-end overflow-hidden">
           <div className="absolute inset-0">
-            <img src={hero.backgroundImage} alt="" className="w-full h-full object-cover opacity-60" />
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary via-secondary/80 to-secondary/40" />
-            <div className="absolute inset-0 bg-gradient-to-t from-secondary via-transparent to-transparent" />
+            <img src={hero.backgroundImage} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/60 to-secondary/10" />
           </div>
 
-          <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 pb-24 pt-32 w-full">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-end">
-              <div className="lg:col-span-7 space-y-8">
-                <div className="inline-flex items-center gap-3 bg-white/5 backdrop-blur-sm border border-white/10 text-white/80 text-[11px] font-bold px-5 py-2 rounded-full uppercase tracking-[0.25em]">
-                  <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-                  {intro.badge}
-                </div>
+          <div className="relative z-10 max-w-6xl mx-auto px-6 md:px-10 pb-20 pt-32 w-full">
+            <div className="max-w-3xl space-y-6">
+              <span className="inline-flex items-center gap-2 bg-primary/20 border border-primary/30 text-primary text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest">
+                <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                {intro.badge}
+              </span>
 
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[0.95] tracking-tight">
-                  <span className="block text-white/90 text-2xl sm:text-3xl md:text-4xl font-light tracking-normal mb-2">{hero.titlePrefix || 'Verlichting voor'}</span>
-                  <span className="text-accent flex items-center gap-1" style={{ minHeight: '1.1em' }}>
-                    <span style={{ display: 'inline-block', minWidth: '14ch' }}>{typeword}</span>
-                    <span className="inline-block w-[3px] h-[0.85em] bg-accent align-middle animate-pulse flex-shrink-0 rounded-full" />
-                  </span>
-                </h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">
+                <span className="block">{hero.titlePrefix || 'Verlichting voor'}</span>
+                <span className="text-primary flex items-center gap-1" style={{ minHeight: '1.2em' }}>
+                  <span style={{ display: 'inline-block', minWidth: '14ch' }}>{typeword}</span>
+                  <span className="inline-block w-0.5 h-[0.8em] bg-primary align-middle animate-pulse flex-shrink-0" />
+                </span>
+              </h1>
 
-                <p className="text-white/50 text-base md:text-lg max-w-lg leading-relaxed font-light">
-                  {hero.subtitle}
-                </p>
+              <p className="text-white/70 text-base md:text-lg max-w-xl leading-relaxed font-light">
+                {hero.subtitle}
+              </p>
 
-                <div className="flex flex-wrap gap-4 pt-2">
-                  <Link to="/producten" className="group bg-accent text-secondary px-8 py-4 rounded-full font-black text-sm hover:shadow-2xl hover:shadow-accent/20 transition-all duration-300 inline-flex items-center gap-2">
-                    {hero.primaryButtonText}
-                    <span className="group-hover:translate-x-1 transition-transform duration-300">&rarr;</span>
-                  </Link>
-                  <Link to="/over-ons" className="group bg-white/5 backdrop-blur-sm border border-white/15 text-white px-8 py-4 rounded-full font-bold text-sm hover:bg-white/10 transition-all duration-300 inline-flex items-center gap-2">
-                    {hero.secondaryButtonText}
-                    <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] group-hover:bg-white/20 transition-all">&rarr;</span>
-                  </Link>
-                </div>
-              </div>
-
-              <div className="hidden lg:block lg:col-span-5">
-                <div className="space-y-5">
-                  {(hero.typewriterWords || ['bedrijfswagens.', 'bouwplaatsen.', 'werkplaatsen.']).slice(0, 3).map((word, i) => (
-                    <div key={i} className="flex items-center gap-4 group">
-                      <span className="w-10 h-px bg-white/15 group-hover:bg-accent/50 group-hover:w-16 transition-all duration-500" />
-                      <span className="text-white/30 text-sm font-light tracking-wide">{word.replace('.', '')}</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-3 pt-2">
+                <Link to="/producten" className="bg-primary text-white px-7 py-3 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
+                  {hero.primaryButtonText}
+                </Link>
+                <Link to="/over-ons" className="bg-white/10 backdrop-blur border border-white/20 text-white px-7 py-3 rounded-full font-bold text-sm hover:bg-white/20 transition-all">
+                  {hero.secondaryButtonText}
+                </Link>
               </div>
             </div>
           </div>
 
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/20">
-            <span className="text-[10px] font-bold uppercase tracking-[0.3em]">Scroll</span>
-            <div className="w-px h-16 bg-gradient-to-b from-white/20 to-transparent" />
+          <div className="absolute bottom-6 right-10 flex flex-col items-center gap-1.5 text-white/30">
+            <span className="text-[10px] font-bold uppercase tracking-widest rotate-90 origin-center translate-y-4">Scroll</span>
+            <div className="w-px h-12 bg-gradient-to-b from-white/30 to-transparent" />
           </div>
-
-          <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-accent/5 to-transparent pointer-events-none" />
         </section>
       );
     }
