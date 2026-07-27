@@ -362,7 +362,7 @@ const Header = () => {
                     {hoveredCategory.imageUrl ? (
                       <div className="relative w-full h-full">
                         <img src={hoveredCategory.imageUrl} alt={hoveredCategory.name}
-                          className="w-full h-full object-cover" />
+                          className="w-full h-full object-contain" />
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-8 pt-24">
                           <h3 className="text-xl font-bold text-white">{hoveredCategory.name}</h3>
                           {hoveredCategory.description && (
