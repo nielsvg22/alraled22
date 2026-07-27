@@ -328,7 +328,7 @@ const Header = () => {
             style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
             onMouseEnter={() => clearTimeout(closeTimeoutRef.current)}
             onMouseLeave={() => { closeTimeoutRef.current = setTimeout(() => { setShowCategories(false); setHoveredCategory(null); }, 150); }}>
-            <div className="max-w-6xl mx-auto flex" style={{ minHeight: '400px' }}>
+            <div className="max-w-6xl mx-auto flex" style={{ minHeight: '360px' }}>
               {/* Left: category sidebar */}
               <div className="w-[280px] border-r border-gray-100 py-1 shrink-0">
                 <Link to="/producten" onClick={() => setShowCategories(false)}
@@ -356,14 +356,14 @@ const Header = () => {
                 ))}
               </div>
               {/* Right: image content area */}
-              <div className="flex-1 relative overflow-hidden bg-gray-50">
+              <div className="flex-1 relative overflow-hidden bg-white">
                 {hoveredCategory ? (
-                  <div key={hoveredCategory.id} className="absolute inset-0 flex items-center justify-center p-10 animate-in fade-in zoom-in-95 duration-200">
+                  <div key={hoveredCategory.id} className="absolute inset-0 animate-in fade-in duration-200">
                     {hoveredCategory.imageUrl ? (
                       <div className="relative w-full h-full">
                         <img src={hoveredCategory.imageUrl} alt={hoveredCategory.name}
-                          className="w-full h-full object-contain" />
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent p-8 pt-20">
+                          className="w-full h-full object-cover" />
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-8 pt-24">
                           <h3 className="text-xl font-bold text-white">{hoveredCategory.name}</h3>
                           {hoveredCategory.description && (
                             <p className="text-sm text-white/80 mt-1 max-w-md">{hoveredCategory.description}</p>
@@ -374,27 +374,29 @@ const Header = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center">
-                        <div className="w-28 h-28 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center mb-5">
-                          <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
+                      <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                        <div className="text-center">
+                          <div className="w-24 h-24 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+                            <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-bold text-gray-900">{hoveredCategory.name}</h3>
+                          {hoveredCategory.description && (
+                            <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">{hoveredCategory.description}</p>
+                          )}
+                          {hoveredCategory.productCount > 0 && (
+                            <p className="text-xs text-primary font-semibold mt-3">{hoveredCategory.productCount} producten &rarr;</p>
+                          )}
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900">{hoveredCategory.name}</h3>
-                        {hoveredCategory.description && (
-                          <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">{hoveredCategory.description}</p>
-                        )}
-                        {hoveredCategory.productCount > 0 && (
-                          <p className="text-xs text-primary font-semibold mt-3">{hoveredCategory.productCount} producten &rarr;</p>
-                        )}
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center justify-center bg-white">
                     <div className="text-center">
-                      <div className="w-24 h-24 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-                        <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-20 h-20 mx-auto rounded-2xl bg-gray-50 flex items-center justify-center mb-4">
+                        <svg className="w-9 h-9 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
                         </svg>
                       </div>
