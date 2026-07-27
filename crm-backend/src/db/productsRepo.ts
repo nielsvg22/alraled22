@@ -185,7 +185,23 @@ export async function deleteProduct(id: string): Promise<boolean> {
 // ── Categories ──────────────────────────────────────────────
 
 export async function listCategories() {
-  return await db.select().from(categories).orderBy(asc(categories.sortOrder), asc(categories.name));
+  const result = await db
+    .select({
+      id: categories.id,
+      name: categories.name,
+      slug: categories.slug,
+      description: categories.description,
+      imageUrl: categories.imageUrl,
+      sortOrder: categories.sortOrder,
+      createdAt: categories.createdAt,
+      updatedAt: categories.updatedAt,
+      productCount: sql<number>`count(${products.id})`,
+    })
+    .from(categories)
+    .leftJoin(products, eq(categories.id, products.categoryId))
+    .groupBy(categories.id)
+    .orderBy(asc(categories.sortOrder), asc(categories.name));
+  return result;
 }
 
 export async function getCategory(id: string) {

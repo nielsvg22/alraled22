@@ -22,6 +22,7 @@ import DiscountCodes from './pages/DiscountCodes';
 import LegalPages from './pages/LegalPages';
 import SeoPages from './pages/SeoPages';
 import Import from './pages/Import';
+import Categories from './pages/Categories';
 import PasswordWall from './components/PasswordWall';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
@@ -60,6 +61,7 @@ function AppRoutes() {
       >
         <Route index element={<Dashboard />} />
         <Route path="products" element={<Products />} />
+        <Route path="categories" element={<AdminRoute><Categories /></AdminRoute>} />
         <Route path="orders" element={<Orders />} />
         <Route path="rmas" element={<AdminRoute><Rmas /></AdminRoute>} />
         <Route path="pages" element={<AdminRoute><Pages /></AdminRoute>} />

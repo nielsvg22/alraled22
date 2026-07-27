@@ -265,21 +265,36 @@ const Header = () => {
                 </svg>
               </Link>
               {showCategories && categories.length > 0 && (
-                <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
-                  <Link to="/producten" onClick={() => setShowCategories(false)}
-                    className="block px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 transition-colors border-b border-gray-100">
-                    Alle producten
-                  </Link>
-                  {categories.map(cat => (
-                    <Link
-                      key={cat.id}
-                      to={`/producten?categorie=${cat.slug || cat.id}`}
-                      onClick={() => setShowCategories(false)}
-                      className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-secondary transition-colors border-b border-gray-50 last:border-0"
-                    >
-                      {cat.name}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[720px] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
+                  <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                    <Link to="/producten" onClick={() => setShowCategories(false)}
+                      className="text-sm font-bold text-gray-900 hover:text-primary transition-colors">
+                      Alle producten bekijken &rarr;
                     </Link>
-                  ))}
+                  </div>
+                  <div className="p-5 grid grid-cols-4 gap-3">
+                    {categories.map(cat => (
+                      <Link
+                        key={cat.id}
+                        to={`/producten?categorie=${cat.slug || cat.id}`}
+                        onClick={() => setShowCategories(false)}
+                        className="group flex flex-col items-center gap-2.5 p-3 rounded-xl hover:bg-gray-50 transition-all"
+                      >
+                        <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-gray-100">
+                          {cat.imageUrl ? (
+                            <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs font-semibold text-gray-700 text-center leading-tight group-hover:text-primary transition-colors">{cat.name}</span>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               )}
             </li>

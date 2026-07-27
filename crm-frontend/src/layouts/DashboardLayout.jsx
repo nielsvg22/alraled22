@@ -21,7 +21,8 @@ import {
   CreditCard,
   Scale,
   Globe,
-  Upload
+  Upload,
+  Tag
 } from 'lucide-react';
 
 export default function DashboardLayout() {
@@ -37,6 +38,7 @@ export default function DashboardLayout() {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Products', href: '/products', icon: Package },
+    { name: 'Categorieën', href: '/categories', icon: Tag },
     { name: 'Orders', href: '/orders', icon: ShoppingCart },
   ];
 
