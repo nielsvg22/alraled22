@@ -632,7 +632,6 @@ const Home = () => {
     '@type': 'Organization',
     name: 'ALRA LED Solutions',
     url: window.location.origin,
-    logo: general.logoUrl || '',
   };
 
   return (
