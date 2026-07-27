@@ -2,17 +2,26 @@
   "nav": {
     "home": "Startseite",
     "about": "Über uns",
+    "products": "Produkte",
     "webshop": "Webshop",
     "blog": "Blog",
     "contact": "Kontakt",
-    "shop_now": "Jetzt kaufen"
+    "shop_now": "Jetzt kaufen",
+    "login": "Anmelden",
+    "account": "Konto"
   },
   "header": {
     "free_shipping": "Kostenloser Versand ab 250 €",
     "warranty": "5 Jahre Garantie",
     "ce_certified": "CE-zertifiziert",
     "login": "Anmelden",
-    "search_placeholder": "Produkte suchen..."
+    "search_placeholder": "Produkte suchen...",
+    "searchPlaceholder": "Produkte suchen...",
+    "searchViewAll": "Alle Produkte anzeigen",
+    "searchNoResults": "Keine Ergebnisse für <1>{{query}}</1>",
+    "language": "Sprache",
+    "themeOn": "Zum Hellmodus wechseln",
+    "themeOff": "Zum Dunkelmodus wechseln"
   },
   "common": {
     "loading": "Laden...",

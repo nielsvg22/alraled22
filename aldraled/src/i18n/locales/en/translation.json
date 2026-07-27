@@ -2,17 +2,26 @@
   "nav": {
     "home": "Home",
     "about": "About us",
+    "products": "Products",
     "webshop": "Webshop",
     "blog": "Blog",
     "contact": "Contact",
-    "shop_now": "Shop now"
+    "shop_now": "Shop now",
+    "login": "Login",
+    "account": "Account"
   },
   "header": {
     "free_shipping": "Free shipping over €250",
     "warranty": "5 years warranty",
     "ce_certified": "CE certified",
     "login": "Login",
-    "search_placeholder": "Search products..."
+    "search_placeholder": "Search products...",
+    "searchPlaceholder": "Search products...",
+    "searchViewAll": "View all products",
+    "searchNoResults": "No results for <1>{{query}}</1>",
+    "language": "Language",
+    "themeOn": "Switch to light mode",
+    "themeOff": "Switch to dark mode"
   },
   "common": {
     "loading": "Loading...",

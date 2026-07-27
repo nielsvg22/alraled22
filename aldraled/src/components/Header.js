@@ -173,7 +173,6 @@ const Header = () => {
   const navLinks = [
     { to: '/', label: t('nav.home') },
     { to: '/over-ons', label: t('nav.about') },
-    { to: '/producten', label: t('nav.products') },
     { to: '/blog', label: t('nav.blog') },
     { to: '/contact', label: t('nav.contact') },
   ];
@@ -257,30 +256,33 @@ const Header = () => {
                 </Link>
               </li>
             ))}
-            {categories.length > 0 && (
-              <li className="relative" onMouseEnter={() => setShowCategories(true)} onMouseLeave={() => setShowCategories(false)}>
-                <button className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-secondary hover:bg-gray-50 transition-all flex items-center gap-1">
-                  Categorieën
-                  <svg className={`w-3 h-3 transition-transform ${showCategories ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {showCategories && (
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
-                    {categories.map(cat => (
-                      <Link
-                        key={cat.id}
-                        to={`/producten?categorie=${cat.slug || cat.id}`}
-                        onClick={() => setShowCategories(false)}
-                        className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-secondary transition-colors border-b border-gray-50 last:border-0"
-                      >
-                        {cat.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </li>
-            )}
+            <li className="relative" onMouseEnter={() => setShowCategories(true)} onMouseLeave={() => setShowCategories(false)}>
+              <Link to="/producten"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 ${isActive('/producten') ? 'text-primary bg-primary/5' : 'text-gray-600 hover:text-secondary hover:bg-gray-50'}`}>
+                {t('nav.products')}
+                <svg className={`w-3 h-3 transition-transform ${showCategories ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </Link>
+              {showCategories && categories.length > 0 && (
+                <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
+                  <Link to="/producten" onClick={() => setShowCategories(false)}
+                    className="block px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 transition-colors border-b border-gray-100">
+                    Alle producten
+                  </Link>
+                  {categories.map(cat => (
+                    <Link
+                      key={cat.id}
+                      to={`/producten?categorie=${cat.slug || cat.id}`}
+                      onClick={() => setShowCategories(false)}
+                      className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-secondary transition-colors border-b border-gray-50 last:border-0"
+                    >
+                      {cat.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </li>
           </ul>
 
           {/* Live search */}
@@ -336,6 +338,24 @@ const Header = () => {
         {/* Mobile menu */}
         {mobileOpen && (
           <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-1">
+            <Link to="/producten"
+              className={`block px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive('/producten') ? 'text-primary bg-primary/5' : 'text-gray-600 hover:bg-gray-50'}`}>
+              {t('nav.products')}
+            </Link>
+            {categories.length > 0 && (
+              <div className="pl-6 space-y-0.5">
+                {categories.map(cat => (
+                  <Link
+                    key={cat.id}
+                    to={`/producten?categorie=${cat.slug || cat.id}`}
+                    onClick={() => setMobileOpen(false)}
+                    className="block px-4 py-2 rounded-xl text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-secondary transition-colors"
+                  >
+                    {cat.name}
+                  </Link>
+                ))}
+              </div>
+            )}
             {navLinks.map(({ to, label }) => (
               <Link
                 key={to}

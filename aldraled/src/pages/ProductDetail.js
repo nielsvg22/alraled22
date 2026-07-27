@@ -21,7 +21,7 @@ const parseSpecs = (specsStr) => {
   }
 };
 
-const TABS = ['Specificaties', 'Productinformatie', 'Beoordelingen', 'Alternatieven', 'Vaak samen gekocht'];
+const TABS = ['Productinformatie', 'Specificaties', 'Beoordelingen', 'Alternatieven', 'Vaak samen gekocht'];
 
 const REVIEWS = [
   { name: 'Mark de Vries', rating: 5, text: 'Uitstekende kwaliteit! Snel geleverd en goed verpakt.', date: '2 weken geleden' },
@@ -47,14 +47,9 @@ const ProductDetail = () => {
   const [added, setAdded]               = useState(false);
   const [stickyVisible, setStickyVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [showInclVat, setShowInclVat]   = useState(true);
-  const [activeTab, setActiveTab]       = useState('Specificaties');
+  const [activeTab, setActiveTab]       = useState('Productinformatie');
   const mainBtnRef = useRef(null);
   const { addToCart } = useCart();
-
-  const displayPrice = showInclVat
-    ? Number(product?.price || 0) * (1 + VAT_RATE)
-    : Number(product?.price || 0);
 
   useEffect(() => {
     setLoading(true);
@@ -90,6 +85,19 @@ const ProductDetail = () => {
     setTimeout(() => setAdded(false), 2000);
   };
 
+  const scrollToSpecs = () => {
+    setActiveTab('Specificaties');
+    setTimeout(() => {
+      const el = document.getElementById('specificaties');
+      if (el) {
+        const headerOffset = 60;
+        const elementPosition = el.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center space-y-3">
@@ -111,7 +119,7 @@ const ProductDetail = () => {
   const avgRating = 4.8;
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen pb-20">
 
       {/* ─── BREADCRUMB ─── */}
       <div className="border-b border-gray-100">
@@ -177,12 +185,12 @@ const ProductDetail = () => {
             {/* Price Block */}
             <div className="bg-gray-50 rounded-2xl p-5 md:p-6 space-y-4">
               {/* Price row */}
-              <div className="flex items-baseline gap-3">
-                <span className="text-3xl md:text-4xl font-bold text-gray-900">€{displayPrice.toFixed(2)}</span>
-                <button onClick={() => setShowInclVat(v => !v)}
-                  className="text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors border border-gray-200 bg-white px-2.5 py-1 rounded-lg">
-                  {showInclVat ? 'incl. BTW' : 'excl. BTW'}
-                </button>
+              <div className="space-y-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl md:text-4xl font-bold text-gray-900">€{Number(product?.price || 0).toFixed(2)}</span>
+                  <span className="text-sm font-semibold text-gray-500">excl. BTW</span>
+                </div>
+                <p className="text-sm text-gray-500">€{(Number(product?.price || 0) * (1 + VAT_RATE)).toFixed(2)} incl. BTW</p>
               </div>
 
               {/* Stock */}
@@ -193,16 +201,16 @@ const ProductDetail = () => {
 
               {/* Specs preview */}
               {specs.length > 0 && (
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden divide-y divide-gray-100">
+                <div className="bg-white rounded-xl border border-gray-200 overflow-visible relative z-10">
                   {specs.slice(0, 4).map((spec, i) => (
-                    <div key={i} className="flex items-center justify-between px-4 py-2.5">
+                    <div key={i} className={`flex items-center justify-between px-4 py-2.5 ${i < Math.min(specs.length, 4) - 1 ? 'border-b border-gray-100' : ''}`}>
                       <span className="text-xs text-gray-500 font-medium">{spec.label}</span>
                       <span className="text-xs font-semibold text-gray-900 text-right ml-4">{spec.value}</span>
                     </div>
                   ))}
                   {specs.length > 4 && (
-                    <button onClick={() => setActiveTab('Specificaties')}
-                      className="w-full px-4 py-2.5 text-xs font-semibold text-gray-900 hover:bg-gray-50 transition-colors text-center border-t border-gray-100">
+                    <button onClick={scrollToSpecs}
+                      className="w-full px-4 py-2.5 text-xs font-semibold text-gray-900 hover:bg-gray-50 transition-colors text-center border-t border-gray-100 cursor-pointer relative z-10">
                       Alle {specs.length} specificaties bekijken →
                     </button>
                   )}
@@ -218,7 +226,7 @@ const ProductDetail = () => {
                     <span className="w-10 text-center text-sm font-bold text-gray-900 border-x border-gray-100 h-10 flex items-center justify-center">{qty}</span>
                     <button onClick={() => setQty(q => q + 1)} className="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors text-lg font-semibold">+</button>
                   </div>
-                  <button className="text-xs text-gray-400 hover:text-gray-600 transition-colors ml-auto">
+                  <button className="text-xs text-gray-400 hover:text-gray-600 transition-colors ml-auto cursor-pointer" title="Toevoegen aan favorieten" aria-label="Toevoegen aan favorieten">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                   </button>
                 </div>
@@ -246,7 +254,7 @@ const ProductDetail = () => {
                 </div>
                 {qty > 1 && (
                   <p className="text-center text-sm text-gray-500">
-                    Subtotaal: <strong className="text-gray-900">€{(displayPrice * qty).toFixed(2)}</strong>
+                    Subtotaal: <strong className="text-gray-900">€{(Number(product?.price || 0) * qty).toFixed(2)}</strong> excl. BTW
                   </p>
                 )}
               </div>
@@ -259,6 +267,26 @@ const ProductDetail = () => {
                 </button>
               </div>
             </div>
+
+            {/* Desktop specs summary panel */}
+            {specs.length > 0 && (
+              <div className="hidden lg:block bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                <h3 className="text-sm font-bold text-gray-900 mb-3">Belangrijkste specificaties</h3>
+                <div className="space-y-2">
+                  {specs.slice(0, 6).map((spec, i) => (
+                    <div key={i} className="flex justify-between text-xs">
+                      <span className="text-gray-500">{spec.label}</span>
+                      <span className="font-semibold text-gray-900">{spec.value}</span>
+                    </div>
+                  ))}
+                </div>
+                {specs.length > 6 && (
+                  <button onClick={scrollToSpecs} className="mt-3 text-xs font-semibold text-gray-900 hover:text-gray-600 transition-colors cursor-pointer">
+                    Alle {specs.length} specificaties bekijken →
+                  </button>
+                )}
+              </div>
+            )}
 
           </div>
         </div>
@@ -290,7 +318,7 @@ const ProductDetail = () => {
           <div className="py-6 md:py-8">
             {/* Specificaties tab */}
             {activeTab === 'Specificaties' && (
-              <div className="max-w-3xl">
+              <div id="specificaties" className="max-w-3xl scroll-mt-20">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-gray-900">Specificaties</h2>
                   <span className="text-sm text-gray-400">{specs.length} kenmerken</span>
@@ -325,10 +353,13 @@ const ProductDetail = () => {
               <div className="max-w-3xl">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">Productinformatie</h2>
                 {product.description ? (
-                  <div className="text-sm text-gray-600 leading-relaxed space-y-4">
-                    {product.description.split('\n').filter(Boolean).map((p, i) => (
-                      <p key={i}>{p}</p>
-                    ))}
+                  <div className="text-[15px] md:text-sm text-gray-600 leading-[1.8] space-y-4">
+                    {product.description.split('\n').filter(Boolean).map((p, i) => {
+                      if (p.startsWith('#')) {
+                        return <h3 key={i} className="text-base font-bold text-gray-900 mt-6 mb-2">{p.replace(/^#+\s*/, '')}</h3>;
+                      }
+                      return <p key={i}>{p}</p>;
+                    })}
                   </div>
                 ) : (
                   <p className="text-sm text-gray-400">Geen omschrijving beschikbaar.</p>
@@ -520,7 +551,7 @@ const ProductDetail = () => {
           <img src={getImageSrc(product)} alt={product.name} className="w-9 h-9 object-contain rounded-lg bg-gray-50 border border-gray-100 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-gray-900 text-sm truncate">{product.name}</p>
-            <p className="text-sm font-bold text-gray-900">€{displayPrice.toFixed(2)} <span className="text-xs text-gray-400 font-normal">{showInclVat ? 'incl. btw' : 'excl. btw'}</span></p>
+            <p className="text-sm font-bold text-gray-900">€{Number(product?.price || 0).toFixed(2)} <span className="text-xs text-gray-400 font-normal">excl. btw</span></p>
           </div>
           <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden shrink-0 bg-white">
             <button onClick={() => setQty(q => Math.max(1, q - 1))} className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-base">−</button>
