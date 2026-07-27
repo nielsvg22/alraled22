@@ -268,89 +268,6 @@ const Header = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </Link>
-              {showCategories && categories.length > 0 && (
-                <div
-                  className="absolute top-full left-0 right-0 mt-0 bg-white shadow-[0_20px_60px_rgba(0,0,0,0.12)] border-t border-gray-100 z-50"
-                  onMouseEnter={() => clearTimeout(closeTimeoutRef.current)}
-                  onMouseLeave={() => { closeTimeoutRef.current = setTimeout(() => { setShowCategories(false); setHoveredCategory(null); }, 150); }}>
-                  <div className="max-w-6xl mx-auto flex min-h-[360px]">
-                    {/* Left: category sidebar */}
-                    <div className="w-[260px] border-r border-gray-100 py-1 shrink-0">
-                      <Link to="/producten" onClick={() => setShowCategories(false)}
-                        className="flex items-center justify-between px-5 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 transition-colors border-b border-gray-100">
-                        <span>Alle producten</span>
-                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
-                      {categories.map(cat => (
-                        <Link
-                          key={cat.id}
-                          to={`/producten?categorie=${cat.slug || cat.id}`}
-                          onClick={() => setShowCategories(false)}
-                          onMouseEnter={() => setHoveredCategory(cat)}
-                          className="flex items-center justify-between px-5 py-3 text-[13px] font-semibold transition-all duration-150 border-b border-gray-50 last:border-0 group"
-                          style={hoveredCategory?.id === cat.id
-                            ? { backgroundColor: '#f8fafc', color: '#2563eb', paddingLeft: '24px' }
-                            : { color: '#374151' }}>
-                          <span>{cat.name}</span>
-                          <svg className="w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition-opacity duration-150" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </Link>
-                      ))}
-                    </div>
-                    {/* Right: image content area */}
-                    <div className="flex-1 relative overflow-hidden bg-gray-50">
-                      {hoveredCategory ? (
-                        <div key={hoveredCategory.id} className="absolute inset-0 flex items-center justify-center p-8 animate-in fade-in zoom-in-95 duration-200">
-                          {hoveredCategory.imageUrl ? (
-                            <div className="relative w-full h-full">
-                              <img src={hoveredCategory.imageUrl} alt={hoveredCategory.name}
-                                className="w-full h-full object-contain" />
-                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent p-6 pt-16">
-                                <h3 className="text-lg font-bold text-white">{hoveredCategory.name}</h3>
-                                {hoveredCategory.description && (
-                                  <p className="text-sm text-white/80 mt-1 max-w-md">{hoveredCategory.description}</p>
-                                )}
-                                {hoveredCategory.productCount > 0 && (
-                                  <p className="text-xs text-white/60 mt-2 font-semibold">{hoveredCategory.productCount} producten bekijken &rarr;</p>
-                                )}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-center">
-                              <div className="w-24 h-24 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-                                <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                              </div>
-                              <h3 className="text-base font-bold text-gray-900">{hoveredCategory.name}</h3>
-                              {hoveredCategory.description && (
-                                <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">{hoveredCategory.description}</p>
-                              )}
-                              {hoveredCategory.productCount > 0 && (
-                                <p className="text-xs text-primary font-semibold mt-3">{hoveredCategory.productCount} producten &rarr;</p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="w-20 h-20 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-                              <svg className="w-9 h-9 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
-                              </svg>
-                            </div>
-                            <p className="text-xs text-gray-400 font-medium">Hover over een categorie om de producten te zien</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
             </li>
           </ul>
 
@@ -403,6 +320,92 @@ const Header = () => {
             </button>
           </div>
         </div>
+
+        {/* Full-width mega dropdown */}
+        {showCategories && categories.length > 0 && (
+          <div
+            className="w-full bg-white border-t border-gray-100"
+            style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
+            onMouseEnter={() => clearTimeout(closeTimeoutRef.current)}
+            onMouseLeave={() => { closeTimeoutRef.current = setTimeout(() => { setShowCategories(false); setHoveredCategory(null); }, 150); }}>
+            <div className="max-w-6xl mx-auto flex" style={{ minHeight: '400px' }}>
+              {/* Left: category sidebar */}
+              <div className="w-[280px] border-r border-gray-100 py-1 shrink-0">
+                <Link to="/producten" onClick={() => setShowCategories(false)}
+                  className="flex items-center justify-between px-6 py-3.5 text-sm font-bold text-gray-900 hover:bg-gray-50 transition-colors border-b border-gray-100">
+                  <span>Alle producten</span>
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+                {categories.map(cat => (
+                  <Link
+                    key={cat.id}
+                    to={`/producten?categorie=${cat.slug || cat.id}`}
+                    onClick={() => setShowCategories(false)}
+                    onMouseEnter={() => setHoveredCategory(cat)}
+                    className="flex items-center justify-between px-6 py-3.5 text-[13px] font-semibold transition-all duration-150 border-b border-gray-50 last:border-0 group"
+                    style={hoveredCategory?.id === cat.id
+                      ? { backgroundColor: '#f0f7ff', color: '#2563eb', paddingLeft: '28px' }
+                      : { color: '#374151' }}>
+                    <span>{cat.name}</span>
+                    <svg className="w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition-opacity duration-150" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                ))}
+              </div>
+              {/* Right: image content area */}
+              <div className="flex-1 relative overflow-hidden bg-gray-50">
+                {hoveredCategory ? (
+                  <div key={hoveredCategory.id} className="absolute inset-0 flex items-center justify-center p-10 animate-in fade-in zoom-in-95 duration-200">
+                    {hoveredCategory.imageUrl ? (
+                      <div className="relative w-full h-full">
+                        <img src={hoveredCategory.imageUrl} alt={hoveredCategory.name}
+                          className="w-full h-full object-contain" />
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent p-8 pt-20">
+                          <h3 className="text-xl font-bold text-white">{hoveredCategory.name}</h3>
+                          {hoveredCategory.description && (
+                            <p className="text-sm text-white/80 mt-1 max-w-md">{hoveredCategory.description}</p>
+                          )}
+                          {hoveredCategory.productCount > 0 && (
+                            <p className="text-xs text-white/60 mt-2 font-semibold">{hoveredCategory.productCount} producten bekijken &rarr;</p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <div className="w-28 h-28 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center mb-5">
+                          <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900">{hoveredCategory.name}</h3>
+                        {hoveredCategory.description && (
+                          <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">{hoveredCategory.description}</p>
+                        )}
+                        {hoveredCategory.productCount > 0 && (
+                          <p className="text-xs text-primary font-semibold mt-3">{hoveredCategory.productCount} producten &rarr;</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-24 h-24 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+                        <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                        </svg>
+                      </div>
+                      <p className="text-xs text-gray-400 font-medium">Hover over een categorie om de producten te zien</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Mobile menu */}
         {mobileOpen && (
