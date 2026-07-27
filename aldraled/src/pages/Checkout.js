@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useCart } from '../lib/CartContext';
 import { useAuth } from '../lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import analytics from '../lib/analytics';
 import { getImageSrc, formatPrice } from '../lib/productHelpers';
+import { VAT_RATE } from '../lib/config';
 
 const Checkout = () => {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -29,7 +30,6 @@ const Checkout = () => {
   const [validatingDiscount, setValidatingDiscount] = useState(false);
   const [showInclVat, setShowInclVat] = useState(true);
 
-  const VAT_RATE = 0.21;
   const vatMultiplier = showInclVat ? (1 + VAT_RATE) : 1;
 
   const applyDiscount = async () => {
@@ -52,10 +52,20 @@ const Checkout = () => {
     ? Math.max(0, cartTotal - appliedDiscount.discountAmount) 
     : cartTotal;
 
+  const [validationError, setValidationError] = useState('');
+  const formRef = useRef(null);
+
   const handleCheckout = async (e) => {
     e.preventDefault();
-    if (!user) { navigate('/login'); return; }
     if (cartItems.length === 0) return;
+
+    const form = formRef.current;
+    if (form && !form.checkValidity()) {
+      form.reportValidity();
+      setValidationError('Vul alle verplichte velden in.');
+      return;
+    }
+    setValidationError('');
     setLoading(true);
     setError('');
     try {
@@ -104,23 +114,21 @@ const Checkout = () => {
             {error && (
               <div className="bg-red-50 border-2 border-red-100 rounded-2xl px-6 py-4 text-red-600 font-medium">{error}</div>
             )}
-            {!user && (
-              <div className="bg-primary/10 border-2 border-primary/20 rounded-2xl px-6 py-4 text-secondary font-medium">
-                U moet <a href="/login" className="text-primary font-black underline">ingelogd</a> zijn om te kunnen afrekenen.
-              </div>
+            {validationError && (
+              <div className="bg-red-50 border-2 border-red-100 rounded-2xl px-6 py-4 text-red-600 font-medium">{validationError}</div>
             )}
 
-            <form className="space-y-8" onSubmit={handleCheckout}>
+            <form ref={formRef} className="space-y-8" onSubmit={handleCheckout}>
               <div className="space-y-6">
                 <h3 className="text-2xl font-black text-secondary uppercase italic">1. Contactgegevens</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">E-mailadres</label>
-                    <input type="email" value={emailValue} onChange={(e) => setEmailValue(e.target.value)} required className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 focus:border-primary outline-none transition-all font-medium" />
+                    <input type="email" value={emailValue} onChange={(e) => setEmailValue(e.target.value)} required className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 focus:border-primary outline-none transition-all font-medium invalid:border-red-400" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Telefoonnummer</label>
-                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 focus:border-primary outline-none transition-all font-medium" />
+                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 focus:border-primary outline-none transition-all font-medium invalid:border-red-400" />
                   </div>
                 </div>
               </div>
@@ -130,16 +138,16 @@ const Checkout = () => {
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Straat + Huisnummer</label>
-                    <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 focus:border-primary outline-none transition-all font-medium" />
+                    <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} required className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 focus:border-primary outline-none transition-all font-medium invalid:border-red-400" />
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Postcode</label>
-                      <input type="text" value={postcode} onChange={(e) => setPostcode(e.target.value)} className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 focus:border-primary outline-none transition-all font-medium" />
+                      <input type="text" value={postcode} onChange={(e) => setPostcode(e.target.value)} required className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 focus:border-primary outline-none transition-all font-medium invalid:border-red-400" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Stad</label>
-                      <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 focus:border-primary outline-none transition-all font-medium" />
+                      <input type="text" value={city} onChange={(e) => setCity(e.target.value)} required className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 focus:border-primary outline-none transition-all font-medium invalid:border-red-400" />
                     </div>
                   </div>
                 </div>
@@ -147,7 +155,7 @@ const Checkout = () => {
 
               <button
                 type="submit"
-                disabled={loading || !user}
+                disabled={loading}
                 className="w-full group relative overflow-hidden bg-secondary text-white py-8 rounded-[2rem] font-black text-2xl uppercase italic shadow-2xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="relative z-10">{loading ? 'VERWERKEN...' : 'BESTELLING PLAATSEN'}</span>

@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "ALRA LED",
+  "name": "ALRA LED Solutions - Professionele LED Verlichting",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +20,7 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#1e40af",
+  "background_color": "#ffffff",
+  "description": "Professionele LED-verlichting voor bedrijfswagens, bouwplaatsen en werkplaatsen"
 }

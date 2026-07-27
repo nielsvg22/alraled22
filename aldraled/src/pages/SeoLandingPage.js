@@ -165,7 +165,7 @@ function SeoLandingPage() {
       {/* Hero with image */}
       {page.heroImage && (
         <div className="relative h-64 md:h-96 overflow-hidden bg-gray-100">
-          <img src={getMediaUrl(page.heroImage)} alt={page.title} className="w-full h-full object-cover" />
+          <img src={getMediaUrl(page.heroImage)} alt={page.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
           <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 via-secondary/30 to-transparent flex items-end">
             <div className="max-w-6xl mx-auto px-6 md:px-10 pb-10 w-full">
               <h1 className="text-3xl md:text-5xl font-black text-white leading-tight max-w-3xl">{page.title}</h1>

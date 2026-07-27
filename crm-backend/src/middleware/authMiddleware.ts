@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const JWT_SECRET = process.env.JWT_SECRET || 'alra-led-jwt-secret-change-in-production';
+
 export interface AuthRequest extends Request {
   user?: {
     userId: string;
@@ -11,13 +13,6 @@ export interface AuthRequest extends Request {
   };
 }
 
-// TODO: TEMP – bypass auth for testing. Remove this block and restore the original below.
-export const authMiddleware = (req: AuthRequest, _res: Response, next: NextFunction) => {
-  req.user = { userId: 'dev', role: 'ADMIN' };
-  return next();
-};
-
-/* Original authMiddleware – uncomment to restore:
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : undefined;
@@ -27,7 +22,7 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
   }
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET || 'secret') as {
+    const payload = jwt.verify(token, JWT_SECRET) as {
       userId?: string;
       role?: string;
     };
@@ -42,7 +37,6 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
     return res.status(401).json({ error: 'Unauthorized' });
   }
 };
-*/
 
 export const adminMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.user?.role !== 'ADMIN') {

@@ -1,29 +1,31 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './lib/AuthContext';
 import { CartProvider } from './lib/CartContext';
 import { ThemeProvider } from './lib/ThemeContext';
 import Layout from './components/Layout';
-import Home from './pages/Home';
-import About from './pages/About';
-import Contact from './pages/Contact';
-import ProductList from './pages/ProductList';
-import ProductDetail from './pages/ProductDetail';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Account from './pages/Account';
-import Checkout from './pages/Checkout';
-import OrderSuccess from './pages/OrderSuccess';
-import Blog from './pages/Blog';
-import BlogDetail from './pages/BlogDetail';
-import DealersMap from './pages/DealersMap';
-import Returns from './pages/Returns';
-import LegalPage from './pages/LegalPage';
-import SeoLandingPage from './pages/SeoLandingPage';
 import ChatBubble from './components/ChatBubble';
 import PasswordWall from './components/PasswordWall';
 import analytics from './lib/analytics';
 import './App.css';
+
+const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
+const Contact = lazy(() => import('./pages/Contact'));
+const ProductList = lazy(() => import('./pages/ProductList'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Account = lazy(() => import('./pages/Account'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const OrderSuccess = lazy(() => import('./pages/OrderSuccess'));
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogDetail = lazy(() => import('./pages/BlogDetail'));
+const DealersMap = lazy(() => import('./pages/DealersMap'));
+const Returns = lazy(() => import('./pages/Returns'));
+const LegalPage = lazy(() => import('./pages/LegalPage'));
+const SeoLandingPage = lazy(() => import('./pages/SeoLandingPage'));
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -70,45 +72,60 @@ function RouteTracker() {
   return null;
 }
 
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <p className="text-sm text-gray-400 font-medium">Laden...</p>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <CartProvider>
-          <Router>
-            <ThemeLoader />
-            <RouteTracker />
-            <PasswordWall>
-              <Layout>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/over-ons" element={<About />} />
-                  <Route path="/producten" element={<ProductList />} />
-                  <Route path="/product/:id" element={<ProductDetail />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/registreren" element={<Register />} />
-                  <Route path="/account" element={<Account />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/bestelling-geplaatst/:orderId?" element={<OrderSuccess />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/blog" element={<Blog />} />
-                  <Route path="/blog/:id" element={<BlogDetail />} />
-                  <Route path="/verkooppunten" element={<DealersMap />} />
-                  <Route path="/retouren" element={<Returns />} />
-                  <Route path="/algemene-voorwaarden" element={<LegalPage />} />
-                  <Route path="/privacy-policy" element={<LegalPage />} />
-                  <Route path="/retourbeleid" element={<LegalPage />} />
-                  <Route path="/klachten" element={<LegalPage />} />
-                  <Route path="/:slug(led-bouwlichtslang|professionele-bouwplaatsverlichting|led-lichtslang|bouwverlichting-huren|bedrijfswagenverlichting)" element={<SeoLandingPage />} />
-                  <Route path="*" element={<Home />} />
-                </Routes>
-              </Layout>
-            </PasswordWall>
-            {process.env.NODE_ENV !== 'test' && <ChatBubble />}
-          </Router>
-        </CartProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <HelmetProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <CartProvider>
+            <Router>
+              <ThemeLoader />
+              <RouteTracker />
+              <PasswordWall>
+                <Layout>
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/over-ons" element={<About />} />
+                      <Route path="/producten" element={<ProductList />} />
+                      <Route path="/product/:id" element={<ProductDetail />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/registreren" element={<Register />} />
+                      <Route path="/account" element={<Account />} />
+                      <Route path="/checkout" element={<Checkout />} />
+                      <Route path="/bestelling-geplaatst/:orderId?" element={<OrderSuccess />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/blog" element={<Blog />} />
+                      <Route path="/blog/:id" element={<BlogDetail />} />
+                      <Route path="/verkooppunten" element={<DealersMap />} />
+                      <Route path="/retouren" element={<Returns />} />
+                      <Route path="/algemene-voorwaarden" element={<LegalPage />} />
+                      <Route path="/privacy-policy" element={<LegalPage />} />
+                      <Route path="/retourbeleid" element={<LegalPage />} />
+                      <Route path="/klachten" element={<LegalPage />} />
+                      <Route path="/:slug(led-bouwlichtslang|professionele-bouwplaatsverlichting|led-lichtslang|bouwverlichting-huren|bedrijfswagenverlichting)" element={<SeoLandingPage />} />
+                      <Route path="*" element={<Home />} />
+                    </Routes>
+                  </Suspense>
+                </Layout>
+              </PasswordWall>
+              {process.env.NODE_ENV !== 'test' && <ChatBubble />}
+            </Router>
+          </CartProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </HelmetProvider>
   );
 }
 

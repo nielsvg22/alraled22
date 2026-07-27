@@ -318,6 +318,8 @@ const Home = () => {
                     src={is.image || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600"}
                     alt={is.heading}
                     className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-secondary/20 to-transparent" />
                 </div>
@@ -375,7 +377,7 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {specializations.map((cat, idx) => (
                 <Link to="/producten" key={idx} className="group relative overflow-hidden rounded-2xl aspect-[4/3] block bg-gray-200">
-                  <img src={cat.image} alt={cat.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <img src={cat.image} alt={cat.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" />
                   <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 p-6">
                     <h3 className="text-white font-black text-lg leading-tight">{cat.title}</h3>
@@ -421,6 +423,8 @@ const Home = () => {
                       src={getImageSrc(product, 'https://via.placeholder.com/400')}
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-secondary/0 group-hover:bg-secondary/50 transition-all duration-300 flex items-center justify-center">
                       <span className="text-white text-xs font-bold bg-primary px-3 py-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity scale-95 group-hover:scale-100">
@@ -548,6 +552,8 @@ const Home = () => {
                         src={item.image}
                         alt={item.title}
                         className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-secondary/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -621,8 +627,17 @@ const Home = () => {
     return null;
   };
 
+  const orgJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'ALRA LED Solutions',
+    url: window.location.origin,
+    logo: general.logoUrl || '',
+  };
+
   return (
     <div className="bg-white">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
       {normalizedOrder.map((id) => (
         <React.Fragment key={id}>
           {renderSection(id)}

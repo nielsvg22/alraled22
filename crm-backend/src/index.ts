@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
@@ -32,17 +34,17 @@ dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT || 5000);
 
-// Ensure default admin and dev user exist
+// Ensure default admin exists (only creates, never resets password)
 async function ensureAdmin() {
   try {
-    const adminEmail = 'admin@alraled.nl';
-    const adminPassword = 'admin1234';
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@alraled.nl';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin1234';
     const adminEmailLower = adminEmail.toLowerCase();
-    const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
     const existing = await db.select().from(users).where(eq(users.email, adminEmailLower));
 
     if (existing.length === 0) {
+      const hashedPassword = await bcrypt.hash(adminPassword, 12);
       console.log('[server] Creating default admin...');
       await db.insert(users).values({
         email: adminEmailLower,
@@ -50,29 +52,9 @@ async function ensureAdmin() {
         name: 'Admin',
         role: 'ADMIN',
       });
-      console.log(`[server] Default admin created: ${adminEmail} / ${adminPassword}`);
+      console.log(`[server] Default admin created: ${adminEmail}`);
     } else {
-      await db.update(users).set({
-        role: 'ADMIN',
-        password: hashedPassword,
-        name: existing[0]?.name ?? 'Admin',
-        updatedAt: new Date(),
-      }).where(eq(users.email, adminEmailLower));
-      console.log('[server] Default admin ensured');
-    }
-
-    // Ensure dev user exists (hardcoded userId used by authMiddleware bypass)
-    const devUser = await db.select().from(users).where(eq(users.id, 'dev'));
-    if (devUser.length === 0) {
-      console.log('[server] Creating dev user...');
-      await db.insert(users).values({
-        id: 'dev',
-        email: 'dev@alraled.nl',
-        password: hashedPassword,
-        name: 'Dev',
-        role: 'ADMIN',
-      });
-      console.log('[server] Dev user created');
+      console.log('[server] Admin already exists, skipping creation');
     }
   } catch (err) {
     console.error('[server] Error ensuring admin:', err);
@@ -87,7 +69,45 @@ async function bootstrap() {
 
 bootstrap();
 
-app.use(cors());
+// Security headers
+app.use(helmet());
+
+// CORS restriction
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:3000', 'http://localhost:5173'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
+
+// Rate limiting
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later' },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts, please try again later' },
+});
+
+app.use('/api/', generalLimiter);
+app.use('/api/auth/login', authLimiter);
+
 app.use(express.json());
 
 // Log all requests

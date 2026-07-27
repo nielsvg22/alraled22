@@ -5,8 +5,7 @@ import { useCart } from '../lib/CartContext';
 import { getMediaUrl, API_URL } from '../lib/api';
 import analytics from '../lib/analytics';
 import { getProductImages, getImageSrc, formatPrice } from '../lib/productHelpers';
-
-const VAT_RATE = 0.21;
+import { VAT_RATE } from '../lib/config';
 
 const parseSpecs = (specsStr) => {
   if (!specsStr) return [];
@@ -22,18 +21,6 @@ const parseSpecs = (specsStr) => {
 };
 
 const TABS = ['Productinformatie', 'Specificaties', 'Beoordelingen', 'Alternatieven', 'Vaak samen gekocht'];
-
-const REVIEWS = [
-  { name: 'Mark de Vries', rating: 5, text: 'Uitstekende kwaliteit! Snel geleverd en goed verpakt.', date: '2 weken geleden' },
-  { name: 'Anita Jansen', rating: 5, text: 'Perfect voor onze verbouwing. Professioneel product.', date: '1 maand geleden' },
-  { name: 'Peter van den Berg', rating: 4, text: 'Goede prijs-kwaliteitverhouding. Doet wat het moet doen.', date: '3 weken geleden' },
-];
-
-const StarIcon = ({ filled }) => (
-  <svg className={`w-3.5 h-3.5 ${filled ? 'text-amber-400' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 20 20">
-    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-  </svg>
-);
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -116,10 +103,36 @@ const ProductDetail = () => {
 
   const specs = parseSpecs(product.specs);
   const images = getProductImages(product);
-  const avgRating = 4.8;
+  const stock = product.stock ?? 0;
+
+  const getStockAvailability = () => {
+    if (stock > 0) return 'https://schema.org/InStock';
+    return 'https://schema.org/OutOfStock';
+  };
+
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description || '',
+    image: getMediaUrl(images[0] || product.imageUrl) || '',
+    brand: {
+      '@type': 'Brand',
+      name: 'ALRA LED',
+    },
+    offers: {
+      '@type': 'Offer',
+      price: product.price,
+      priceCurrency: 'EUR',
+      availability: getStockAvailability(),
+      url: window.location.href,
+    },
+  };
 
   return (
     <div className="bg-white min-h-screen pb-20">
+
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
 
       {/* ─── BREADCRUMB ─── */}
       <div className="border-b border-gray-100">
@@ -143,6 +156,8 @@ const ProductDetail = () => {
                 src={getMediaUrl(images[selectedImage] || product.imageUrl) || 'https://via.placeholder.com/800'}
                 alt={product.name}
                 className="w-full h-full object-contain p-8 md:p-12 transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+                decoding="async"
               />
               {images.length > 1 && (
                 <div className="absolute top-3 right-3 bg-white/90 rounded-lg px-2.5 py-1 text-[11px] font-bold text-gray-500 shadow-sm border border-gray-100">
@@ -157,7 +172,7 @@ const ProductDetail = () => {
                     className={`w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-xl overflow-hidden border-2 transition-all ${
                       index === selectedImage ? 'border-gray-800' : 'border-gray-200 hover:border-gray-400'
                     }`}>
-                    <img src={getMediaUrl(url) || ''} alt="" className="w-full h-full object-cover" />
+                    <img src={getMediaUrl(url) || ''} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>
@@ -173,13 +188,6 @@ const ProductDetail = () => {
                 <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{product.category}</span>
               )}
               <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 leading-tight mt-0.5">{product.name}</h1>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="flex items-center gap-0.5">
-                  {[...Array(5)].map((_, i) => <StarIcon key={i} filled={i < Math.round(avgRating)} />)}
-                </div>
-                <span className="text-sm font-bold text-gray-700">{avgRating}</span>
-                <span className="text-xs text-gray-400">(5 reviews)</span>
-              </div>
             </div>
 
             {/* Price Block */}
@@ -194,10 +202,24 @@ const ProductDetail = () => {
               </div>
 
               {/* Stock */}
-              <div className="flex items-center gap-1.5 text-emerald-700 font-semibold text-sm">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                Op voorraad
-              </div>
+              {stock > 10 && (
+                <div className="flex items-center gap-1.5 text-emerald-700 font-semibold text-sm">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                  Op voorraad
+                </div>
+              )}
+              {stock > 0 && stock <= 10 && (
+                <div className="flex items-center gap-1.5 text-amber-700 font-semibold text-sm">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
+                  Bijna op &ndash; {stock} op voorraad
+                </div>
+              )}
+              {stock === 0 && (
+                <div className="flex items-center gap-1.5 text-red-600 font-semibold text-sm">
+                  <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                  Uitverkocht
+                </div>
+              )}
 
               {/* Specs preview */}
               {specs.length > 0 && (
@@ -231,10 +253,12 @@ const ProductDetail = () => {
                   </button>
                 </div>
                 <div className="flex gap-2.5">
-                  <button onClick={() => handleAdd()}
-                    className={`flex-1 py-3.5 rounded-xl font-bold text-sm transition-all ${added
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-[0.98]'
+                  <button onClick={() => handleAdd()} disabled={stock === 0}
+                    className={`flex-1 py-3.5 rounded-xl font-bold text-sm transition-all ${stock === 0
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : added
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-[0.98]'
                     }`}>
                     {added ? (
                       <span className="flex items-center justify-center gap-2">
@@ -373,33 +397,11 @@ const ProductDetail = () => {
 
             {/* Beoordelingen tab */}
             {activeTab === 'Beoordelingen' && (
-              <div>
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="flex items-center gap-0.5">
-                    {[...Array(5)].map((_, i) => <StarIcon key={i} filled={i < Math.round(avgRating)} />)}
-                  </div>
-                  <span className="text-lg font-bold text-gray-900">{avgRating}</span>
-                  <span className="text-sm text-gray-400">(5 reviews)</span>
+              <div className="text-center py-16 bg-gray-50 rounded-2xl border border-gray-100">
+                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center mx-auto mb-3 border border-gray-100">
+                  <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {REVIEWS.map((r, i) => (
-                    <div key={i} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
-                      <div className="flex items-center gap-2.5 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
-                          {r.name.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">{r.name}</p>
-                          <div className="flex items-center gap-0.5">
-                            {[...Array(5)].map((_, j) => <StarIcon key={j} filled={j < r.rating} />)}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-600">"{r.text}"</p>
-                      <p className="text-xs text-gray-400 mt-2">{r.date}</p>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-sm text-gray-400 font-medium">Beoordelingen komen binnenkort</p>
               </div>
             )}
 
@@ -411,7 +413,7 @@ const ProductDetail = () => {
                   {related.map(p => (
                     <Link key={p.id} to={`/product/${p.id}`} className="group block">
                       <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 mb-3">
-                        <img src={getImageSrc(p)} alt={p.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
+                        <img src={getImageSrc(p)} alt={p.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" />
                       </div>
                       <p className="text-sm font-semibold text-gray-900 group-hover:text-gray-600 transition-colors line-clamp-2 leading-snug">{p.name}</p>
                       <p className="text-base font-bold text-gray-900 mt-1">{formatPrice(p.price)}</p>
@@ -429,7 +431,7 @@ const ProductDetail = () => {
                   {fbt.map(p => (
                     <div key={p.id} className="group bg-white rounded-2xl border border-gray-100 p-4">
                       <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden mb-3">
-                        <img src={getImageSrc(p)} alt={p.name} className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-500" />
+                        <img src={getImageSrc(p)} alt={p.name} className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" />
                       </div>
                       <p className="text-sm font-semibold text-gray-900 line-clamp-2 min-h-[2.5em] leading-snug">{p.name}</p>
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
@@ -457,7 +459,7 @@ const ProductDetail = () => {
               {explicit.map(item => (
                 <div key={item.id} className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-gray-200 transition-all">
                   <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden mb-3">
-                    <img src={getImageSrc(item)} alt={item.name} className="w-full h-full object-contain p-3" />
+                    <img src={getImageSrc(item)} alt={item.name} className="w-full h-full object-contain p-3" loading="lazy" decoding="async" />
                   </div>
                   <p className="text-sm font-semibold text-gray-900 line-clamp-2 min-h-[2.5em] leading-snug">{item.name}</p>
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
@@ -484,7 +486,7 @@ const ProductDetail = () => {
                 {bundle.items.map((b) => (
                   <div key={b.id} className="text-center">
                     <div className="aspect-square bg-white rounded-2xl overflow-hidden mb-2 border border-gray-100">
-                      {b.imageUrl ? <img src={getImageSrc(b)} alt={b.name} className="w-full h-full object-contain p-3" /> : <div className="w-full h-full flex items-center justify-center text-gray-300 text-lg font-bold">+</div>}
+                      {b.imageUrl ? <img src={getImageSrc(b)} alt={b.name} className="w-full h-full object-contain p-3" loading="lazy" decoding="async" /> : <div className="w-full h-full flex items-center justify-center text-gray-300 text-lg font-bold">+</div>}
                     </div>
                     <p className="text-xs font-semibold text-gray-700 line-clamp-2 leading-tight">{b.name}</p>
                   </div>
@@ -545,7 +547,7 @@ const ProductDetail = () => {
       {/* ─── STICKY BAR ─── */}
       <div className={`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-lg transition-transform duration-300 ${stickyVisible ? 'translate-y-0' : 'translate-y-full'}`}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center gap-4">
-          <img src={getImageSrc(product)} alt={product.name} className="w-9 h-9 object-contain rounded-lg bg-gray-50 border border-gray-100 shrink-0" />
+          <img src={getImageSrc(product)} alt={product.name} className="w-9 h-9 object-contain rounded-lg bg-gray-50 border border-gray-100 shrink-0" loading="lazy" decoding="async" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-gray-900 text-sm truncate">{product.name}</p>
             <p className="text-sm font-bold text-gray-900">{formatPrice(product?.price)} <span className="text-xs text-gray-400 font-normal">excl. btw</span></p>

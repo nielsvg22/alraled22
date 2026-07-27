@@ -65,7 +65,7 @@ const Footer = () => {
           <div className="md:col-span-1 space-y-4">
             <Link to="/" className="block">
               {general.logoUrl ? (
-                <img src={general.logoUrl} alt="ALRA LED" className="h-10 w-auto" />
+                <img src={general.logoUrl} alt="ALRA LED" className="h-10 w-auto" loading="lazy" decoding="async" />
               ) : (
                 <span className="text-xl font-black tracking-tight">
                   ALRA<span className="text-primary">LED</span>
@@ -144,7 +144,7 @@ const Footer = () => {
             <Link to="/retourbeleid" className="hover:text-white/60 transition-colors">Retourbeleid</Link>
             {general.webkeurmerkId && (
               <a href={`https://www.webkeurmerk.nl/keurmerk/${general.webkeurmerkId}`} target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors">
-                <img src="https://www.webkeurmerk.nl/images/keurmerk.png" alt="Webkeurmerk" className="h-6 w-auto inline-block" />
+                <img src="https://www.webkeurmerk.nl/images/keurmerk.png" alt="Webkeurmerk" className="h-6 w-auto inline-block" loading="lazy" decoding="async" />
               </a>
             )}
           </div>
