@@ -95,7 +95,10 @@ function App() {
                   <Route path="/blog/:id" element={<BlogDetail />} />
                   <Route path="/verkooppunten" element={<DealersMap />} />
                   <Route path="/retouren" element={<Returns />} />
-                  <Route path="/:slug(algemene-voorwaarden|privacy-policy|retourbeleid|klachten)" element={<LegalPage />} />
+                  <Route path="/algemene-voorwaarden" element={<LegalPage />} />
+                  <Route path="/privacy-policy" element={<LegalPage />} />
+                  <Route path="/retourbeleid" element={<LegalPage />} />
+                  <Route path="/klachten" element={<LegalPage />} />
                   <Route path="/:slug(led-bouwlichtslang|professionele-bouwplaatsverlichting|led-lichtslang|bouwverlichting-huren|bedrijfswagenverlichting)" element={<SeoLandingPage />} />
                   <Route path="*" element={<Home />} />
                 </Routes>
