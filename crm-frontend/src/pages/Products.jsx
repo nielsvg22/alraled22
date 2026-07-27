@@ -322,10 +322,10 @@ export default function Products() {
                   </div>
                 )}
                 {/* Category badge */}
-                {product.category && (
+                {(product.category || product.categoryId) && (
                   <span className="absolute top-3 left-3 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider"
                     style={{ background: 'rgba(15,23,42,0.7)', color: '#fff', backdropFilter: 'blur(4px)' }}>
-                    {product.category}
+                    {product.category || categories.find(c => c.id === product.categoryId)?.name || ''}
                   </span>
                 )}
                 {/* Actions overlay */}
