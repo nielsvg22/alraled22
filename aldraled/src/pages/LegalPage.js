@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 
@@ -20,11 +20,12 @@ const DEFAULT_TITLES = {
 };
 
 const LegalPage = () => {
-  const { slug } = useParams();
+  const location = useLocation();
   const { i18n } = useTranslation();
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const slug = location.pathname.replace(/^\//, '');
   const contentKey = PAGE_KEYS[slug];
 
   useEffect(() => {
