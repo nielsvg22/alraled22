@@ -7,6 +7,8 @@ import { AuthRequest } from '../middleware/authMiddleware';
 
 dotenv.config();
 
+const JWT_SECRET = process.env.JWT_SECRET || 'alra-led-jwt-secret-change-in-production';
+
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
@@ -40,7 +42,7 @@ function serializeUser(user: { id: string; email: string; name: string | null; r
 }
 
 function signToken(user: { id: string; role: usersRepo.Role }) {
-  return jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+  return jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 export async function register(req: Request, res: Response) {

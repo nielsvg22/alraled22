@@ -9,6 +9,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const JWT_SECRET = process.env.JWT_SECRET || 'alra-led-jwt-secret-change-in-production';
+
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
@@ -47,7 +49,7 @@ export const register = async (req: Request, res: Response) => {
 
     const token = jwt.sign(
       { userId: user.id, role: user.role },
-      process.env.JWT_SECRET || 'secret',
+      JWT_SECRET,
       { expiresIn: '1d' }
     );
 
@@ -86,7 +88,7 @@ export const login = async (req: Request, res: Response) => {
 
     const token = jwt.sign(
       { userId: user.id, role: user.role },
-      process.env.JWT_SECRET || 'secret',
+      JWT_SECRET,
       { expiresIn: '1d' }
     );
 
