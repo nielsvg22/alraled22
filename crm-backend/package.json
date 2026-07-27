@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "db:push": "drizzle-kit push",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "db:seed-categories": "ts-node-dev --transpile-only src/scripts/seed-categories.ts"
   },
   "keywords": [],
   "author": "",
