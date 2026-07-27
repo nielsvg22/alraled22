@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import api from '../lib/api';
+import { formatPrice } from '../lib/productHelpers';
 import confetti from 'canvas-confetti';
 
 const OrderSuccess = () => {
@@ -71,7 +72,7 @@ const OrderSuccess = () => {
         {total !== null && (
           <div className="flex justify-between text-sm border-t border-gray-100 pt-3">
             <span className="text-gray-500">Totaalbedrag</span>
-            <span className="font-black text-secondary">€{Number(total).toFixed(2)}</span>
+            <span className="font-black text-secondary">{formatPrice(total)}</span>
           </div>
         )}
         <div className="flex justify-between text-sm">

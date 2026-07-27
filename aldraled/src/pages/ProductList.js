@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
 import { API_URL } from '../lib/api';
-import { getImageSrc } from '../lib/productHelpers';
+import { getImageSrc, formatPrice } from '../lib/productHelpers';
 
 const VAT_RATE = 0.21;
 
@@ -43,7 +43,7 @@ function QuickViewModal({ product, onClose }) {
             {product.category && <span className="text-xs font-bold text-primary uppercase tracking-widest">{product.category}</span>}
             <h2 className="text-xl font-black text-secondary leading-tight">{product.name}</h2>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-secondary">€{displayPrice.toFixed(2)}</span>
+              <span className="text-3xl font-black text-secondary">{formatPrice(displayPrice)}</span>
               <button onClick={() => setShowInclVat(v => !v)}
                 className={`text-xs font-bold px-2 py-0.5 rounded-full border transition-all ${
                   showInclVat ? 'bg-primary/10 text-primary border-primary/30' : 'text-gray-400 border-gray-200'
@@ -113,7 +113,7 @@ function CompareModal({ list, onClose }) {
   }, []);
 
   const ROWS = [
-    { label: 'Prijs', key: (p) => `€${p.price}` },
+    { label: 'Prijs', key: (p) => formatPrice(p.price) },
     { label: 'Categorie', key: (p) => p.category || '—' },
     { label: 'Beschrijving', key: (p) => p.description ? p.description.slice(0, 80) + (p.description.length > 80 ? '…' : '') : '—' },
   ];
@@ -330,7 +330,7 @@ const ProductList = () => {
                     <h3 className="text-sm font-bold text-secondary group-hover:text-primary transition-colors leading-snug truncate">{product.name}</h3>
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-sm font-black text-secondary">
-                        €{showInclVat ? (product.price * (1 + VAT_RATE)).toFixed(2) : product.price}
+                        {formatPrice(showInclVat ? (product.price * (1 + VAT_RATE)) : product.price)}
                       </span>
                       <span className="text-[10px] text-gray-400 uppercase tracking-wide">excl. btw</span>
                     </div>

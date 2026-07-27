@@ -6,6 +6,7 @@ import { useTheme } from '../lib/ThemeContext';
 import axios from 'axios';
 import { useTranslation, Trans } from 'react-i18next';
 import { getMediaUrl, API_URL } from '../lib/api';
+import { formatPrice } from '../lib/productHelpers';
 
 const DEFAULT_GENERAL = {
   tagline: '',
@@ -91,7 +92,7 @@ function LiveSearch() {
                 <p className="text-sm font-bold text-secondary truncate">{product.name}</p>
                 {product.category && <p className="text-[10px] text-gray-400">{product.category}</p>}
               </div>
-              <span className="text-sm font-black text-primary shrink-0">€{product.price}</span>
+              <span className="text-sm font-black text-primary shrink-0">{formatPrice(product.price)}</span>
             </Link>
           ))}
           <Link

@@ -1,5 +1,16 @@
 import { getMediaUrl } from './api';
 
+const priceFormatter = new Intl.NumberFormat('nl-NL', {
+  style: 'currency',
+  currency: 'EUR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+export function formatPrice(amount) {
+  return priceFormatter.format(Number(amount || 0));
+}
+
 export function getProductImages(product) {
   const urls = Array.isArray(product?.images)
     ? product.images.map((image) => image.url || image).filter(Boolean)

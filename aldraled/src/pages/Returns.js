@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import api from '../lib/api';
+import { formatPrice } from '../lib/productHelpers';
 
 const statusLabel = {
   REQUESTED: 'Aangevraagd',
@@ -143,7 +144,7 @@ export default function Returns() {
                     <option value="">Kies een bestelling</option>
                     {orders.map((o) => (
                       <option key={o.id} value={o.id}>
-                        #{o.id.slice(0, 6)} · {new Date(o.createdAt).toLocaleDateString('nl-NL')} · €{Number(o.total || 0).toFixed(2)}
+                        #{o.id.slice(0, 6)} · {new Date(o.createdAt).toLocaleDateString('nl-NL')} · {formatPrice(o.total)}
                       </option>
                     ))}
                   </select>

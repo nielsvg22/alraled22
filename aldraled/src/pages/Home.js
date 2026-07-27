@@ -5,7 +5,7 @@ import CustomBlocks from '../components/CustomBlocks';
 import LogoCarousel from '../components/LogoCarousel';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
-import { getImageSrc } from '../lib/productHelpers';
+import { getImageSrc, formatPrice } from '../lib/productHelpers';
 
 const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
 
@@ -429,7 +429,7 @@ const Home = () => {
                     </div>
                   </div>
                   <h3 className="text-sm font-bold text-secondary group-hover:text-primary transition-colors truncate">{product.name}</h3>
-                  <p className="text-sm font-black text-secondary mt-0.5">€{product.price}</p>
+                  <p className="text-sm font-black text-secondary mt-0.5">{formatPrice(product.price)}</p>
                 </Link>
               ))}
             </div>

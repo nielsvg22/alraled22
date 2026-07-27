@@ -2,7 +2,7 @@ import React from 'react';
 import { useCart } from '../lib/CartContext';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getImageSrc } from '../lib/productHelpers';
+import { getImageSrc, formatPrice } from '../lib/productHelpers';
 
 const CartDrawer = () => {
   const { t } = useTranslation();
@@ -49,7 +49,7 @@ const CartDrawer = () => {
                       <h4 className="font-black text-secondary uppercase italic leading-none">{item.name}</h4>
                       <button onClick={() => removeFromCart(item.id)} className="text-gray-300 hover:text-red-500 transition-colors">✕</button>
                     </div>
-                    <p className="text-primary font-black italic">€ {item.price}</p>
+                    <p className="text-primary font-black italic">{formatPrice(item.price)}</p>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center border-2 border-gray-100 rounded-xl overflow-hidden">
                         <button onClick={() => updateQuantity(item.id, -1)} className="px-3 py-1 hover:bg-gray-100 font-bold">-</button>
@@ -67,7 +67,7 @@ const CartDrawer = () => {
             <div className="p-8 bg-gray-50 space-y-6">
               <div className="flex justify-between items-end">
                 <span className="text-gray-400 font-bold uppercase tracking-widest text-xs">{t('cart.subtotal')}</span>
-                <span className="text-4xl font-black text-secondary italic tracking-tighter">€ {cartTotal.toFixed(2)}</span>
+                <span className="text-4xl font-black text-secondary italic tracking-tighter">{formatPrice(cartTotal)}</span>
               </div>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-tight">
                 {t('cart.shippingNote')}

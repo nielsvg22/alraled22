@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useCart } from '../lib/CartContext';
 import { getMediaUrl, API_URL } from '../lib/api';
 import analytics from '../lib/analytics';
-import { getProductImages, getImageSrc } from '../lib/productHelpers';
+import { getProductImages, getImageSrc, formatPrice } from '../lib/productHelpers';
 
 const VAT_RATE = 0.21;
 
@@ -187,10 +187,10 @@ const ProductDetail = () => {
               {/* Price row */}
               <div className="space-y-1">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl md:text-4xl font-bold text-gray-900">€{Number(product?.price || 0).toFixed(2)}</span>
+                  <span className="text-3xl md:text-4xl font-bold text-gray-900">{formatPrice(product?.price)}</span>
                   <span className="text-sm font-semibold text-gray-500">excl. BTW</span>
                 </div>
-                <p className="text-sm text-gray-500">€{(Number(product?.price || 0) * (1 + VAT_RATE)).toFixed(2)} incl. BTW</p>
+                <p className="text-sm text-gray-500">{formatPrice((Number(product?.price || 0) * (1 + VAT_RATE)))} incl. BTW</p>
               </div>
 
               {/* Stock */}
@@ -251,7 +251,7 @@ const ProductDetail = () => {
                 </div>
                 {qty > 1 && (
                   <p className="text-center text-sm text-gray-500">
-                    Subtotaal: <strong className="text-gray-900">€{(Number(product?.price || 0) * qty).toFixed(2)}</strong> excl. BTW
+                    Subtotaal: <strong className="text-gray-900">{formatPrice((Number(product?.price || 0) * qty))}</strong> excl. BTW
                   </p>
                 )}
               </div>
@@ -414,7 +414,7 @@ const ProductDetail = () => {
                         <img src={getImageSrc(p)} alt={p.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
                       </div>
                       <p className="text-sm font-semibold text-gray-900 group-hover:text-gray-600 transition-colors line-clamp-2 leading-snug">{p.name}</p>
-                      <p className="text-base font-bold text-gray-900 mt-1">€{Number(p.price || 0).toFixed(2)}</p>
+                      <p className="text-base font-bold text-gray-900 mt-1">{formatPrice(p.price)}</p>
                     </Link>
                   ))}
                 </div>
@@ -433,7 +433,7 @@ const ProductDetail = () => {
                       </div>
                       <p className="text-sm font-semibold text-gray-900 line-clamp-2 min-h-[2.5em] leading-snug">{p.name}</p>
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                        <span className="text-base font-bold text-gray-900">€{Number(p.price || 0).toFixed(2)}</span>
+                        <span className="text-base font-bold text-gray-900">{formatPrice(p.price)}</span>
                         <button onClick={() => addToCart({ id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl })}
                           className="px-3.5 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800 transition-all">
                           + Toevoegen
@@ -461,7 +461,7 @@ const ProductDetail = () => {
                   </div>
                   <p className="text-sm font-semibold text-gray-900 line-clamp-2 min-h-[2.5em] leading-snug">{item.name}</p>
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                    <span className="text-base font-bold text-gray-900">€{Number(item.price || 0).toFixed(2)}</span>
+                    <span className="text-base font-bold text-gray-900">{formatPrice(item.price)}</span>
                     <button onClick={() => { addToCart(item); setAdded(true); setTimeout(() => setAdded(false), 2000); }}
                       className="p-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-all">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
@@ -495,7 +495,7 @@ const ProductDetail = () => {
                   <p className="text-sm text-gray-500 font-medium">Totaalset</p>
                   <p className="text-xs text-gray-400">{bundle.items.length} producten</p>
                 </div>
-                <span className="text-2xl font-bold text-gray-900">€{Number(bundle.total || 0).toFixed(2)}</span>
+                <span className="text-2xl font-bold text-gray-900">{formatPrice(bundle.total)}</span>
               </div>
               <button onClick={() => { bundle.items.forEach(it => addToCart({ id: it.id, name: it.name, price: it.price, imageUrl: it.imageUrl })); setAdded(true); setTimeout(() => setAdded(false), 1500); }}
                 className="w-full max-w-xs py-3.5 rounded-xl bg-gray-900 text-white font-bold text-sm hover:bg-gray-800 transition-all">
@@ -548,7 +548,7 @@ const ProductDetail = () => {
           <img src={getImageSrc(product)} alt={product.name} className="w-9 h-9 object-contain rounded-lg bg-gray-50 border border-gray-100 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-gray-900 text-sm truncate">{product.name}</p>
-            <p className="text-sm font-bold text-gray-900">€{Number(product?.price || 0).toFixed(2)} <span className="text-xs text-gray-400 font-normal">excl. btw</span></p>
+            <p className="text-sm font-bold text-gray-900">{formatPrice(product?.price)} <span className="text-xs text-gray-400 font-normal">excl. btw</span></p>
           </div>
           <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden shrink-0 bg-white">
             <button onClick={() => setQty(q => Math.max(1, q - 1))} className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-base">−</button>

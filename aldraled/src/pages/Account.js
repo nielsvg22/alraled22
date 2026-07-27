@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import api from '../lib/api';
+import { formatPrice } from '../lib/productHelpers';
 
 const statusLabel = {
   PENDING: 'In behandeling',
@@ -138,7 +139,7 @@ const Account = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-3xl font-black text-secondary italic leading-none">€{order.total.toFixed(2)}</p>
+                        <p className="text-3xl font-black text-secondary italic leading-none">{formatPrice(order.total)}</p>
                         <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-1">{order.items?.length || 0} artikel(en)</p>
                       </div>
                     </div>
