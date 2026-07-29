@@ -91,14 +91,26 @@ async function scFetch(path: string, options: RequestInit = {}): Promise<any> {
     body: options.body ? JSON.parse(options.body as string) : undefined,
   });
 
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+
+  let res;
+  try {
+    res = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+  } catch (fetchErr: any) {
+    clearTimeout(timeout);
+    await logEvent('sendcloud', 'ERROR', 'scFetch', `Fetch fout: ${fetchErr.message}`, { path, error: fetchErr.message });
+    throw fetchErr;
+  }
+  clearTimeout(timeout);
 
   const responseText = await res.text();
   let responseData;
