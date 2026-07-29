@@ -11,7 +11,7 @@
     }
   },
   "deploy": {
-    "startCommand": "npm run start",
+    "startCommand": "sh -c \"npx drizzle-kit push && node dist/index.js\"",
     "restartPolicyType": "ON_FAILURE",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 100
