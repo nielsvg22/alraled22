@@ -7,31 +7,32 @@ const router = Router();
 
 router.get('/run', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const statements = [
-      "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `shippingName` varchar(255) DEFAULT NULL",
-      "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `shippingCompany` varchar(255) DEFAULT NULL",
-      "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `shippingAddress` varchar(255) DEFAULT NULL",
-      "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `shippingPostcode` varchar(20) DEFAULT NULL",
-      "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `shippingCity` varchar(100) DEFAULT NULL",
-      "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `shippingCountry` varchar(2) DEFAULT 'NL'",
-      "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `shippingPhone` varchar(50) DEFAULT NULL",
-      "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `shippingMethod` varchar(100) DEFAULT NULL",
-      "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `shippingCost` double NOT NULL DEFAULT 0",
-      "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `trackingNumber` varchar(255) DEFAULT NULL",
-      "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `trackingUrl` varchar(512) DEFAULT NULL",
-      "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `sendcloudShipmentId` varchar(50) DEFAULT NULL",
+    const columns = [
+      { name: 'shippingName', def: 'varchar(255) DEFAULT NULL' },
+      { name: 'shippingCompany', def: 'varchar(255) DEFAULT NULL' },
+      { name: 'shippingAddress', def: 'varchar(255) DEFAULT NULL' },
+      { name: 'shippingPostcode', def: 'varchar(20) DEFAULT NULL' },
+      { name: 'shippingCity', def: 'varchar(100) DEFAULT NULL' },
+      { name: 'shippingCountry', def: "varchar(2) DEFAULT 'NL'" },
+      { name: 'shippingPhone', def: 'varchar(50) DEFAULT NULL' },
+      { name: 'shippingMethod', def: 'varchar(100) DEFAULT NULL' },
+      { name: 'shippingCost', def: 'double NOT NULL DEFAULT 0' },
+      { name: 'trackingNumber', def: 'varchar(255) DEFAULT NULL' },
+      { name: 'trackingUrl', def: 'varchar(512) DEFAULT NULL' },
+      { name: 'sendcloudShipmentId', def: 'varchar(50) DEFAULT NULL' },
     ];
 
     const results: string[] = [];
-    for (const stmt of statements) {
+
+    for (const col of columns) {
       try {
-        await db.execute(sql.raw(stmt));
-        results.push(`OK: ${stmt.split('`')[1]}`);
+        await db.execute(sql.raw(`ALTER TABLE \`Order\` ADD COLUMN \`${col.name}\` ${col.def}`));
+        results.push(`OK: ${col.name}`);
       } catch (err: any) {
-        if (err.message?.includes('Duplicate column')) {
-          results.push(`SKIP: ${stmt.split('`')[1]} (bestaat al)`);
+        if (err.message?.includes('Duplicate column') || err.errno === 1060) {
+          results.push(`SKIP: ${col.name} (bestaat al)`);
         } else {
-          results.push(`ERR: ${stmt.split('`')[1]} - ${err.message}`);
+          results.push(`ERR: ${col.name} - ${err.message}`);
         }
       }
     }
