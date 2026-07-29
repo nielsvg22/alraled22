@@ -44,6 +44,8 @@ export default function SendcloudSettings() {
   const [error, setError] = useState('');
   const [shippingMethods, setShippingMethods] = useState([]);
   const [testResult, setTestResult] = useState(null);
+  const [migrating, setMigrating] = useState(false);
+  const [migrationResult, setMigrationResult] = useState(null);
 
   useEffect(() => {
     api.get('/shipping/settings')
@@ -80,6 +82,19 @@ export default function SendcloudSettings() {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  const runMigration = async () => {
+    setMigrating(true);
+    setMigrationResult(null);
+    try {
+      const r = await api.get('/migration/run');
+      setMigrationResult(r.data);
+    } catch (err) {
+      setMigrationResult({ ok: false, error: err.response?.data?.error || 'Migratie mislukt' });
+    } finally {
+      setMigrating(false);
+    }
+  };
+
   if (loading) return <div className="flex items-center justify-center py-20"><div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /></div>;
 
   return (
@@ -106,6 +121,31 @@ export default function SendcloudSettings() {
           <AlertCircle className="w-5 h-5 shrink-0" /> {error}
         </div>
       )}
+
+      {/* Migration card */}
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-amber-900 text-sm">Database migratie</h3>
+            <p className="text-xs text-amber-700 mt-0.5">Voer dit eenmalig uit na het deployen van de SendCloud integratie</p>
+          </div>
+          <button onClick={runMigration} disabled={migrating}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 text-white text-sm font-bold hover:bg-amber-700 transition-all disabled:opacity-50">
+            {migrating ? '...' : 'Migratie uitvoeren'}
+          </button>
+        </div>
+        {migrationResult && (
+          <div className="mt-3 space-y-1">
+            {migrationResult.ok ? (
+              migrationResult.results?.map((r, i) => (
+                <p key={i} className={`text-xs font-medium ${r.startsWith('OK') ? 'text-emerald-700' : r.startsWith('SKIP') ? 'text-gray-500' : 'text-red-600'}`}>{r}</p>
+              ))
+            ) : (
+              <p className="text-xs text-red-600">{migrationResult.error}</p>
+            )}
+          </div>
+        )}
+      </div>
 
       {testResult && (
         <div className={`rounded-xl px-5 py-4 text-sm font-medium flex items-center gap-3 ${testResult.ok ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-red-50 border border-red-200 text-red-600'}`}>
