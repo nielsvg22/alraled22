@@ -144,9 +144,69 @@ async function scFetch(path: string, options: RequestInit = {}): Promise<any> {
   return responseData;
 }
 
+async function scFetchV2(path: string, options: RequestInit = {}): Promise<any> {
+  const settings = await getSendcloudSettings();
+  const apiKey = settings.apiKey;
+  const apiSecret = settings.apiSecret;
+  if (!apiKey || !apiSecret) {
+    await logEvent('sendcloud', 'ERROR', 'scFetchV2', 'SendCloud API niet geconfigureerd');
+    throw new Error('SendCloud API niet geconfigureerd');
+  }
+
+  const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
+  const url = `${SENDCLOUD_API_V2}${path}`;
+
+  await logEvent('sendcloud', 'INFO', 'scFetchV2', `Request: ${options.method || 'GET'} ${path}`, {
+    method: options.method || 'GET',
+    body: options.body ? JSON.parse(options.body as string) : undefined,
+  });
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+
+  let res;
+  try {
+    res = await fetch(url, {
+      method: options.method as string || 'GET',
+      body: options.body as string | undefined,
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/json',
+        ...(options.headers as Record<string, string> || {}),
+      },
+      signal: controller.signal,
+    } as any);
+  } catch (fetchErr: any) {
+    clearTimeout(timeout);
+    const detail = { url, path, error: fetchErr.message, code: fetchErr.code };
+    console.error('[sendcloud] V2 Fetch failed:', detail);
+    await logEvent('sendcloud', 'ERROR', 'scFetchV2', `Fetch fout naar ${url}: ${fetchErr.message}`, detail);
+    throw fetchErr;
+  }
+  clearTimeout(timeout);
+
+  const responseText = await res.text();
+  let responseData;
+  try { responseData = JSON.parse(responseText); } catch { responseData = responseText; }
+
+  if (!res.ok) {
+    await logEvent('sendcloud', 'ERROR', 'scFetchV2', `API fout ${res.status}: ${responseText.slice(0, 500)}`, {
+      status: res.status, path, response: responseData,
+    });
+    throw new Error(`SendCloud V2 API fout (${res.status}): ${responseText}`);
+  }
+
+  await logEvent('sendcloud', 'INFO', 'scFetchV2', `Response OK: ${path}`, {
+    status: res.status, response: responseData,
+  });
+
+  return responseData;
+}
+
 export async function getShippingMethods(country: string = 'NL'): Promise<any[]> {
   try {
-    const data = await scFetch('/shipping_methods');
+    // Use V2 API for shipping methods (V3 uses different endpoint name)
+    const data = await scFetchV2('/shipping-methods');
     const methods = data?.shipping_methods || data || [];
     return methods.filter((m: any) => {
       if (!m.countries) return true;
@@ -212,38 +272,31 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
     }
   }
 
+  const fullAddress = houseNumber ? `${street} ${houseNumber}` : street;
+
+  // Use V2 API (parcels) which works with Basic auth
   const payload = {
-    shipping_method: params.shippingMethodId,
-    sender_address: {
-      contact_name: settings.senderName || 'ALRA LED Solutions',
-      street: settings.senderAddress || '',
-      house_number: settings.senderHouseNumber || '',
-      city: settings.senderCity || '',
-      postal_code: settings.senderPostalCode || '',
-      country: settings.senderCountry || 'NL',
-      telephone: settings.senderTelephone || '',
-    },
-    receiver_address: {
-      contact_name: params.receiverName,
+    parcel: {
+      name: params.receiverName,
       company_name: params.receiverCompany || '',
-      street,
-      house_number: houseNumber,
+      address: fullAddress,
       city: params.receiverCity,
       postal_code: params.receiverPostalCode,
       country: params.receiverCountry || 'NL',
       telephone: params.receiverPhone || '',
+      shipping_method: params.shippingMethodId,
+      order_number: params.orderNumber,
+      weight: String(params.weight || 500),
+      reference: params.reference || '',
     },
-    order_number: params.orderNumber,
-    weight: params.weight || 500,
-    reference: params.reference || '',
   };
 
-  console.log('[sendcloud] Creating shipment:', JSON.stringify(payload, null, 2));
+  console.log('[sendcloud] Creating shipment (V2):', JSON.stringify(payload, null, 2));
   await logEvent('sendcloud', 'INFO', 'createShipment', `Shipment aanmaken voor order ${params.orderNumber}`, payload, params.reference);
-  const data = await scFetch('/shipments', { method: 'POST', body: JSON.stringify(payload) });
+  const data = await scFetchV2('/parcels', { method: 'POST', body: JSON.stringify(payload) });
   console.log('[sendcloud] Shipment created:', JSON.stringify(data, null, 2));
-  await logEvent('sendcloud', 'INFO', 'createShipment', `Shipment aangemaakt: ID ${data?.id || data?.shipment?.id}`, data, params.reference);
-  return data?.shipment || data;
+  await logEvent('sendcloud', 'INFO', 'createShipment', `Shipment aangemaakt: ID ${data?.id || data?.parcel?.id}`, data, params.reference);
+  return data?.parcel || data;
 }
 
 export async function getShipmentLabel(shipmentId: number): Promise<Buffer | null> {
@@ -262,8 +315,8 @@ export async function getShipmentLabel(shipmentId: number): Promise<Buffer | nul
 
 export async function getTrackingUrl(shipmentId: number): Promise<string | null> {
   try {
-    const data = await scFetch(`/shipments/${shipmentId}`);
-    return data?.shipment?.tracking_url || null;
+    const data = await scFetchV2(`/parcels/${shipmentId}`);
+    return data?.parcel?.tracking_url || null;
   } catch {
     return null;
   }
