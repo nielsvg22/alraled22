@@ -26,6 +26,7 @@ const DealersMap = lazy(() => import('./pages/DealersMap'));
 const Returns = lazy(() => import('./pages/Returns'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 const SeoLandingPage = lazy(() => import('./pages/SeoLandingPage'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -115,7 +116,7 @@ function App() {
                       <Route path="/retourbeleid" element={<LegalPage />} />
                       <Route path="/klachten" element={<LegalPage />} />
                       <Route path="/:slug(led-bouwlichtslang|professionele-bouwplaatsverlichting|led-lichtslang|bouwverlichting-huren|bedrijfswagenverlichting)" element={<SeoLandingPage />} />
-                      <Route path="*" element={<Home />} />
+                      <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
                 </Layout>

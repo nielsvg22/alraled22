@@ -25,6 +25,12 @@ function normalizeText(v) {
   return String(v || '').trim();
 }
 
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.appendChild(document.createTextNode(str || ''));
+  return div.innerHTML;
+}
+
 export default function DealersMap() {
   const mapElRef = useRef(null);
   const mapRef = useRef(null);
@@ -129,12 +135,12 @@ export default function DealersMap() {
     dealersWithDistance.forEach((d) => {
       const marker = L.marker([d.lat, d.lon]);
       const distanceLine = typeof d.distanceKm === 'number' ? `<div style="margin-top:6px;"><strong>${d.distanceKm.toFixed(1)} km</strong></div>` : '';
-      const websiteLine = d.website ? `<div style="margin-top:6px;"><a href="${d.website}" target="_blank" rel="noreferrer">Website</a></div>` : '';
-      const phoneLine = d.phone ? `<div style="margin-top:6px;">${d.phone}</div>` : '';
+      const websiteLine = d.website ? `<div style="margin-top:6px;"><a href="${escapeHtml(d.website)}" target="_blank" rel="noreferrer">Website</a></div>` : '';
+      const phoneLine = d.phone ? `<div style="margin-top:6px;">${escapeHtml(d.phone)}</div>` : '';
       marker.bindPopup(
         `<div style="min-width:220px;">
-          <div style="font-weight:800;">${d.name || 'Verkooppunt'}</div>
-          <div style="opacity:0.8;margin-top:4px;">${d.address || ''}</div>
+          <div style="font-weight:800;">${escapeHtml(d.name || 'Verkooppunt')}</div>
+          <div style="opacity:0.8;margin-top:4px;">${escapeHtml(d.address || '')}</div>
           ${distanceLine}
           ${phoneLine}
           ${websiteLine}

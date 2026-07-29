@@ -26,8 +26,7 @@ export default function BlogDetail() {
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-        style={{ borderColor: 'rgb(var(--color-primary))', borderTopColor: 'transparent' }} />
+      <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
     </div>
   );
 
@@ -35,7 +34,7 @@ export default function BlogDetail() {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center text-center px-6 gap-4">
       <span className="text-5xl">📭</span>
       <h1 className="text-2xl font-black text-gray-800">Artikel niet gevonden</h1>
-      <Link to="/blog" className="text-sm font-bold hover:underline" style={{ color: 'rgb(var(--color-primary))' }}>
+      <Link to="/blog" className="text-sm font-bold text-primary hover:underline">
         ← Terug naar nieuws
       </Link>
     </div>
@@ -72,7 +71,7 @@ export default function BlogDetail() {
         {/* Meta */}
         <header className="mb-10 space-y-5">
           {date && (
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgb(var(--color-primary))' }}>
+            <p className="text-xs font-bold text-primary uppercase tracking-widest">
               {date}
             </p>
           )}
@@ -82,8 +81,7 @@ export default function BlogDetail() {
 
           {/* Author row */}
           <div className="flex items-center gap-3 py-4 border-y border-gray-100">
-            <div className="w-10 h-10 rounded-full text-white flex items-center justify-center font-black text-sm shrink-0"
-              style={{ background: 'rgb(var(--color-primary))' }}>
+            <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-black text-sm shrink-0">
               {author[0]?.toUpperCase()}
             </div>
             <div className="flex-1">
@@ -96,7 +94,7 @@ export default function BlogDetail() {
         {/* Hero image */}
         {image && (
           <div className="rounded-2xl overflow-hidden shadow-lg mb-10">
-            <img src={getMediaUrl(image)} alt={title} className="w-full max-h-[500px] object-cover" />
+            <img src={getMediaUrl(image)} alt={title} className="w-full max-h-[500px] object-cover" loading="lazy" decoding="async" />
           </div>
         )}
 
@@ -119,7 +117,7 @@ export default function BlogDetail() {
                 {item.icon && <span className="text-2xl">{item.icon}</span>}
                 {item.title && <h3 className="font-bold text-gray-800 mt-2 mb-1">{item.title}</h3>}
                 {item.description && <p className="text-sm text-gray-500">{item.description}</p>}
-                {item.number && <p className="text-3xl font-black mt-1" style={{ color: 'rgb(var(--color-primary))' }}>{item.number}</p>}
+                {item.number && <p className="text-3xl font-black text-primary mt-1">{item.number}</p>}
                 {item.label && <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mt-1">{item.label}</p>}
               </div>
             ))}
@@ -129,8 +127,7 @@ export default function BlogDetail() {
         {/* Footer */}
         <div className="mt-14 pt-8 border-t border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full text-white flex items-center justify-center font-black text-sm"
-              style={{ background: 'rgb(var(--color-primary))' }}>
+            <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-black text-sm">
               {author[0]?.toUpperCase()}
             </div>
             <div>
@@ -139,8 +136,7 @@ export default function BlogDetail() {
             </div>
           </div>
           <Link to="/blog"
-            className="flex items-center gap-1.5 text-sm font-bold hover:underline"
-            style={{ color: 'rgb(var(--color-primary))' }}>
+            className="flex items-center gap-1.5 text-sm font-bold text-primary hover:underline">
             ← Meer artikelen
           </Link>
         </div>

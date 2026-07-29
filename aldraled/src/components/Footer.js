@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import { API_URL } from '../lib/api';
 
 const DEFAULTS = {
   tagline: '',
@@ -45,7 +44,9 @@ const Footer = () => {
             <p className="text-white/50 text-xs mt-0.5">{general.newsletterText}</p>
           </div>
           <form className="flex w-full md:w-auto gap-2" onSubmit={e => e.preventDefault()}>
+            <label htmlFor="footer-newsletter" className="sr-only">Email address for newsletter</label>
             <input
+              id="footer-newsletter"
               type="email"
               placeholder={general.newsletterPlaceholder}
               className="flex-1 md:w-64 bg-white/10 border border-white/10 text-white placeholder-white/30 text-sm px-4 py-2.5 rounded-full focus:outline-none focus:border-primary transition-colors"
@@ -76,9 +77,14 @@ const Footer = () => {
               {general.footerDescription}
             </p>
             <div className="flex gap-3 pt-1">
-              {['Li', 'Ig', 'Fb'].map(s => (
-                <a key={s} href="#!" className="w-8 h-8 bg-white/10 hover:bg-primary rounded-lg flex items-center justify-center text-[10px] font-bold text-white/60 hover:text-white transition-all">
-                  {s}
+              {[
+                { label: 'LinkedIn', href: 'https://www.linkedin.com/company/alra-led-solutions' },
+                { label: 'Instagram', href: 'https://www.instagram.com/alraled' },
+                { label: 'Facebook', href: 'https://www.facebook.com/alraled' },
+              ].map(({ label, href }) => (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label}
+                  className="w-8 h-8 bg-white/10 hover:bg-primary rounded-lg flex items-center justify-center text-[10px] font-bold text-white/60 hover:text-white transition-all">
+                  {label[0]}
                 </a>
               ))}
             </div>
@@ -104,9 +110,11 @@ const Footer = () => {
           {/* Products */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-widest text-white/40 mb-4">{general.productsTitle}</h4>
-            <ul className="space-y-2.5 text-sm text-white/60">
+            <ul className="space-y-2.5">
               {(Array.isArray(general.productLinks) ? general.productLinks : []).map((label, index) => (
-                <li key={`${label}-${index}`} className="hover:text-white transition-colors cursor-pointer">{label}</li>
+                <li key={`${label}-${index}`}>
+                  <Link to="/producten" className="text-sm text-white/60 hover:text-white transition-colors">{label}</Link>
+                </li>
               ))}
             </ul>
           </div>
@@ -141,7 +149,7 @@ const Footer = () => {
           <div className="flex gap-5 items-center">
             <Link to="/algemene-voorwaarden" className="hover:text-white/60 transition-colors">{general.termsLabel || 'Algemene Voorwaarden'}</Link>
             <Link to="/privacy-policy" className="hover:text-white/60 transition-colors">{general.privacyLabel || 'Privacy Policy'}</Link>
-            <Link to="/retourbeleid" className="hover:text-white/60 transition-colors">Retourbeleid</Link>
+            <Link to="/retourbeleid" className="hover:text-white/60 transition-colors">{general.retourbeleidLabel || 'Retourbeleid'}</Link>
             {general.webkeurmerkId && (
               <a href={`https://www.webkeurmerk.nl/keurmerk/${general.webkeurmerkId}`} target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors">
                 <img src="https://www.webkeurmerk.nl/images/keurmerk.png" alt="Webkeurmerk" className="h-6 w-auto inline-block" loading="lazy" decoding="async" />

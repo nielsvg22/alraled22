@@ -1486,6 +1486,9 @@ export default function Pages() {
                                 <Field label="Beschrijving">
                                   <textarea className={`${taCls} ${iBdr}`} rows={3} value={is.description||''} onChange={e => setIs({ description: e.target.value })} />
                                 </Field>
+                                <Field label="Afbeelding">
+                                  <ImageField value={is.image||''} onChange={v => setIs({ image: v })} height={24} />
+                                </Field>
                                 <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
                                   <Field label="Levering kaart — titel">
                                     <input className={`${iCls} ${iBdr}`} value={is.deliveryTitle||''} onChange={e => setIs({ deliveryTitle: e.target.value })} />

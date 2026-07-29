@@ -22,15 +22,13 @@ function GridPost({ block, index }) {
       {image ? (
         <div className="relative h-48 overflow-hidden shrink-0 bg-gray-100">
           <img src={getMediaUrl(image)} alt={title}
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-600" />
-          <div className="absolute bottom-0 left-0 h-0.5 w-0 group-hover:w-full transition-all duration-500"
-            style={{ background: 'rgb(var(--color-primary))' }} />
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-600" loading="lazy" decoding="async" />
+          <div className="absolute bottom-0 left-0 h-0.5 w-0 group-hover:w-full bg-primary transition-all duration-500" />
         </div>
       ) : (
         <div className="h-48 shrink-0 flex items-center justify-center bg-gray-50 relative overflow-hidden">
           <span className="text-5xl opacity-10 font-black text-gray-400">{num}</span>
-          <div className="absolute bottom-0 left-0 h-0.5 w-0 group-hover:w-full transition-all duration-500"
-            style={{ background: 'rgb(var(--color-primary))' }} />
+          <div className="absolute bottom-0 left-0 h-0.5 w-0 group-hover:w-full bg-primary transition-all duration-500" />
         </div>
       )}
 
@@ -42,8 +40,7 @@ function GridPost({ block, index }) {
           <span>{readTime(excerpt)} min</span>
         </div>
 
-        <h3 className="font-black text-gray-900 text-base leading-snug group-hover:text-primary transition-colors line-clamp-2 flex-1"
-          style={{ '--primary': 'rgb(var(--color-primary))' }}>
+        <h3 className="font-black text-gray-900 text-base leading-snug group-hover:text-primary transition-colors line-clamp-2 flex-1">
           {title}
         </h3>
 
@@ -53,14 +50,12 @@ function GridPost({ block, index }) {
 
         <div className="flex items-center justify-between mt-1 pt-3 border-t border-gray-50">
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-full text-white text-[9px] font-black flex items-center justify-center"
-              style={{ background: 'rgb(var(--color-primary))' }}>
+            <div className="w-5 h-5 rounded-full bg-primary text-white text-[9px] font-black flex items-center justify-center">
               {author[0]?.toUpperCase()}
             </div>
             <span className="text-xs text-gray-400">{author}</span>
           </div>
-          <span className="text-[11px] font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
-            style={{ color: 'rgb(var(--color-primary))' }}>
+          <span className="text-[11px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
             Lees meer
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -113,16 +108,14 @@ export default function Blog() {
       <div className="max-w-4xl mx-auto px-6 py-10">
         {loading ? (
           <div className="flex items-center justify-center py-32">
-            <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-              style={{ borderColor: 'rgb(var(--color-primary))', borderTopColor: 'transparent' }} />
+            <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
           </div>
         ) : articles.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 text-center gap-4">
             <p className="text-6xl font-black text-gray-100">∅</p>
             <h2 className="text-xl font-black text-gray-700">Binnenkort beschikbaar</h2>
             <p className="text-sm text-gray-400">Voeg blogberichten toe via CRM → Pagina Bouwer</p>
-            <Link to="/producten" className="mt-2 text-sm font-bold underline underline-offset-4"
-              style={{ color: 'rgb(var(--color-primary))' }}>
+            <Link to="/producten" className="mt-2 text-sm font-bold text-primary underline underline-offset-4">
               Bekijk producten →
             </Link>
           </div>
@@ -144,8 +137,7 @@ export default function Blog() {
               Interesse in onze producten?
             </p>
             <Link to="/producten"
-              className="text-sm font-bold underline underline-offset-4 hover:opacity-70 transition-opacity"
-              style={{ color: 'rgb(var(--color-primary))' }}>
+              className="text-sm font-bold text-primary underline underline-offset-4 hover:opacity-70 transition-opacity">
               Bekijk het aanbod →
             </Link>
           </div>

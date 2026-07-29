@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useCart } from '../lib/CartContext';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,15 @@ import { getImageSrc, formatPrice } from '../lib/productHelpers';
 const CartDrawer = () => {
   const { t } = useTranslation();
   const { cartItems, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, cartTotal } = useCart();
+
+  useEffect(() => {
+    if (isCartOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isCartOpen]);
 
   return (
     <>
@@ -20,7 +29,7 @@ const CartDrawer = () => {
             <h2 className="text-3xl font-black text-secondary uppercase italic tracking-tighter">
               {t('cart.titlePrefix')}<span className="text-primary">{t('cart.titleHighlight')}</span>
             </h2>
-            <button onClick={() => setIsCartOpen(false)} className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-2xl hover:bg-secondary hover:text-white transition-all">
+            <button onClick={() => setIsCartOpen(false)} aria-label="Winkelwagen sluiten" className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-2xl hover:bg-secondary hover:text-white transition-all">
               ✕
             </button>
           </div>
@@ -41,7 +50,7 @@ const CartDrawer = () => {
                     <img
                       src={getImageSrc(item, 'https://via.placeholder.com/150')}
                       alt={item.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                       loading="lazy"
                       decoding="async"
                     />
@@ -49,14 +58,14 @@ const CartDrawer = () => {
                   <div className="flex-1 space-y-2">
                     <div className="flex justify-between">
                       <h4 className="font-black text-secondary uppercase italic leading-none">{item.name}</h4>
-                      <button onClick={() => removeFromCart(item.id)} className="text-gray-300 hover:text-red-500 transition-colors">✕</button>
+                      <button onClick={() => removeFromCart(item.id)} aria-label={`${item.name} verwijderen`} className="text-gray-300 hover:text-red-500 transition-colors">✕</button>
                     </div>
                     <p className="text-primary font-black italic">{formatPrice(item.price)}</p>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center border-2 border-gray-100 rounded-xl overflow-hidden">
-                        <button onClick={() => updateQuantity(item.id, -1)} className="px-3 py-1 hover:bg-gray-100 font-bold">-</button>
+                        <button onClick={() => updateQuantity(item.id, -1)} aria-label="Aantal verlagen" className="px-3 py-1 hover:bg-gray-100 font-bold">-</button>
                         <span className="px-3 font-black text-secondary">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, 1)} className="px-3 py-1 hover:bg-gray-100 font-bold">+</button>
+                        <button onClick={() => updateQuantity(item.id, 1)} aria-label="Aantal verhogen" className="px-3 py-1 hover:bg-gray-100 font-bold">+</button>
                       </div>
                     </div>
                   </div>

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import { useCart } from '../lib/CartContext';
-import { useTheme } from '../lib/ThemeContext';
 import axios from 'axios';
 import { useTranslation, Trans } from 'react-i18next';
 import { getMediaUrl, API_URL } from '../lib/api';
@@ -120,7 +119,6 @@ const Header = () => {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { setIsCartOpen, cartCount } = useCart();
-  const { isDarkMode, toggleTheme } = useTheme();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -279,20 +277,10 @@ const Header = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            {/* Theme toggle */}
-            <button
-              onClick={toggleTheme}
-              title={isDarkMode ? t('header.themeOn') : t('header.themeOff')}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${
-                isDarkMode ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              }`}
-            >
-              {isDarkMode ? '💡' : '🌑'}
-            </button>
-
             {/* Cart */}
             <button
               onClick={() => setIsCartOpen(true)}
+              aria-label="Winkelwagen openen"
               className="relative w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-secondary transition-all"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -311,7 +299,7 @@ const Header = () => {
             </Link>
 
             {/* Mobile hamburger */}
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center" aria-label={mobileOpen ? 'Menu sluiten' : 'Menu openen'} aria-expanded={mobileOpen}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {mobileOpen
                   ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

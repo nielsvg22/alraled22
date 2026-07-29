@@ -187,7 +187,7 @@ const ProductDetail = () => {
               {product.category && (
                 <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{product.category}</span>
               )}
-              <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 leading-tight mt-0.5">{product.name}</h1>
+              <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-secondary leading-tight mt-0.5">{product.name}</h1>
             </div>
 
             {/* Price Block */}
@@ -195,7 +195,7 @@ const ProductDetail = () => {
               {/* Price row */}
               <div className="space-y-1">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl md:text-4xl font-bold text-gray-900">{formatPrice(product?.price)}</span>
+                  <span className="text-3xl md:text-4xl font-black text-secondary">{formatPrice(product?.price)}</span>
                   <span className="text-sm font-semibold text-gray-500">excl. BTW</span>
                 </div>
                 <p className="text-sm text-gray-500">{formatPrice((Number(product?.price || 0) * (1 + VAT_RATE)))} incl. BTW</p>
@@ -244,9 +244,9 @@ const ProductDetail = () => {
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Aantal</span>
                   <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white">
-                    <button onClick={() => setQty(q => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors text-lg font-semibold">−</button>
+                    <button onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Aantal verlagen" className="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors text-lg font-semibold">−</button>
                     <span className="w-10 text-center text-sm font-bold text-gray-900 border-x border-gray-100 h-10 flex items-center justify-center">{qty}</span>
-                    <button onClick={() => setQty(q => q + 1)} className="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors text-lg font-semibold">+</button>
+                    <button onClick={() => setQty(q => q + 1)} aria-label="Aantal verhogen" className="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors text-lg font-semibold">+</button>
                   </div>
                   <button className="text-xs text-gray-400 hover:text-gray-600 transition-colors ml-auto cursor-pointer" title="Toevoegen aan favorieten" aria-label="Toevoegen aan favorieten">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
@@ -258,7 +258,7 @@ const ProductDetail = () => {
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : added
                         ? 'bg-emerald-600 text-white'
-                        : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-[0.98]'
+                        : 'bg-primary text-white hover:brightness-110 active:scale-[0.98]'
                     }`}>
                     {added ? (
                       <span className="flex items-center justify-center gap-2">
@@ -282,10 +282,10 @@ const ProductDetail = () => {
 
               {/* Offerte */}
               <div className="border-t border-gray-200 pt-4">
-                <button className="w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-600 hover:border-gray-900 hover:text-gray-900 hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
+                <Link to="/contact" className="w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-600 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                   Vraag offerte aan bij grotere aantallen
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -327,6 +327,8 @@ const ProductDetail = () => {
               if (!hasContent) return null;
               return (
                 <button key={tab} onClick={() => setActiveTab(tab)}
+                  role="tab"
+                  aria-selected={activeTab === tab}
                   className={`px-4 md:px-5 py-3.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap transition-all ${
                     activeTab === tab ? 'text-gray-900 border-b-2 border-gray-900' : 'text-gray-400 hover:text-gray-600'
                   }`}>
@@ -558,7 +560,7 @@ const ProductDetail = () => {
             <button onClick={() => setQty(q => q + 1)} className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-base">+</button>
           </div>
           <button onClick={() => handleAdd()}
-            className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all shrink-0 ${added ? 'bg-emerald-600 text-white' : 'bg-gray-900 text-white hover:bg-gray-800'}`}>
+            className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all shrink-0 ${added ? 'bg-emerald-600 text-white' : 'bg-primary text-white hover:brightness-110'}`}>
             {added ? '✓ Toegevoegd' : 'In winkelwagen'}
           </button>
         </div>

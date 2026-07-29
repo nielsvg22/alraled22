@@ -212,6 +212,20 @@ const ProductList = () => {
     });
   }, []);
 
+  const [compareLimitWarning, setCompareLimitWarning] = useState(false);
+
+  const handleCompareToggle = useCallback((product) => {
+    setCompareList(prev => {
+      if (prev.find(p => p.id === product.id)) return prev.filter(p => p.id !== product.id);
+      if (prev.length >= 3) {
+        setCompareLimitWarning(true);
+        setTimeout(() => setCompareLimitWarning(false), 2000);
+        return prev;
+      }
+      return [...prev, product];
+    });
+  }, []);
+
   return (
     <div className="bg-white min-h-screen pb-20">
       {/* Page header */}
@@ -263,6 +277,9 @@ const ProductList = () => {
           {compareList.length > 0 && (
             <span className="text-xs font-bold text-primary">{compareList.length}/3 geselecteerd voor vergelijking</span>
           )}
+          {compareLimitWarning && (
+            <span className="text-xs font-bold text-amber-600 animate-pulse">Maximaal 3 producten vergelijken</span>
+          )}
         </div>
 
         {/* Loading skeletons */}
@@ -295,7 +312,7 @@ const ProductList = () => {
                 <div key={product.id} className="group relative">
                   {/* Compare checkbox */}
                   <button
-                    onClick={() => toggleCompare(product)}
+                    onClick={() => handleCompareToggle(product)}
                     title={inCompare ? 'Verwijder uit vergelijking' : 'Voeg toe aan vergelijking'}
                     className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all text-xs font-black ${
                       inCompare ? 'bg-primary border-primary text-white' : 'bg-white/90 border-gray-300 text-transparent hover:border-primary'
@@ -331,7 +348,7 @@ const ProductList = () => {
                       <span className="text-sm font-black text-secondary">
                         {formatPrice(showInclVat ? (product.price * (1 + VAT_RATE)) : product.price)}
                       </span>
-                      <span className="text-[10px] text-gray-400 uppercase tracking-wide">excl. btw</span>
+                      <span className="text-[10px] text-gray-400 uppercase tracking-wide">{showInclVat ? 'incl. btw' : 'excl. btw'}</span>
                     </div>
                   </Link>
                 </div>

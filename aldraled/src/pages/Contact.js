@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { API_URL } from '../lib/api';
 import CustomBlocks from '../components/CustomBlocks';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const DEFAULTS = {
   eyebrow: 'Neem contact op',
@@ -23,6 +22,8 @@ const DEFAULTS = {
   successTitle: 'Bericht verstuurd!',
   successText: 'We nemen zo snel mogelijk contact met u op.',
   newMessage: 'Nieuw bericht',
+  errorTitle: 'Er is iets misgegaan',
+  errorText: 'Probeer het opnieuw of neem telefonisch contact op.',
   phone: '085-0021 606',
   email: 'info@alra-led.nl',
   address: 'Dijkgraafweg 4a, 7336 AT Apeldoorn',
@@ -43,7 +44,13 @@ const Contact = () => {
   const { i18n } = useTranslation();
   const [info, setInfo] = useState(DEFAULTS);
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const [blocks, setBlocks] = useState([]);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     const lang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
@@ -56,9 +63,22 @@ const Contact = () => {
       .catch(() => setBlocks([]));
   }, [i18n.resolvedLanguage, i18n.language]);
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError('');
+    try {
+      await axios.post(`${API_URL}/api/contact`, { name, email, subject, message });
+      setSent(true);
+    } catch {
+      setError(info.errorText);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="bg-white">
-      {/* Header */}
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-12">
           <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1">{info.eyebrow}</p>
@@ -71,19 +91,17 @@ const Contact = () => {
 
       <div className="max-w-6xl mx-auto px-6 md:px-10 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-
-          {/* Contact info */}
           <div className="space-y-6">
             <div>
               <p className="text-xs font-bold text-secondary uppercase tracking-widest mb-4">{info.detailsTitle}</p>
               <div className="space-y-4">
                 {[
                   { icon: '📍', label: info.addressLabel, value: info.address },
-                  { icon: '📞', label: info.phoneLabel, value: info.phone, href: `tel:${info.phone.replace(/-/g, '')}` },
+                  { icon: '📞', label: info.phoneLabel, value: info.phone, href: `tel:${info.phone.replace(/[^+\d]/g, '')}` },
                   { icon: '✉️', label: info.emailLabel, value: info.email, href: `mailto:${info.email}` },
                 ].map(({ icon, label, value, href }) => (
                   <div key={label} className="flex items-start gap-3">
-                    <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center text-base shrink-0">{icon}</div>
+                    <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center text-base shrink-0" aria-hidden="true">{icon}</div>
                     <div>
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</p>
                       {href ? (
@@ -100,7 +118,7 @@ const Contact = () => {
             <div className="bg-secondary rounded-2xl p-6">
               <p className="text-white font-bold text-sm mb-1">{info.callTitle}</p>
               <p className="text-white/50 text-xs mb-4">{info.callText}</p>
-              <a href={`tel:${info.phone}`} className="block text-center bg-primary text-white text-xs font-bold py-2.5 rounded-xl hover:brightness-110 transition-all">
+              <a href={`tel:${info.phone.replace(/[^+\d]/g, '')}`} className="block text-center bg-primary text-white text-xs font-bold py-2.5 rounded-xl hover:brightness-110 transition-all">
                 {info.phone}
               </a>
             </div>
@@ -112,45 +130,52 @@ const Contact = () => {
             </div>
           </div>
 
-          {/* Form */}
           <div className="lg:col-span-2">
             {sent ? (
               <div className="h-full flex flex-col items-center justify-center gap-4 bg-gray-50 rounded-2xl p-12 text-center border border-gray-100">
-                <div className="text-4xl">✅</div>
+                <div className="text-4xl" aria-hidden="true">✅</div>
                 <h3 className="font-black text-secondary text-xl">{info.successTitle}</h3>
                 <p className="text-gray-400 text-sm">{info.successText}</p>
-                <button onClick={() => setSent(false)} className="text-primary text-sm font-bold hover:underline">{info.newMessage}</button>
+                <button onClick={() => { setSent(false); setName(''); setEmail(''); setSubject(''); setMessage(''); }} className="text-primary text-sm font-bold hover:underline">{info.newMessage}</button>
               </div>
             ) : (
               <form
                 className="bg-gray-50 border border-gray-100 rounded-2xl p-8 space-y-5"
-                onSubmit={e => { e.preventDefault(); setSent(true); }}
+                onSubmit={handleSubmit}
+                noValidate
               >
+                {error && (
+                  <div role="alert" className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-red-600 text-sm font-medium">{error}</div>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-secondary uppercase tracking-wider">{info.form?.nameLabel}</label>
-                    <input type="text" required placeholder={info.form?.namePlaceholder} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:outline-none transition-colors" />
+                    <label htmlFor="contact-name" className="text-xs font-bold text-secondary uppercase tracking-wider">{info.form?.nameLabel}</label>
+                    <input id="contact-name" type="text" required placeholder={info.form?.namePlaceholder} value={name} onChange={e => setName(e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:outline-none transition-colors" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-secondary uppercase tracking-wider">{info.form?.emailLabel}</label>
-                    <input type="email" required placeholder={info.form?.emailPlaceholder} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:outline-none transition-colors" />
+                    <label htmlFor="contact-email" className="text-xs font-bold text-secondary uppercase tracking-wider">{info.form?.emailLabel}</label>
+                    <input id="contact-email" type="email" required placeholder={info.form?.emailPlaceholder} value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:outline-none transition-colors" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-secondary uppercase tracking-wider">{info.form?.subjectLabel}</label>
-                  <input type="text" placeholder={info.form?.subjectPlaceholder} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:outline-none transition-colors" />
+                  <label htmlFor="contact-subject" className="text-xs font-bold text-secondary uppercase tracking-wider">{info.form?.subjectLabel}</label>
+                  <input id="contact-subject" type="text" placeholder={info.form?.subjectPlaceholder} value={subject} onChange={e => setSubject(e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:outline-none transition-colors" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-secondary uppercase tracking-wider">{info.form?.messageLabel}</label>
-                  <textarea rows={5} required placeholder={info.form?.messagePlaceholder} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:outline-none transition-colors resize-none" />
+                  <label htmlFor="contact-message" className="text-xs font-bold text-secondary uppercase tracking-wider">{info.form?.messageLabel}</label>
+                  <textarea id="contact-message" rows={5} required placeholder={info.form?.messagePlaceholder} value={message} onChange={e => setMessage(e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:outline-none transition-colors resize-none" />
                 </div>
-                <button type="submit" className="w-full bg-secondary text-white font-bold py-3 rounded-xl hover:bg-primary transition-all text-sm">
-                  {info.form?.submit}
+                <button type="submit" disabled={submitting} className="w-full bg-secondary text-white font-bold py-3 rounded-xl hover:bg-primary transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                  {submitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Versturen...
+                    </>
+                  ) : info.form?.submit}
                 </button>
               </form>
             )}
           </div>
-
         </div>
       </div>
 

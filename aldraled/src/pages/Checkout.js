@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCart } from '../lib/CartContext';
 import { useAuth } from '../lib/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../lib/api';
 import analytics from '../lib/analytics';
 import { getImageSrc, formatPrice } from '../lib/productHelpers';
@@ -92,9 +92,9 @@ const Checkout = () => {
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-8 text-center space-y-8">
         <h2 className="text-6xl font-black text-secondary uppercase italic tracking-tighter">Wagen is <span className="text-primary">Leeg</span></h2>
         <p className="text-gray-400 font-medium max-w-md">Voeg producten toe aan uw winkelwagen voordat u kunt afrekenen.</p>
-        <a href="/producten" className="bg-secondary text-white px-12 py-5 rounded-full font-black text-xl uppercase italic hover:scale-105 transition-all shadow-2xl">
+        <Link to="/producten" className="bg-secondary text-white px-12 py-5 rounded-full font-black text-xl uppercase italic hover:scale-105 transition-all shadow-2xl">
           Bekijk Producten
-        </a>
+        </Link>
       </div>
     );
   }
@@ -175,9 +175,9 @@ const Checkout = () => {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url; a.download = 'offerte.pdf'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-                  } catch {
-                    alert('Offerte genereren mislukt');
-                  }
+                   } catch {
+                    setError('Offerte genereren mislukt. Probeer het opnieuw.');
+                   }
                 }}
                 className="w-full mt-4 bg-gray-100 text-secondary border-2 border-gray-100 hover:border-primary/30 hover:bg-primary/5 px-6 py-6 rounded-[2rem] font-black uppercase italic transition-all"
               >

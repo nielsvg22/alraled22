@@ -23,22 +23,27 @@ const Counter = ({ end, duration = 2000, suffix = "" }) => {
   }, []);
 
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible || end <= 0) return;
 
     let start = 0;
     const increment = end / (duration / 16);
-    const timer = setInterval(() => {
+    let rafId;
+
+    const animate = () => {
       start += increment;
       if (start >= end) {
         setCount(end);
-        clearInterval(timer);
       } else {
         setCount(Math.floor(start));
+        rafId = requestAnimationFrame(animate);
       }
-    }, 16);
+    };
 
-    return () => clearInterval(timer);
+    rafId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafId);
   }, [isVisible, end, duration]);
+
+  if (end <= 0) return <span ref={countRef}>{end}{suffix}</span>;
 
   return (
     <span ref={countRef}>
