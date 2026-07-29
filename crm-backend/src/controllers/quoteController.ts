@@ -125,6 +125,7 @@ export const createQuotePdf = async (req: AuthRequest, res: Response) => {
     doc.font('Helvetica').fillColor(COLORS.text);
     for (let idx = 0; idx < lines.length; idx++) {
       const line = lines[idx];
+      if (!line) continue;
       const rowH = 36;
 
       if (idx % 2 === 0) {
