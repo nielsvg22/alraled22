@@ -205,13 +205,25 @@ async function scFetchV2(path: string, options: RequestInit = {}): Promise<any> 
 
 export async function getShippingMethods(country: string = 'NL'): Promise<any[]> {
   try {
-    const data = await scFetch('/compat/shipping-options', { method: 'POST', body: JSON.stringify({ country_code: country }) });
-    const methods = data?.shipping_options || data?.shipping_methods || data || [];
+    // V3 compat endpoint needs shipping_method_ids array
+    const data = await scFetch('/compat/shipping-options', {
+      method: 'POST',
+      body: JSON.stringify({ shipping_method_ids: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] }),
+    });
+    const methods = data?.shipping_options || data || [];
     return Array.isArray(methods) ? methods : [];
   } catch (err) {
     console.error('Failed to fetch shipping methods:', err);
     return getFallbackMethods();
   }
+}
+
+export async function getFallbackMethods(): Promise<any[]> {
+  return [
+    { id: 1, name: 'PostNL Standard', shipping_option_code: 'postnl:standard', price: 0, carrier: { name: 'PostNL' } },
+    { id: 8, name: 'DHL Parcel', shipping_option_code: 'dhl Parcel NL:parcel', price: 0, carrier: { name: 'DHL' } },
+    { id: 11, name: 'DPD', shipping_option_code: 'dpd:dpd_nl_32480', price: 0, carrier: { name: 'DPD' } },
+  ];
 }
 
 export async function getShippingRates(fromPostalCode: string, toPostalCode: string, country: string, weight: number): Promise<any[]> {
@@ -229,14 +241,6 @@ export async function getShippingRates(fromPostalCode: string, toPostalCode: str
   } catch {
     return getFallbackMethods();
   }
-}
-
-function getFallbackMethods(): any[] {
-  return [
-    { id: 1, name: 'Standaard verzending', carrier: 'PostNL', price: 6.95, deliveryTime: '2-3 werkdagen', minWeight: 0, maxWeight: 30000 },
-    { id: 8, name: 'DHL Pakket', carrier: 'DHL', price: 5.95, deliveryTime: '1-2 werkdagen', minWeight: 0, maxWeight: 30000 },
-    { id: 11, name: 'DPD Pakket', carrier: 'DPD', price: 5.49, deliveryTime: '1-2 werkdagen', minWeight: 0, maxWeight: 30000 },
-  ];
 }
 
 interface CreateShipmentParams {
@@ -272,12 +276,12 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
   let shippingCode = 'postnl:standard'; // default
   try {
     const methods = await getShippingMethods('NL');
-    const match = methods.find((m: any) => String(m.id) === String(params.shippingMethodId) || m.shipping_method_id === params.shippingMethodId);
+    const match = methods.find((m: any) => {
+      const mId = m.id || m.shipping_method_id;
+      return String(mId) === String(params.shippingMethodId);
+    });
     if (match?.shipping_option_code) {
       shippingCode = match.shipping_option_code;
-    } else if (match?.name) {
-      // Try to construct code from name
-      shippingCode = match.name.toLowerCase().replace(/\s+/g, '_');
     }
   } catch {}
 
