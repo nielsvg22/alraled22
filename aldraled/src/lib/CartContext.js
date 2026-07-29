@@ -33,17 +33,19 @@ export const CartProvider = ({ children }) => {
   }, [cartItems]);
 
   const addToCart = (product) => {
+    const addQty = product._addQuantity || 1;
+    const { _addQuantity, ...cleanProduct } = product;
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find(item => item.id === product.id);
-      const newQty = existingItem ? existingItem.quantity + 1 : 1;
-      const price = product.attributes?.price || product.price || 0;
-      analytics.trackAddToCart(product.id, price, newQty);
+      const existingItem = prevItems.find(item => item.id === cleanProduct.id);
+      const newQty = existingItem ? existingItem.quantity + addQty : addQty;
+      const price = cleanProduct.attributes?.price || cleanProduct.price || 0;
+      analytics.trackAddToCart(cleanProduct.id, price, newQty);
       if (existingItem) {
         return prevItems.map(item => 
-          item.id === product.id ? { ...item, quantity: newQty } : item
+          item.id === cleanProduct.id ? { ...item, quantity: newQty } : item
         );
       }
-      return [...prevItems, { ...product, quantity: 1 }];
+      return [...prevItems, { ...cleanProduct, quantity: addQty }];
     });
     setIsCartOpen(true);
   };

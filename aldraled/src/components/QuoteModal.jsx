@@ -76,7 +76,10 @@ export default function QuoteModal({ product, isOpen, onClose }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!r.ok) throw new Error('Mislukt');
+      if (!r.ok) {
+        const errBody = await r.text();
+        throw new Error(`HTTP ${r.status}: ${errBody}`);
+      }
       const blob = await r.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -87,8 +90,8 @@ export default function QuoteModal({ product, isOpen, onClose }) {
       a.remove();
       URL.revokeObjectURL(url);
       setSubmitted(true);
-    } catch {
-      setError('Er is iets misgegaan. Probeer het opnieuw.');
+    } catch (e) {
+      setError(e.message || 'Er is iets misgegaan. Probeer het opnieuw.');
     } finally {
       setSubmitting(false);
     }

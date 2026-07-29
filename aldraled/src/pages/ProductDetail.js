@@ -69,7 +69,7 @@ const ProductDetail = () => {
   }, [product]);
 
   const handleAdd = (q = qty) => {
-    for (let i = 0; i < q; i++) addToCart(product);
+    addToCart({ ...product, _addQuantity: q });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
