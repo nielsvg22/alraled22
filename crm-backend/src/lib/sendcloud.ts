@@ -5,7 +5,7 @@ import { logEvent } from './logger';
 import fetch from 'node-fetch';
 
 const SENDCLOUD_API_V2 = 'https://panel.sendcloud.sc/api/v2';
-const SENDCLOUD_API_V3 = 'https://api.sendcloud.sc/v3';
+const SENDCLOUD_API_V3 = 'https://panel.sendcloud.sc/api/v3';
 
 export interface SendcloudSettings {
   apiKey: string;
