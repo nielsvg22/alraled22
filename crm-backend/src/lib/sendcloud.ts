@@ -205,21 +205,28 @@ async function scFetchV2(path: string, options: RequestInit = {}): Promise<any> 
 
 export async function getShippingMethods(country: string = 'NL'): Promise<any[]> {
   try {
-    // Use V2 API for shipping methods (it works, V3 compat is broken)
-    const data = await scFetchV2('/shipping-methods');
-    const methods = data?.shipping_methods || data || [];
-    const filtered = Array.isArray(methods) ? methods.filter((m: any) => {
-      if (!m.countries) return true;
-      return m.countries.some((c: any) => c.iso_2 === country);
-    }) : [];
-    // Ensure each method has shipping_option_code
-    return filtered.map((m: any) => ({
-      ...m,
-      shipping_option_code: m.shipping_option_code || `postnl:standard`,
-    }));
+    // V3: get available shipping options
+    const data = await scFetch('/shipping-options/return-a-list-of-available-shipping-options', {
+      method: 'POST',
+      body: JSON.stringify({
+        from_country_code: 'NL',
+        to_country_code: country,
+        total_order_price: { value: '10.00', currency: 'EUR' },
+        parcels: [{ weight: { value: '1.0', unit: 'kg' } }],
+      }),
+    });
+    const methods = data?.shipping_options || data?.items || data || [];
+    return Array.isArray(methods) ? methods : [];
   } catch (err) {
-    console.error('Failed to fetch shipping methods:', err);
-    return getFallbackMethods();
+    console.error('Failed to fetch shipping methods via V3:', err);
+    // Fallback to V2
+    try {
+      const data = await scFetchV2('/shipping-methods');
+      const methods = data?.shipping_methods || data || [];
+      return Array.isArray(methods) ? methods : [];
+    } catch {
+      return getFallbackMethods();
+    }
   }
 }
 
