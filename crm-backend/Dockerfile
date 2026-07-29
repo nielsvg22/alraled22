@@ -17,4 +17,4 @@ COPY --from=build /app/dist ./dist
 COPY package.json drizzle.config.ts ./
 COPY src/db/schema.ts ./src/db/schema.ts
 EXPOSE 5000
-CMD ["sh", "-c", "npx drizzle-kit push && node dist/index.js"]
+CMD ["sh", "-c", "npx drizzle-kit push 2>&1 || true; node dist/index.js"]
