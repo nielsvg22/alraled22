@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useCart } from '../lib/CartContext';
 import { API_URL } from '../lib/api';
 import { getImageSrc, formatPrice } from '../lib/productHelpers';
@@ -21,13 +20,40 @@ export default function QuoteModal({ product, isOpen, onClose }) {
   const [message, setMessage] = useState('');
   const [includeCart, setIncludeCart] = useState(false);
 
+  // Product search
+  const [allProducts, setAllProducts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setSearching(true);
+    fetch(`${API_URL}/api/products`)
+      .then(r => r.json())
+      .then(data => { setAllProducts(Array.isArray(data) ? data : []); setSearching(false); })
+      .catch(() => setSearching(false));
+  }, [isOpen]);
+
+  const filteredProducts = searchQuery.trim()
+    ? allProducts
+        .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        .filter(p => !items.find(i => i.id === p.id))
+        .slice(0, 8)
+    : [];
+
+  const addItem = useCallback((p) => {
+    if (items.find(i => i.id === p.id)) return;
+    setItems(prev => [...prev, { id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl, qty: 1 }]);
+    setSearchQuery('');
+  }, [items]);
+
   const removeItem = (id) => {
-    setItems(items.filter(i => i.id !== id));
+    setItems(prev => prev.filter(i => i.id !== id));
   };
 
   const updateQty = (id, qty) => {
     if (qty < 1) return;
-    setItems(items.map(i => i.id === id ? { ...i, qty } : i));
+    setItems(prev => prev.map(i => i.id === id ? { ...i, qty } : i));
   };
 
   const allItems = includeCart
@@ -133,12 +159,12 @@ export default function QuoteModal({ product, isOpen, onClose }) {
                           <p className="text-xs text-gray-400">{formatPrice(item.price)} per stuk</p>
                         </div>
                         <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white shrink-0">
-                          <button onClick={() => updateQty(item.id, item.qty - 1)} className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-sm">−</button>
+                          <button type="button" onClick={() => updateQty(item.id, item.qty - 1)} className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-sm">−</button>
                           <span className="w-8 text-center text-sm font-bold">{item.qty}</span>
-                          <button onClick={() => updateQty(item.id, item.qty + 1)} className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-sm">+</button>
+                          <button type="button" onClick={() => updateQty(item.id, item.qty + 1)} className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-sm">+</button>
                         </div>
                         <p className="text-sm font-bold text-secondary w-20 text-right">{formatPrice(item.price * item.qty)}</p>
-                        <button onClick={() => removeItem(item.id)} className="text-gray-300 hover:text-red-500 transition-colors ml-1">
+                        <button type="button" onClick={() => removeItem(item.id)} className="text-gray-300 hover:text-red-500 transition-colors ml-1">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                       </div>
@@ -152,10 +178,50 @@ export default function QuoteModal({ product, isOpen, onClose }) {
                     </label>
                   )}
 
-                  <Link to="/producten" onClick={onClose} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-gray-200 text-sm font-semibold text-gray-500 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                    Product toevoegen
-                  </Link>
+                  {/* Product search */}
+                  <div className="relative">
+                    <div className="relative">
+                      <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        placeholder="Zoek product om toe te voegen..."
+                        className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none transition-all"
+                      />
+                      {searchQuery && (
+                        <button type="button" onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      )}
+                    </div>
+                    {filteredProducts.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                        {filteredProducts.map(p => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => addItem(p)}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 last:border-0"
+                          >
+                            <div className="w-10 h-10 bg-gray-50 rounded-lg overflow-hidden shrink-0 border border-gray-100">
+                              <img src={getImageSrc(p, 'https://via.placeholder.com/80')} alt="" className="w-full h-full object-contain p-1" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
+                              <p className="text-xs text-gray-400">{formatPrice(p.price)}</p>
+                            </div>
+                            <span className="text-primary text-xs font-bold shrink-0">+ Toevoegen</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {searchQuery && filteredProducts.length === 0 && !searching && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg p-4 text-center">
+                        <p className="text-sm text-gray-400">Geen producten gevonden</p>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="bg-gray-50 rounded-xl px-4 py-3 flex justify-between items-center border border-gray-100">
                     <span className="text-sm text-gray-500 font-medium">Subtotaal (excl. BTW)</span>
@@ -235,13 +301,14 @@ export default function QuoteModal({ product, isOpen, onClose }) {
             {/* Footer */}
             <div className="px-8 py-5 border-t border-gray-100 flex items-center justify-between gap-4">
               {step > 1 ? (
-                <button onClick={() => setStep(s => s - 1)} className="px-6 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all">
+                <button type="button" onClick={() => setStep(s => s - 1)} className="px-6 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all">
                   Terug
                 </button>
               ) : <div />}
 
               {step < 3 ? (
                 <button
+                  type="button"
                   onClick={() => {
                     if (step === 1 && allItems.length === 0) return;
                     if (step === 2 && (!name || !email)) return;
@@ -254,6 +321,7 @@ export default function QuoteModal({ product, isOpen, onClose }) {
                 </button>
               ) : (
                 <button
+                  type="button"
                   onClick={handleSubmit}
                   disabled={submitting}
                   className="px-8 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:brightness-110 transition-all disabled:opacity-50 flex items-center gap-2"
