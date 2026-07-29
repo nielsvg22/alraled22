@@ -56,7 +56,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { items, discountCodeId } = orderSchema.parse(req.body);
+    const { items, discountCodeId, shipping } = orderSchema.parse(req.body);
 
     const productIds = items.map((item) => item.productId);
     const foundProducts = await db.select().from(products).where(inArray(products.id, productIds));
@@ -89,7 +89,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    const total = Math.max(0, subtotal - discountAmount + (payload.shipping?.cost || 0));
+    const total = Math.max(0, subtotal - discountAmount + (shipping?.cost || 0));
 
     const newOrder = await db.transaction(async (tx) => {
       const orderId = crypto.randomUUID();
@@ -99,15 +99,15 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         total, 
         discountCodeId: discountCodeId || null, 
         discountAmount,
-        shippingName: payload.shipping?.name || null,
-        shippingCompany: payload.shipping?.company || null,
-        shippingAddress: payload.shipping?.address || null,
-        shippingPostcode: payload.shipping?.postcode || null,
-        shippingCity: payload.shipping?.city || null,
-        shippingCountry: payload.shipping?.country || 'NL',
-        shippingPhone: payload.shipping?.phone || null,
-        shippingMethod: payload.shipping?.method || null,
-        shippingCost: payload.shipping?.cost || 0,
+        shippingName: shipping?.name || null,
+        shippingCompany: shipping?.company || null,
+        shippingAddress: shipping?.address || null,
+        shippingPostcode: shipping?.postcode || null,
+        shippingCity: shipping?.city || null,
+        shippingCountry: shipping?.country || 'NL',
+        shippingPhone: shipping?.phone || null,
+        shippingMethod: shipping?.method || null,
+        shippingCost: shipping?.cost || 0,
       });
       
       await tx.insert(orderItems).values(

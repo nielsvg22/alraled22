@@ -37,7 +37,7 @@ const SECTIONS = {
 };
 
 export default function SendcloudSettings() {
-  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);

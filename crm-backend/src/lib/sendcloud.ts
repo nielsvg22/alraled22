@@ -58,8 +58,12 @@ export async function getSendcloudSettings(): Promise<Partial<SendcloudSettings>
 export async function setSendcloudSettings(settings: Partial<SendcloudSettings>): Promise<void> {
   for (const [key, value] of Object.entries(settings)) {
     if (value !== undefined && value !== null) {
-      await db.insert(sendcloudConfig).values({ key, value: String(value) })
-        .onDuplicateKeyUpdate({ value: String(value) });
+      const existing = await db.select().from(sendcloudConfig).where(eq(sendcloudConfig.key, key));
+      if (existing.length > 0) {
+        await db.update(sendcloudConfig).set({ value: String(value) }).where(eq(sendcloudConfig.key, key));
+      } else {
+        await db.insert(sendcloudConfig).values({ key, value: String(value) });
+      }
     }
   }
 }
