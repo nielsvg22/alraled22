@@ -205,14 +205,9 @@ async function scFetchV2(path: string, options: RequestInit = {}): Promise<any> 
 
 export async function getShippingMethods(country: string = 'NL'): Promise<any[]> {
   try {
-    // Use V3 compat endpoint for shipping options
-    const data = await scFetch('/compat/shipping-options');
+    const data = await scFetch('/compat/shipping-options', { method: 'POST', body: JSON.stringify({ country_code: country }) });
     const methods = data?.shipping_options || data?.shipping_methods || data || [];
-    return Array.isArray(methods) ? methods.filter((m: any) => {
-      if (!m.countries && !m.country_codes) return true;
-      const countries = m.countries || m.country_codes || [];
-      return countries.some((c: any) => (c.iso_2 || c) === country);
-    }) : [];
+    return Array.isArray(methods) ? methods : [];
   } catch (err) {
     console.error('Failed to fetch shipping methods:', err);
     return getFallbackMethods();
@@ -273,7 +268,19 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
     }
   }
 
-  // V3 API payload format
+  // Resolve shipping option code from methods
+  let shippingCode = 'postnl:standard'; // default
+  try {
+    const methods = await getShippingMethods('NL');
+    const match = methods.find((m: any) => String(m.id) === String(params.shippingMethodId) || m.shipping_method_id === params.shippingMethodId);
+    if (match?.shipping_option_code) {
+      shippingCode = match.shipping_option_code;
+    } else if (match?.name) {
+      // Try to construct code from name
+      shippingCode = match.name.toLowerCase().replace(/\s+/g, '_');
+    }
+  } catch {}
+
   const payload = {
     to_address: {
       name: params.receiverName,
@@ -289,9 +296,9 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
       sender_address_id: 1,
     },
     ship_with: {
-      type: 'shipping_method_id',
+      type: 'shipping_option_code',
       properties: {
-        shipping_method_id: params.shippingMethodId,
+        shipping_option_code: shippingCode,
       },
     },
     order_number: params.orderNumber,
