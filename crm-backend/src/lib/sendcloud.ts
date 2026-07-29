@@ -1,6 +1,7 @@
 import { db } from './db';
 import { sendcloudConfig } from '../db/schema';
 import { eq } from 'drizzle-orm';
+import { logEvent } from './logger';
 
 const SENDCLOUD_API_V2 = 'https://panel.sendcloud.sc/api/v2';
 const SENDCLOUD_API_V3 = 'https://api.sendcloud.sc/v3';
@@ -77,10 +78,20 @@ async function scFetch(path: string, options: RequestInit = {}): Promise<any> {
   const settings = await getSendcloudSettings();
   const apiKey = settings.apiKey;
   const apiSecret = settings.apiSecret;
-  if (!apiKey || !apiSecret) throw new Error('SendCloud API niet geconfigureerd');
+  if (!apiKey || !apiSecret) {
+    await logEvent('sendcloud', 'ERROR', 'scFetch', 'SendCloud API niet geconfigureerd');
+    throw new Error('SendCloud API niet geconfigureerd');
+  }
 
   const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
-  const res = await fetch(`${SENDCLOUD_API_V3}${path}`, {
+  const url = `${SENDCLOUD_API_V3}${path}`;
+
+  await logEvent('sendcloud', 'INFO', 'scFetch', `Request: ${options.method || 'GET'} ${path}`, {
+    method: options.method || 'GET',
+    body: options.body ? JSON.parse(options.body as string) : undefined,
+  });
+
+  const res = await fetch(url, {
     ...options,
     headers: {
       'Authorization': `Basic ${auth}`,
@@ -89,11 +100,25 @@ async function scFetch(path: string, options: RequestInit = {}): Promise<any> {
     },
   });
 
+  const responseText = await res.text();
+  let responseData;
+  try { responseData = JSON.parse(responseText); } catch { responseData = responseText; }
+
   if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`SendCloud API fout (${res.status}): ${body}`);
+    await logEvent('sendcloud', 'ERROR', 'scFetch', `API fout ${res.status}: ${responseText.slice(0, 500)}`, {
+      status: res.status,
+      path,
+      response: responseData,
+    });
+    throw new Error(`SendCloud API fout (${res.status}): ${responseText}`);
   }
-  return res.json();
+
+  await logEvent('sendcloud', 'INFO', 'scFetch', `Response OK: ${path}`, {
+    status: res.status,
+    response: typeof responseData === 'object' ? { ...responseData, shipping_methods: undefined } : 'OK',
+  });
+
+  return responseData;
 }
 
 export async function getShippingMethods(country: string = 'NL'): Promise<any[]> {
@@ -191,8 +216,10 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
   };
 
   console.log('[sendcloud] Creating shipment:', JSON.stringify(payload, null, 2));
+  await logEvent('sendcloud', 'INFO', 'createShipment', `Shipment aanmaken voor order ${params.orderNumber}`, payload, params.reference);
   const data = await scFetch('/shipments', { method: 'POST', body: JSON.stringify(payload) });
   console.log('[sendcloud] Shipment created:', JSON.stringify(data, null, 2));
+  await logEvent('sendcloud', 'INFO', 'createShipment', `Shipment aangemaakt: ID ${data?.id || data?.shipment?.id}`, data, params.reference);
   return data?.shipment || data;
 }
 

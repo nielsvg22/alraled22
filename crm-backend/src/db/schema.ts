@@ -354,3 +354,14 @@ export const sendcloudConfig = mysqlTable('SendcloudConfig', {
   value: text('value').notNull(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
+
+export const systemLogs = mysqlTable('SystemLog', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  type: varchar('type', { length: 50 }).notNull(),
+  level: mysqlEnum('level', ['INFO', 'WARN', 'ERROR']).notNull().default('INFO'),
+  source: varchar('source', { length: 100 }).notNull(),
+  message: text('message').notNull(),
+  details: text('details'),
+  orderId: varchar('orderId', { length: 36 }),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+});

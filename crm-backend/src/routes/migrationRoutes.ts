@@ -52,6 +52,29 @@ router.get('/run', authMiddleware, async (req: AuthRequest, res: Response) => {
       results.push(`ERR: SendcloudConfig - ${err.message}`);
     }
 
+    // Create SystemLog table
+    try {
+      await db.execute(sql.raw(`
+        CREATE TABLE IF NOT EXISTS SystemLog (
+          id varchar(36) NOT NULL,
+          type varchar(50) NOT NULL,
+          level enum('INFO','WARN','ERROR') NOT NULL DEFAULT 'INFO',
+          source varchar(100) NOT NULL,
+          message text NOT NULL,
+          details text DEFAULT NULL,
+          orderId varchar(36) DEFAULT NULL,
+          createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          INDEX idx_type (type),
+          INDEX idx_level (level),
+          INDEX idx_createdAt (createdAt)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+      `));
+      results.push('OK: SystemLog tabel');
+    } catch (err: any) {
+      results.push(`ERR: SystemLog - ${err.message}`);
+    }
+
     res.json({ ok: true, results });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
