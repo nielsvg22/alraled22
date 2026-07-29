@@ -40,12 +40,6 @@ const DEFAULTS: Partial<SendcloudSettings> = {
   defaultShippingMethod: '1',
   freeShippingThreshold: 250,
   standardShippingCost: 6.95,
-  enableEveningDelivery: false,
-  enableSaturdayDelivery: false,
-  enablePickupPoints: true,
-  enableSignature: false,
-  enableInsurance: false,
-  insuranceAmount: 500,
 };
 
 export async function getSendcloudSettings(): Promise<Partial<SendcloudSettings>> {
@@ -70,21 +64,59 @@ export async function setSendcloudSettings(settings: Partial<SendcloudSettings>)
   }
 }
 
-export async function getSendcloudApiKey(): Promise<string> {
-  const settings = await getSendcloudSettings();
-  return settings.apiKey || '';
-}
+// ── OAuth2 Token ──
+let cachedToken: string | null = null;
+let tokenExpiresAt = 0;
 
-async function scFetch(path: string, options: RequestInit = {}): Promise<any> {
+async function getOAuthToken(): Promise<string> {
+  if (cachedToken && Date.now() < tokenExpiresAt) return cachedToken;
+
   const settings = await getSendcloudSettings();
   const apiKey = settings.apiKey;
   const apiSecret = settings.apiSecret;
-  if (!apiKey || !apiSecret) {
+  if (!apiKey || !apiSecret) throw new Error('SendCloud API niet geconfigureerd');
+
+  const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
+  const res = await fetch('https://account.sendcloud.com/oauth2/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${auth}`,
+    },
+    body: 'grant_type=client_credentials&scope=api',
+  } as any);
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`OAuth2 token fout (${res.status}): ${body}`);
+  }
+
+  const data = await res.json() as any;
+  cachedToken = data.access_token;
+  tokenExpiresAt = Date.now() + (data.expires_in - 60) * 1000;
+  console.log('[sendcloud] OAuth2 token verkregen, verloopt over', data.expires_in, 'seconden');
+  return cachedToken!;
+}
+
+// ── V3 Fetch ──
+async function scFetch(path: string, options: RequestInit = {}): Promise<any> {
+  const settings = await getSendcloudSettings();
+  if (!settings.apiKey || !settings.apiSecret) {
     await logEvent('sendcloud', 'ERROR', 'scFetch', 'SendCloud API niet geconfigureerd');
     throw new Error('SendCloud API niet geconfigureerd');
   }
 
-  const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
+  // Get OAuth2 token
+  let authHeader: string;
+  try {
+    const token = await getOAuthToken();
+    authHeader = `Bearer ${token}`;
+  } catch (e: any) {
+    // Fallback to Basic auth
+    console.log('[sendcloud] OAuth2 mislukt, fallback naar Basic auth:', e.message);
+    authHeader = `Basic ${Buffer.from(`${settings.apiKey}:${settings.apiSecret}`).toString('base64')}`;
+  }
+
   const url = `${SENDCLOUD_API_V3}${path}`;
 
   await logEvent('sendcloud', 'INFO', 'scFetch', `Request: ${options.method || 'GET'} ${path}`, {
@@ -101,7 +133,7 @@ async function scFetch(path: string, options: RequestInit = {}): Promise<any> {
       method: options.method as string || 'GET',
       body: options.body as string | undefined,
       headers: {
-        'Authorization': `Basic ${auth}`,
+        'Authorization': authHeader,
         'Content-Type': 'application/json',
         ...(options.headers as Record<string, string> || {}),
       },
@@ -109,16 +141,9 @@ async function scFetch(path: string, options: RequestInit = {}): Promise<any> {
     } as any);
   } catch (fetchErr: any) {
     clearTimeout(timeout);
-    const detail = {
-      url,
-      path,
-      error: fetchErr.message,
-      code: fetchErr.code,
-      type: fetchErr.type,
-      cause: fetchErr.cause?.message,
-    };
+    const detail = { url, path, error: fetchErr.message, code: fetchErr.code };
     console.error('[sendcloud] Fetch failed:', detail);
-    await logEvent('sendcloud', 'ERROR', 'scFetch', `Fetch fout naar ${url}: ${fetchErr.message}`, detail);
+    await logEvent('sendcloud', 'ERROR', 'scFetch', `Fetch fout: ${fetchErr.message}`, detail);
     throw fetchErr;
   }
   clearTimeout(timeout);
@@ -129,37 +154,25 @@ async function scFetch(path: string, options: RequestInit = {}): Promise<any> {
 
   if (!res.ok) {
     await logEvent('sendcloud', 'ERROR', 'scFetch', `API fout ${res.status}: ${responseText.slice(0, 500)}`, {
-      status: res.status,
-      path,
-      response: responseData,
+      status: res.status, path, response: responseData,
     });
     throw new Error(`SendCloud API fout (${res.status}): ${responseText}`);
   }
 
   await logEvent('sendcloud', 'INFO', 'scFetch', `Response OK: ${path}`, {
-    status: res.status,
-    response: typeof responseData === 'object' ? { ...responseData, shipping_methods: undefined } : 'OK',
+    status: res.status, response: responseData,
   });
 
   return responseData;
 }
 
+// ── V2 Fetch ──
 async function scFetchV2(path: string, options: RequestInit = {}): Promise<any> {
   const settings = await getSendcloudSettings();
-  const apiKey = settings.apiKey;
-  const apiSecret = settings.apiSecret;
-  if (!apiKey || !apiSecret) {
-    await logEvent('sendcloud', 'ERROR', 'scFetchV2', 'SendCloud API niet geconfigureerd');
-    throw new Error('SendCloud API niet geconfigureerd');
-  }
+  if (!settings.apiKey || !settings.apiSecret) throw new Error('SendCloud API niet geconfigureerd');
 
-  const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
+  const auth = Buffer.from(`${settings.apiKey}:${settings.apiSecret}`).toString('base64');
   const url = `${SENDCLOUD_API_V2}${path}`;
-
-  await logEvent('sendcloud', 'INFO', 'scFetchV2', `Request: ${options.method || 'GET'} ${path}`, {
-    method: options.method || 'GET',
-    body: options.body ? JSON.parse(options.body as string) : undefined,
-  });
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000);
@@ -178,9 +191,6 @@ async function scFetchV2(path: string, options: RequestInit = {}): Promise<any> 
     } as any);
   } catch (fetchErr: any) {
     clearTimeout(timeout);
-    const detail = { url, path, error: fetchErr.message, code: fetchErr.code };
-    console.error('[sendcloud] V2 Fetch failed:', detail);
-    await logEvent('sendcloud', 'ERROR', 'scFetchV2', `Fetch fout naar ${url}: ${fetchErr.message}`, detail);
     throw fetchErr;
   }
   clearTimeout(timeout);
@@ -190,21 +200,14 @@ async function scFetchV2(path: string, options: RequestInit = {}): Promise<any> 
   try { responseData = JSON.parse(responseText); } catch { responseData = responseText; }
 
   if (!res.ok) {
-    await logEvent('sendcloud', 'ERROR', 'scFetchV2', `API fout ${res.status}: ${responseText.slice(0, 500)}`, {
-      status: res.status, path, response: responseData,
-    });
     throw new Error(`SendCloud V2 API fout (${res.status}): ${responseText}`);
   }
-
-  await logEvent('sendcloud', 'INFO', 'scFetchV2', `Response OK: ${path}`, {
-    status: res.status, response: responseData,
-  });
 
   return responseData;
 }
 
+// ── Shipping Methods ──
 export async function getShippingMethods(country: string = 'NL'): Promise<any[]> {
-  // Return known methods - V3 API shipping options endpoints are not accessible
   return [
     { id: 1, name: 'PostNL Standaard', shipping_option_code: 'postnl:standard', carrier: { name: 'PostNL' }, price: 0, delivery_time: '2-3 werkdagen' },
     { id: 8, name: 'DHL Pakket', shipping_option_code: 'dhl Parcel NL:parcel', carrier: { name: 'DHL' }, price: 0, delivery_time: '1-2 werkdagen' },
@@ -212,31 +215,7 @@ export async function getShippingMethods(country: string = 'NL'): Promise<any[]>
   ];
 }
 
-export async function getFallbackMethods(): Promise<any[]> {
-  return [
-    { id: 1, name: 'PostNL Standard', shipping_option_code: 'postnl:standard', price: 0, carrier: { name: 'PostNL' } },
-    { id: 8, name: 'DHL Parcel', shipping_option_code: 'dhl Parcel NL:parcel', price: 0, carrier: { name: 'DHL' } },
-    { id: 11, name: 'DPD', shipping_option_code: 'dpd:dpd_nl_32480', price: 0, carrier: { name: 'DPD' } },
-  ];
-}
-
-export async function getShippingRates(fromPostalCode: string, toPostalCode: string, country: string, weight: number): Promise<any[]> {
-  try {
-    const methods = await getShippingMethods(country);
-    return methods.map((m: any) => ({
-      id: m.id,
-      name: m.name,
-      carrier: m.carrier?.name || 'Onbekend',
-      price: m.price || 0,
-      deliveryTime: m.delivery_time || '2-3 werkdagen',
-      minWeight: m.min_weight || 0,
-      maxWeight: m.max_weight || 30000,
-    }));
-  } catch {
-    return getFallbackMethods();
-  }
-}
-
+// ── Create Shipment ──
 interface CreateShipmentParams {
   orderNumber: string;
   receiverName: string;
@@ -255,7 +234,6 @@ interface CreateShipmentParams {
 export async function createShipment(params: CreateShipmentParams): Promise<any> {
   const settings = await getSendcloudSettings();
 
-  // Parse house number from address if empty
   let street: string = params.receiverAddress || '';
   let houseNumber: string = params.receiverHouseNumber || '';
   if (!houseNumber) {
@@ -266,7 +244,6 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
     }
   }
 
-  // Use sender address fields directly instead of sender_address_id
   const payload = {
     to_address: {
       name: params.receiverName,
@@ -302,28 +279,26 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
     }],
   };
 
-  console.log('[sendcloud] Creating shipment (V3):', JSON.stringify(payload, null, 2));
   await logEvent('sendcloud', 'INFO', 'createShipment', `Shipment aanmaken voor order ${params.orderNumber}`, payload, params.reference);
   const data = await scFetch('/shipments/announce', { method: 'POST', body: JSON.stringify(payload) });
-  console.log('[sendcloud] Shipment created:', JSON.stringify(data, null, 2));
   await logEvent('sendcloud', 'INFO', 'createShipment', `Shipment aangemaakt`, data, params.reference);
   return data?.data || data;
 }
 
+// ── Label ──
 export async function getShipmentLabel(parcelId: number): Promise<Buffer | null> {
   try {
-    const settings = await getSendcloudSettings();
-    const auth = Buffer.from(`${settings.apiKey}:${settings.apiSecret}`).toString('base64');
-    const res = await fetch(`${SENDCLOUD_API_V3}/parcels/${parcelId}/documents/label`, {
-      headers: { 'Authorization': `Basic ${auth}` },
-    });
-    if (!res.ok) return null;
-    return Buffer.from(await res.buffer());
+    const data = await scFetch(`/parcels/${parcelId}/documents/label`);
+    if (data?.label_file) {
+      return Buffer.from(data.label_file, 'base64');
+    }
+    return null;
   } catch {
     return null;
   }
 }
 
+// ── Tracking ──
 export async function getTrackingUrl(parcelId: number): Promise<string | null> {
   try {
     const data = await scFetch(`/parcels/${parcelId}`);
