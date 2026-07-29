@@ -205,13 +205,18 @@ async function scFetchV2(path: string, options: RequestInit = {}): Promise<any> 
 
 export async function getShippingMethods(country: string = 'NL'): Promise<any[]> {
   try {
-    // V3 compat endpoint needs shipping_method_ids array
-    const data = await scFetch('/compat/shipping-options', {
-      method: 'POST',
-      body: JSON.stringify({ shipping_method_ids: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] }),
-    });
-    const methods = data?.shipping_options || data || [];
-    return Array.isArray(methods) ? methods : [];
+    // Use V2 API for shipping methods (it works, V3 compat is broken)
+    const data = await scFetchV2('/shipping-methods');
+    const methods = data?.shipping_methods || data || [];
+    const filtered = Array.isArray(methods) ? methods.filter((m: any) => {
+      if (!m.countries) return true;
+      return m.countries.some((c: any) => c.iso_2 === country);
+    }) : [];
+    // Ensure each method has shipping_option_code
+    return filtered.map((m: any) => ({
+      ...m,
+      shipping_option_code: m.shipping_option_code || `postnl:standard`,
+    }));
   } catch (err) {
     console.error('Failed to fetch shipping methods:', err);
     return getFallbackMethods();
@@ -283,7 +288,10 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
     if (match?.shipping_option_code) {
       shippingCode = match.shipping_option_code;
     }
-  } catch {}
+    console.log('[sendcloud] Resolved shipping code:', shippingCode, 'from method ID:', params.shippingMethodId);
+  } catch (e) {
+    console.error('[sendcloud] Failed to resolve shipping code:', e);
+  }
 
   const payload = {
     to_address: {
