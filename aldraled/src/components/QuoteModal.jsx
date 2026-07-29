@@ -21,7 +21,7 @@ export default function QuoteModal({ product, isOpen, onClose }) {
   const [includeCart, setIncludeCart] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  const EMAIL_RE = /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+\-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/;
+  const EMAIL_RE = /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+-.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9-]*\.)+[A-Za-z]{2,}$/;
 
   const validateStep2 = () => {
     const errs = {};

@@ -21,7 +21,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 router.patch('/:id/status', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { status } = req.body;
-    await db.update(quotes).set({ status, updatedAt: new Date() }).where(eq(quotes.id, req.params.id));
+    await db.update(quotes).set({ status, updatedAt: new Date() }).where(eq(quotes.id, String(req.params.id)));
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Internal server error' });
