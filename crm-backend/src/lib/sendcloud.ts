@@ -266,19 +266,7 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
     }
   }
 
-  // Get actual sender address ID from SendCloud
-  let senderAddressId = 1;
-  try {
-    const addrData = await scFetch('/sender-addresses');
-    const addresses = addrData?.sender_addresses || addrData?.data || [];
-    if (Array.isArray(addresses) && addresses.length > 0) {
-      senderAddressId = addresses[0].id;
-    }
-    console.log('[sendcloud] Using sender_address_id:', senderAddressId);
-  } catch (e) {
-    console.error('[sendcloud] Failed to get sender addresses, using default:', e);
-  }
-
+  // Use sender address fields directly instead of sender_address_id
   const payload = {
     to_address: {
       name: params.receiverName,
@@ -291,7 +279,13 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
       phone_number: params.receiverPhone || '',
     },
     from_address: {
-      sender_address_id: senderAddressId,
+      name: settings.senderName || 'ALRA LED Solutions',
+      address_line_1: settings.senderAddress || '',
+      house_number: settings.senderHouseNumber || '',
+      postal_code: settings.senderPostalCode || '',
+      city: settings.senderCity || '',
+      country_code: settings.senderCountry || 'NL',
+      phone_number: settings.senderTelephone || '',
     },
     ship_with: {
       type: 'shipping_option_code',
