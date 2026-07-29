@@ -89,17 +89,17 @@ const Checkout = () => {
       const res = await api.post('/orders', {
         items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity })),
         discountCodeId: appliedDiscount?.discountId,
-        shipping: {
-          name,
-          company,
-          address,
-          postcode,
-          city,
-          country: 'NL',
-          phone,
-          method: selectedMethod?.name || 'Standaard verzending',
-          cost: selectedMethod?.price || 0,
-        },
+          shipping: {
+            name,
+            company,
+            address,
+            postcode,
+            city,
+            country: 'NL',
+            phone,
+            method: String(selectedMethod?.id || 1),
+            cost: selectedMethod?.price || 0,
+          },
       });
       analytics.trackCheckoutComplete(res.data.id, cartTotal);
       clearCart();

@@ -9,6 +9,7 @@ import PDFDocument from 'pdfkit';
 import { getContent } from '../db/contentRepo';
 import { getEffectiveUnitPrice, getPricingContextForUser } from '../lib/pricing';
 import createMollieClient, { Payment } from '@mollie/api-client';
+import { createShipment, getSendcloudSettings } from '../lib/sendcloud';
 
 const orderSchema = z.object({
   items: z.array(z.object({
@@ -177,6 +178,44 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     if (fullOrder) {
       sendOrderConfirmation(fullOrder as any).catch(() => {});
       sendAdminNotification(fullOrder as any).catch(() => {});
+
+      // Create SendCloud shipment async
+      (async () => {
+        try {
+          const scSettings = await getSendcloudSettings();
+          if (!scSettings.apiKey || !shipping?.address) return;
+
+          const shippingMethodId = Number(shipping?.method) || Number(scSettings.defaultShippingMethod) || 1;
+          const weight = fullOrder.items?.reduce((sum: number, item: any) => sum + (item.quantity * 500), 0) || 500;
+
+          const shipment = await createShipment({
+            orderNumber: newOrder.id.slice(0, 8),
+            receiverName: shipping?.name || fullOrder.user?.name || '',
+            receiverCompany: shipping?.company || '',
+            receiverAddress: shipping?.address || '',
+            receiverHouseNumber: '',
+            receiverCity: shipping?.city || '',
+            receiverPostalCode: shipping?.postcode || '',
+            receiverCountry: shipping?.country || 'NL',
+            receiverPhone: shipping?.phone || '',
+            shippingMethodId,
+            weight,
+            reference: newOrder.id,
+          });
+
+          if (shipment?.id) {
+            await db.update(orders)
+              .set({
+                sendcloudShipmentId: String(shipment.id),
+                trackingNumber: shipment.tracking_number || null,
+                trackingUrl: shipment.tracking_url || null,
+              })
+              .where(eq(orders.id, newOrder.id));
+          }
+        } catch (scErr) {
+          console.error('[order] Failed to create SendCloud shipment:', scErr);
+        }
+      })();
     }
   } catch (error: any) {
     if (error instanceof z.ZodError) {
