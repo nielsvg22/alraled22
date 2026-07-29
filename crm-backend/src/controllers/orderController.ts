@@ -143,8 +143,9 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         const orderId = newOrder.id;
         const mollieClient = createMollieClient({ apiKey });
         const apiBase = process.env.API_BASE_URL || `${req.protocol}://${req.get('host') || 'localhost:5000'}`;
+        const frontendBase = process.env.FRONTEND_URL || (req.get('referer') ? new URL(req.get('referer')!).origin : apiBase);
         const webhookUrl = `${apiBase}/api/payments/webhook`;
-        const redirectUrl = `${process.env.FRONTEND_URL || apiBase}/bestelling-geplaatst/${orderId}`;
+        const redirectUrl = `${frontendBase}/bestelling-geplaatst/${orderId}`;
         const molliePayment = await mollieClient.payments.create({
           amount: { currency: 'EUR', value: total.toFixed(2) },
           description: `Order #${orderId.slice(0, 8)}`,
