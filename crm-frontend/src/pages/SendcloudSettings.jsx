@@ -42,8 +42,8 @@ export default function SendcloudSettings() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-  const [shippingMethods, setShippingMethods] = useState<any[]>([]);
-  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [shippingMethods, setShippingMethods] = useState([]);
+  const [testResult, setTestResult] = useState(null);
 
   useEffect(() => {
     api.get('/shipping/settings')
@@ -58,7 +58,7 @@ export default function SendcloudSettings() {
       await api.put('/shipping/settings', settings);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.response?.data?.error || 'Opslaan mislukt');
     } finally {
       setSaving(false);
@@ -71,12 +71,12 @@ export default function SendcloudSettings() {
       const r = await api.get('/shipping/methods');
       setShippingMethods(r.data);
       setTestResult({ ok: true, msg: `${r.data.length} verzendmethoden gevonden` });
-    } catch (err: any) {
+    } catch (err) {
       setTestResult({ ok: false, msg: err.response?.data?.error || 'Verbinding mislukt' });
     }
   };
 
-  const updateField = (key: string, value: string) => {
+  const updateField = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
@@ -152,7 +152,7 @@ export default function SendcloudSettings() {
             <h2 className="font-bold text-gray-900">Beschikbare verzendmethoden</h2>
           </div>
           <div className="divide-y divide-gray-100">
-            {shippingMethods.map((m: any) => (
+            {shippingMethods.map((m) => (
               <div key={m.id} className="px-6 py-3 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{m.name}</p>
