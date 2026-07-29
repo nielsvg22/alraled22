@@ -6,6 +6,7 @@ import { getMediaUrl, API_URL } from '../lib/api';
 import analytics from '../lib/analytics';
 import { getProductImages, getImageSrc, formatPrice } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
+import QuoteModal from '../components/QuoteModal';
 
 const parseSpecs = (specsStr) => {
   if (!specsStr) return [];
@@ -35,6 +36,7 @@ const ProductDetail = () => {
   const [stickyVisible, setStickyVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [activeTab, setActiveTab]       = useState('Productinformatie');
+  const [quoteOpen, setQuoteOpen]       = useState(false);
   const mainBtnRef = useRef(null);
   const { addToCart } = useCart();
 
@@ -282,32 +284,12 @@ const ProductDetail = () => {
 
               {/* Offerte */}
               <div className="border-t border-gray-200 pt-4">
-                <Link to="/contact" className="w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-600 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2">
+                <button onClick={() => setQuoteOpen(true)} className="w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-600 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 cursor-pointer">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                   Vraag offerte aan bij grotere aantallen
-                </Link>
+                </button>
               </div>
             </div>
-
-            {/* Desktop specs summary panel */}
-            {specs.length > 0 && (
-              <div className="hidden lg:block bg-gray-50 rounded-2xl p-5 border border-gray-100">
-                <h3 className="text-sm font-bold text-gray-900 mb-3">Belangrijkste specificaties</h3>
-                <div className="space-y-2">
-                  {specs.slice(0, 6).map((spec, i) => (
-                    <div key={i} className="flex justify-between text-xs">
-                      <span className="text-gray-500">{spec.label}</span>
-                      <span className="font-semibold text-gray-900">{spec.value}</span>
-                    </div>
-                  ))}
-                </div>
-                {specs.length > 6 && (
-                  <button onClick={scrollToSpecs} className="mt-3 text-xs font-semibold text-gray-900 hover:text-gray-600 transition-colors cursor-pointer">
-                    Alle {specs.length} specificaties bekijken →
-                  </button>
-                )}
-              </div>
-            )}
 
           </div>
         </div>
@@ -569,6 +551,8 @@ const ProductDetail = () => {
       <style>{`
         .scrollbar-none::-webkit-scrollbar { display: none; }
       `}</style>
+
+      <QuoteModal product={product} isOpen={quoteOpen} onClose={() => setQuoteOpen(false)} />
     </div>
   );
 };
