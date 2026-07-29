@@ -144,7 +144,12 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         const orderId = newOrder.id;
         const mollieClient = createMollieClient({ apiKey });
         const apiBase = process.env.API_BASE_URL || `${req.protocol}://${req.get('host') || 'localhost:5000'}`;
-        const frontendBase = process.env.FRONTEND_URL || (req.get('referer') ? new URL(req.get('referer')!).origin : apiBase);
+        const origin = req.get('origin') || req.get('referer') || '';
+        let frontendBase = process.env.FRONTEND_URL;
+        if (!frontendBase && origin) {
+          try { frontendBase = new URL(origin).origin; } catch {}
+        }
+        frontendBase = frontendBase || 'https://alraled22-production.up.railway.app';
         const webhookUrl = `${apiBase}/api/payments/webhook`;
         const redirectUrl = `${frontendBase}/bestelling-geplaatst/${orderId}`;
         const molliePayment = await mollieClient.payments.create({
