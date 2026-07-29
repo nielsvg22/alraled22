@@ -179,8 +179,8 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
   const settings = await getSendcloudSettings();
 
   // Parse house number from address if empty
-  let street = params.receiverAddress;
-  let houseNumber = params.receiverHouseNumber;
+  let street: string = params.receiverAddress || '';
+  let houseNumber: string = params.receiverHouseNumber || '';
   if (!houseNumber) {
     const match = street.match(/^(.*?)\s+(\d+\w*)$/);
     if (match) {
