@@ -11,7 +11,7 @@
     }
   },
   "deploy": {
-    "startCommand": "npx drizzle-kit push && npm run start",
+    "startCommand": "chmod +x entrypoint.sh && ./entrypoint.sh",
     "restartPolicyType": "ON_FAILURE",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 100

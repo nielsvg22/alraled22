@@ -16,6 +16,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package.json ./package.json
 COPY drizzle.config.ts ./drizzle.config.ts
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 EXPOSE 5000
-CMD ["sh", "-c", "npx drizzle-kit push && node dist/index.js"]
-
+CMD ["./entrypoint.sh"]
