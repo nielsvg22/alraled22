@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../lib/CartContext';
-import { getMediaUrl, API_URL } from '../lib/api';
+import { API_URL } from '../lib/api';
 import { getImageSrc, formatPrice } from '../lib/productHelpers';
-import { VAT_RATE } from '../lib/config';
 
 export default function QuoteModal({ product, isOpen, onClose }) {
   const { cartItems } = useCart();
@@ -21,11 +20,6 @@ export default function QuoteModal({ product, isOpen, onClose }) {
   const [company, setCompany] = useState('');
   const [message, setMessage] = useState('');
   const [includeCart, setIncludeCart] = useState(false);
-
-  const addItem = (p) => {
-    if (items.find(i => i.id === p.id)) return;
-    setItems([...items, { id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl, qty: 1 }]);
-  };
 
   const removeItem = (id) => {
     setItems(items.filter(i => i.id !== id));

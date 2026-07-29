@@ -204,14 +204,6 @@ const ProductList = () => {
     return matchesSearch && matchesCat;
   });
 
-  const toggleCompare = useCallback((product) => {
-    setCompareList(prev => {
-      if (prev.find(p => p.id === product.id)) return prev.filter(p => p.id !== product.id);
-      if (prev.length >= 3) return prev;
-      return [...prev, product];
-    });
-  }, []);
-
   const [compareLimitWarning, setCompareLimitWarning] = useState(false);
 
   const handleCompareToggle = useCallback((product) => {
