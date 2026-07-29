@@ -19,6 +19,18 @@ export default function QuoteModal({ product, isOpen, onClose }) {
   const [company, setCompany] = useState('');
   const [message, setMessage] = useState('');
   const [includeCart, setIncludeCart] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const EMAIL_RE = /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+\-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/;
+
+  const validateStep2 = () => {
+    const errs = {};
+    if (!name.trim()) errs.name = 'Naam is verplicht';
+    if (!email.trim()) errs.email = 'E-mail is verplicht';
+    else if (!EMAIL_RE.test(email.trim())) errs.email = 'Ongeldig e-mailadres';
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   // Product search
   const [allProducts, setAllProducts] = useState([]);
@@ -238,8 +250,9 @@ export default function QuoteModal({ product, isOpen, onClose }) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-secondary uppercase tracking-wider">Naam *</label>
-                      <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="Uw naam"
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:outline-none transition-colors" />
+                      <input type="text" required value={name} onChange={e => { setName(e.target.value); setFieldErrors(prev => ({ ...prev, name: undefined })); }} placeholder="Uw naam"
+                        className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors ${fieldErrors.name ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-primary'}`} />
+                      {fieldErrors.name && <p className="text-red-500 text-xs mt-1">{fieldErrors.name}</p>}
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-secondary uppercase tracking-wider">Bedrijf</label>
@@ -250,8 +263,9 @@ export default function QuoteModal({ product, isOpen, onClose }) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-secondary uppercase tracking-wider">E-mail *</label>
-                      <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="naam@bedrijf.nl"
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:outline-none transition-colors" />
+                      <input type="email" required value={email} onChange={e => { setEmail(e.target.value); setFieldErrors(prev => ({ ...prev, email: undefined })); }} placeholder="naam@bedrijf.nl"
+                        className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors ${fieldErrors.email ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-primary'}`} />
+                      {fieldErrors.email && <p className="text-red-500 text-xs mt-1">{fieldErrors.email}</p>}
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-secondary uppercase tracking-wider">Telefoon</label>
@@ -314,10 +328,10 @@ export default function QuoteModal({ product, isOpen, onClose }) {
                   type="button"
                   onClick={() => {
                     if (step === 1 && allItems.length === 0) return;
-                    if (step === 2 && (!name || !email)) return;
+                    if (step === 2 && !validateStep2()) return;
                     setStep(s => s + 1);
                   }}
-                  disabled={(step === 1 && allItems.length === 0) || (step === 2 && (!name || !email))}
+                  disabled={step === 1 && allItems.length === 0}
                   className="px-8 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Volgende

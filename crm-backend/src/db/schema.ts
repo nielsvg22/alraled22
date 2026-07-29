@@ -311,3 +311,27 @@ export const pageViewsRelations = relations(pageViews, ({ one }) => ({
 export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => ({
   visit: one(visits, { fields: [analyticsEvents.visitId], references: [visits.id] }),
 }));
+
+export const quotes = mysqlTable('Quote', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  name: varchar('name', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  phone: varchar('phone', { length: 50 }),
+  company: varchar('company', { length: 255 }),
+  message: text('message'),
+  items: text('items').notNull(),
+  total: double('total').notNull().default(0),
+  status: mysqlEnum('status', ['NEW', 'VIEWED', 'CONTACTED', 'CONVERTED', 'ARCHIVED']).notNull().default('NEW'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
+});
+
+export const notifications = mysqlTable('Notification', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  type: varchar('type', { length: 50 }).notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  message: text('message').notNull(),
+  link: varchar('link', { length: 512 }),
+  read: int('read').notNull().default(0),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+});

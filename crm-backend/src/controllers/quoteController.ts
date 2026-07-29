@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { products } from '../db/schema';
 import { db } from '../lib/db';
 import { inArray } from 'drizzle-orm';
+import { quotes, notifications } from '../db/schema';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { getEffectiveUnitPrice, getPricingContextForUser } from '../lib/pricing';
 
@@ -260,6 +261,26 @@ export const createQuotePdf = async (req: AuthRequest, res: Response) => {
     doc.text('Deze offerte is 30 dagen geldig. Prijzen zijn exclusief tenzij anders vermeld.', mx, footerY + 34, { width: contentW, align: 'center' });
 
     doc.end();
+
+    // Save quote to database
+    const itemsJson = JSON.stringify(lines.map(l => ({ name: l.name, qty: l.qty, unit: l.unit, total: l.total })));
+    await db.insert(quotes).values({
+      name: payload.customer.name,
+      email: payload.customer.email || '',
+      phone: payload.customer.phone,
+      company: payload.customer.company,
+      message: payload.message,
+      items: itemsJson,
+      total,
+    });
+
+    // Create notification
+    await db.insert(notifications).values({
+      type: 'quote',
+      title: 'Nieuwe offerte aangevraagd',
+      message: `${payload.customer.name}${payload.customer.company ? ` (${payload.customer.company})` : ''} heeft een offerte aangevraagd van ${formatEuro(total)}.`,
+      link: '/offertes',
+    });
   } catch (error: any) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.issues });
     res.status(500).json({ error: 'Internal server error' });
