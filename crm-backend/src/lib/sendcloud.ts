@@ -2,6 +2,7 @@ import { db } from './db';
 import { sendcloudConfig } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { logEvent } from './logger';
+import fetch from 'node-fetch';
 
 const SENDCLOUD_API_V2 = 'https://panel.sendcloud.sc/api/v2';
 const SENDCLOUD_API_V3 = 'https://api.sendcloud.sc/v3';
@@ -97,17 +98,27 @@ async function scFetch(path: string, options: RequestInit = {}): Promise<any> {
   let res;
   try {
     res = await fetch(url, {
-      ...options,
-      signal: controller.signal,
+      method: options.method as string || 'GET',
+      body: options.body as string | undefined,
       headers: {
         'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...(options.headers as Record<string, string> || {}),
       },
-    });
+      signal: controller.signal,
+    } as any);
   } catch (fetchErr: any) {
     clearTimeout(timeout);
-    await logEvent('sendcloud', 'ERROR', 'scFetch', `Fetch fout: ${fetchErr.message}`, { path, error: fetchErr.message });
+    const detail = {
+      url,
+      path,
+      error: fetchErr.message,
+      code: fetchErr.code,
+      type: fetchErr.type,
+      cause: fetchErr.cause?.message,
+    };
+    console.error('[sendcloud] Fetch failed:', detail);
+    await logEvent('sendcloud', 'ERROR', 'scFetch', `Fetch fout naar ${url}: ${fetchErr.message}`, detail);
     throw fetchErr;
   }
   clearTimeout(timeout);
@@ -243,7 +254,7 @@ export async function getShipmentLabel(shipmentId: number): Promise<Buffer | nul
       headers: { 'Authorization': `Basic ${auth}` },
     });
     if (!res.ok) return null;
-    return Buffer.from(await res.arrayBuffer());
+    return Buffer.from(await res.buffer());
   } catch {
     return null;
   }
