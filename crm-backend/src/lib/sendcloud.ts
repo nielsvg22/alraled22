@@ -205,13 +205,14 @@ async function scFetchV2(path: string, options: RequestInit = {}): Promise<any> 
 
 export async function getShippingMethods(country: string = 'NL'): Promise<any[]> {
   try {
-    // Use V2 API for shipping methods (V3 uses different endpoint name)
-    const data = await scFetchV2('/shipping-methods');
-    const methods = data?.shipping_methods || data || [];
-    return methods.filter((m: any) => {
-      if (!m.countries) return true;
-      return m.countries.some((c: any) => c.iso_2 === country);
-    });
+    // Use V3 compat endpoint for shipping options
+    const data = await scFetch('/compat/shipping-options');
+    const methods = data?.shipping_options || data?.shipping_methods || data || [];
+    return Array.isArray(methods) ? methods.filter((m: any) => {
+      if (!m.countries && !m.country_codes) return true;
+      const countries = m.countries || m.country_codes || [];
+      return countries.some((c: any) => (c.iso_2 || c) === country);
+    }) : [];
   } catch (err) {
     console.error('Failed to fetch shipping methods:', err);
     return getFallbackMethods();
@@ -272,38 +273,49 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
     }
   }
 
-  const fullAddress = houseNumber ? `${street} ${houseNumber}` : street;
-
-  // Use V2 API (parcels) which works with Basic auth
+  // V3 API payload format
   const payload = {
-    parcel: {
+    to_address: {
       name: params.receiverName,
       company_name: params.receiverCompany || '',
-      address: fullAddress,
-      city: params.receiverCity,
+      address_line_1: street,
+      house_number: houseNumber,
       postal_code: params.receiverPostalCode,
-      country: params.receiverCountry || 'NL',
-      telephone: params.receiverPhone || '',
-      shipping_method: params.shippingMethodId,
-      order_number: params.orderNumber,
-      weight: String(params.weight || 500),
-      reference: params.reference || '',
+      city: params.receiverCity,
+      country_code: params.receiverCountry || 'NL',
+      phone_number: params.receiverPhone || '',
     },
+    from_address: {
+      sender_address_id: 1,
+    },
+    ship_with: {
+      type: 'shipping_method_id',
+      properties: {
+        shipping_method_id: params.shippingMethodId,
+      },
+    },
+    order_number: params.orderNumber,
+    parcels: [{
+      weight: {
+        value: String((params.weight || 500) / 1000),
+        unit: 'kg',
+      },
+    }],
   };
 
-  console.log('[sendcloud] Creating shipment (V2):', JSON.stringify(payload, null, 2));
+  console.log('[sendcloud] Creating shipment (V3):', JSON.stringify(payload, null, 2));
   await logEvent('sendcloud', 'INFO', 'createShipment', `Shipment aanmaken voor order ${params.orderNumber}`, payload, params.reference);
-  const data = await scFetchV2('/parcels', { method: 'POST', body: JSON.stringify(payload) });
+  const data = await scFetch('/shipments/announce', { method: 'POST', body: JSON.stringify(payload) });
   console.log('[sendcloud] Shipment created:', JSON.stringify(data, null, 2));
-  await logEvent('sendcloud', 'INFO', 'createShipment', `Shipment aangemaakt: ID ${data?.id || data?.parcel?.id}`, data, params.reference);
-  return data?.parcel || data;
+  await logEvent('sendcloud', 'INFO', 'createShipment', `Shipment aangemaakt`, data, params.reference);
+  return data?.data || data;
 }
 
-export async function getShipmentLabel(shipmentId: number): Promise<Buffer | null> {
+export async function getShipmentLabel(parcelId: number): Promise<Buffer | null> {
   try {
     const settings = await getSendcloudSettings();
     const auth = Buffer.from(`${settings.apiKey}:${settings.apiSecret}`).toString('base64');
-    const res = await fetch(`${SENDCLOUD_API_V2}/shipments/${shipmentId}/label`, {
+    const res = await fetch(`${SENDCLOUD_API_V3}/parcels/${parcelId}/documents/label`, {
       headers: { 'Authorization': `Basic ${auth}` },
     });
     if (!res.ok) return null;
@@ -313,10 +325,10 @@ export async function getShipmentLabel(shipmentId: number): Promise<Buffer | nul
   }
 }
 
-export async function getTrackingUrl(shipmentId: number): Promise<string | null> {
+export async function getTrackingUrl(parcelId: number): Promise<string | null> {
   try {
-    const data = await scFetchV2(`/parcels/${shipmentId}`);
-    return data?.parcel?.tracking_url || null;
+    const data = await scFetch(`/parcels/${parcelId}`);
+    return data?.parcel?.tracking_url || data?.data?.tracking_url || null;
   } catch {
     return null;
   }
