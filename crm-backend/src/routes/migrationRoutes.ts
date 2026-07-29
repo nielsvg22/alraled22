@@ -1,7 +1,6 @@
 import { Router, Response } from 'express';
-import { db } from '../lib/db';
-import { sql } from 'drizzle-orm';
 import { authMiddleware, AuthRequest } from '../middleware/authMiddleware';
+import { pool } from '../lib/db';
 
 const router = Router();
 
@@ -26,35 +25,37 @@ router.get('/run', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     for (const col of columns) {
       try {
-        await db.execute(sql.raw(`ALTER TABLE \`Order\` ADD COLUMN \`${col.name}\` ${col.def}`));
+        await pool.execute(`ALTER TABLE \`Order\` ADD COLUMN \`${col.name}\` ${col.def}`);
         results.push(`OK: ${col.name}`);
       } catch (err: any) {
-        if (err.message?.includes('Duplicate column') || err.errno === 1060) {
+        const code = err.errno || err.code || 0;
+        const msg = err.sqlMessage || err.message || String(err);
+        if (code === 1060 || msg.includes('Duplicate column')) {
           results.push(`SKIP: ${col.name} (bestaat al)`);
         } else {
-          results.push(`ERR: ${col.name} - ${err.message}`);
+          results.push(`ERR: ${col.name} (${code}) ${msg}`);
         }
       }
     }
 
     // Create SendcloudConfig table
     try {
-      await db.execute(sql.raw(`
+      await pool.execute(`
         CREATE TABLE IF NOT EXISTS SendcloudConfig (
           \`key\` varchar(255) NOT NULL,
           value text NOT NULL,
           updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
           PRIMARY KEY (\`key\`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-      `));
+      `);
       results.push('OK: SendcloudConfig tabel');
     } catch (err: any) {
-      results.push(`ERR: SendcloudConfig - ${err.message}`);
+      results.push(`ERR: SendcloudConfig - ${err.sqlMessage || err.message}`);
     }
 
     // Create SystemLog table
     try {
-      await db.execute(sql.raw(`
+      await pool.execute(`
         CREATE TABLE IF NOT EXISTS SystemLog (
           id varchar(36) NOT NULL,
           type varchar(50) NOT NULL,
@@ -69,10 +70,10 @@ router.get('/run', authMiddleware, async (req: AuthRequest, res: Response) => {
           INDEX idx_level (level),
           INDEX idx_createdAt (createdAt)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-      `));
+      `);
       results.push('OK: SystemLog tabel');
     } catch (err: any) {
-      results.push(`ERR: SystemLog - ${err.message}`);
+      results.push(`ERR: SystemLog - ${err.sqlMessage || err.message}`);
     }
 
     res.json({ ok: true, results });
