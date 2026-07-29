@@ -204,30 +204,12 @@ async function scFetchV2(path: string, options: RequestInit = {}): Promise<any> 
 }
 
 export async function getShippingMethods(country: string = 'NL'): Promise<any[]> {
-  try {
-    // V3: get available shipping options
-    const data = await scFetch('/shipping-options/return-a-list-of-available-shipping-options', {
-      method: 'POST',
-      body: JSON.stringify({
-        from_country_code: 'NL',
-        to_country_code: country,
-        total_order_price: { value: '10.00', currency: 'EUR' },
-        parcels: [{ weight: { value: '1.0', unit: 'kg' } }],
-      }),
-    });
-    const methods = data?.shipping_options || data?.items || data || [];
-    return Array.isArray(methods) ? methods : [];
-  } catch (err) {
-    console.error('Failed to fetch shipping methods via V3:', err);
-    // Fallback to V2
-    try {
-      const data = await scFetchV2('/shipping-methods');
-      const methods = data?.shipping_methods || data || [];
-      return Array.isArray(methods) ? methods : [];
-    } catch {
-      return getFallbackMethods();
-    }
-  }
+  // Return known methods - V3 API shipping options endpoints are not accessible
+  return [
+    { id: 1, name: 'PostNL Standaard', shipping_option_code: 'postnl:standard', carrier: { name: 'PostNL' }, price: 0, delivery_time: '2-3 werkdagen' },
+    { id: 8, name: 'DHL Pakket', shipping_option_code: 'dhl Parcel NL:parcel', carrier: { name: 'DHL' }, price: 0, delivery_time: '1-2 werkdagen' },
+    { id: 11, name: 'DPD Pakket', shipping_option_code: 'dpd:dpd_nl_32480', carrier: { name: 'DPD' }, price: 0, delivery_time: '1-2 werkdagen' },
+  ];
 }
 
 export async function getFallbackMethods(): Promise<any[]> {
@@ -284,20 +266,17 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
     }
   }
 
-  // Resolve shipping option code from methods
-  let shippingCode = 'postnl:standard'; // default
+  // Get actual sender address ID from SendCloud
+  let senderAddressId = 1;
   try {
-    const methods = await getShippingMethods('NL');
-    const match = methods.find((m: any) => {
-      const mId = m.id || m.shipping_method_id;
-      return String(mId) === String(params.shippingMethodId);
-    });
-    if (match?.shipping_option_code) {
-      shippingCode = match.shipping_option_code;
+    const addrData = await scFetch('/sender-addresses');
+    const addresses = addrData?.sender_addresses || addrData?.data || [];
+    if (Array.isArray(addresses) && addresses.length > 0) {
+      senderAddressId = addresses[0].id;
     }
-    console.log('[sendcloud] Resolved shipping code:', shippingCode, 'from method ID:', params.shippingMethodId);
+    console.log('[sendcloud] Using sender_address_id:', senderAddressId);
   } catch (e) {
-    console.error('[sendcloud] Failed to resolve shipping code:', e);
+    console.error('[sendcloud] Failed to get sender addresses, using default:', e);
   }
 
   const payload = {
@@ -312,12 +291,12 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
       phone_number: params.receiverPhone || '',
     },
     from_address: {
-      sender_address_id: 1,
+      sender_address_id: senderAddressId,
     },
     ship_with: {
       type: 'shipping_option_code',
       properties: {
-        shipping_option_code: shippingCode,
+        shipping_option_code: 'postnl:standard',
       },
     },
     order_number: params.orderNumber,
