@@ -184,8 +184,8 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
   if (!houseNumber) {
     const match = street.match(/^(.*?)\s+(\d+\w*)$/);
     if (match) {
-      street = match[1];
-      houseNumber = match[2];
+      street = match[1] || street;
+      houseNumber = match[2] || houseNumber;
     }
   }
 
