@@ -24,6 +24,7 @@ import SeoPages from './pages/SeoPages';
 import Import from './pages/Import';
 import Categories from './pages/Categories';
 import Quotes from './pages/Quotes';
+import SendcloudSettings from './pages/SendcloudSettings';
 import PasswordWall from './components/PasswordWall';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
@@ -79,6 +80,7 @@ function AppRoutes() {
         <Route path="seo" element={<AdminRoute><SeoPages /></AdminRoute>} />
         <Route path="import" element={<AdminRoute><Import /></AdminRoute>} />
         <Route path="quotes" element={<AdminRoute><Quotes /></AdminRoute>} />
+        <Route path="shipping" element={<AdminRoute><SendcloudSettings /></AdminRoute>} />
         <Route
           path="users"
           element={

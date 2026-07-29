@@ -16,6 +16,17 @@ const orderSchema = z.object({
     quantity: z.number().int().positive(),
   })).min(1),
   discountCodeId: z.string().uuid().optional(),
+  shipping: z.object({
+    name: z.string().optional(),
+    company: z.string().optional(),
+    address: z.string().optional(),
+    postcode: z.string().optional(),
+    city: z.string().optional(),
+    country: z.string().optional(),
+    phone: z.string().optional(),
+    method: z.string().optional(),
+    cost: z.number().optional(),
+  }).optional(),
 });
 
 const updateStatusSchema = z.object({
@@ -78,7 +89,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    const total = Math.max(0, subtotal - discountAmount);
+    const total = Math.max(0, subtotal - discountAmount + (payload.shipping?.cost || 0));
 
     const newOrder = await db.transaction(async (tx) => {
       const orderId = crypto.randomUUID();
@@ -87,7 +98,16 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         userId, 
         total, 
         discountCodeId: discountCodeId || null, 
-        discountAmount 
+        discountAmount,
+        shippingName: payload.shipping?.name || null,
+        shippingCompany: payload.shipping?.company || null,
+        shippingAddress: payload.shipping?.address || null,
+        shippingPostcode: payload.shipping?.postcode || null,
+        shippingCity: payload.shipping?.city || null,
+        shippingCountry: payload.shipping?.country || 'NL',
+        shippingPhone: payload.shipping?.phone || null,
+        shippingMethod: payload.shipping?.method || null,
+        shippingCost: payload.shipping?.cost || 0,
       });
       
       await tx.insert(orderItems).values(

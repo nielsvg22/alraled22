@@ -73,6 +73,19 @@ export const orders = mysqlTable('Order', {
   discountCodeId: varchar('discountCodeId', { length: 36 }).references(() => discountCodes.id),
   discountAmount: double('discountAmount').notNull().default(0),
   status: mysqlEnum('status', ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']).notNull().default('PENDING'),
+  // Shipping fields
+  shippingName: varchar('shippingName', { length: 255 }),
+  shippingCompany: varchar('shippingCompany', { length: 255 }),
+  shippingAddress: varchar('shippingAddress', { length: 255 }),
+  shippingPostcode: varchar('shippingPostcode', { length: 20 }),
+  shippingCity: varchar('shippingCity', { length: 100 }),
+  shippingCountry: varchar('shippingCountry', { length: 2 }).default('NL'),
+  shippingPhone: varchar('shippingPhone', { length: 50 }),
+  shippingMethod: varchar('shippingMethod', { length: 100 }),
+  shippingCost: double('shippingCost').notNull().default(0),
+  trackingNumber: varchar('trackingNumber', { length: 255 }),
+  trackingUrl: varchar('trackingUrl', { length: 512 }),
+  sendcloudShipmentId: varchar('sendcloudShipmentId', { length: 50 }),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
@@ -334,4 +347,10 @@ export const notifications = mysqlTable('Notification', {
   link: varchar('link', { length: 512 }),
   read: int('read').notNull().default(0),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
+});
+
+export const sendcloudConfig = mysqlTable('SendcloudConfig', {
+  key: varchar('key', { length: 255 }).primaryKey(),
+  value: text('value').notNull(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });

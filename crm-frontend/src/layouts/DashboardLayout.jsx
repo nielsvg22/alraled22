@@ -24,7 +24,8 @@ import {
   Globe,
   Upload,
   Tag,
-  Bell
+  Bell,
+  Truck
 } from 'lucide-react';
 
 export default function DashboardLayout() {
@@ -75,6 +76,7 @@ export default function DashboardLayout() {
 
   if (isAdmin) {
     navigation.push({ name: 'Offertes', href: '/quotes', icon: FileText });
+    navigation.push({ name: 'Verzending', href: '/shipping', icon: Truck });
     navigation.push({ name: 'Users', href: '/users', icon: Users });
     navigation.push({ name: 'Pagina\'s', href: '/pages', icon: FileText });
     navigation.push({ name: 'Pagina Bouwer', href: '/builder', icon: Layers });

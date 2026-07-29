@@ -32,6 +32,24 @@ const Checkout = () => {
   const [validatingDiscount, setValidatingDiscount] = useState(false);
   const [showInclVat, setShowInclVat] = useState(true);
 
+  // Shipping
+  const [shippingMethods, setShippingMethods] = useState([]);
+  const [selectedMethod, setSelectedMethod] = useState(null);
+
+  useEffect(() => {
+    fetch(`${api.defaults?.baseURL?.replace('/api', '') || 'http://localhost:5000'}/api/shipping/methods/public?country=NL`)
+      .then(r => r.json())
+      .then(data => {
+        const methods = Array.isArray(data) ? data : [];
+        setShippingMethods(methods);
+        if (methods.length > 0) setSelectedMethod(methods[0]);
+      })
+      .catch(() => {
+        setShippingMethods([{ id: 1, name: 'Standaard verzending', carrier_name: 'PostNL', price: 6.95, delivery_time: '2-3 werkdagen' }]);
+        setSelectedMethod({ id: 1, name: 'Standaard verzending', carrier_name: 'PostNL', price: 6.95, delivery_time: '2-3 werkdagen' });
+      });
+  }, []);
+
   const vatMultiplier = showInclVat ? (1 + VAT_RATE) : 1;
 
   const applyDiscount = async () => {
@@ -50,9 +68,9 @@ const Checkout = () => {
     }
   };
 
-  const finalTotal = appliedDiscount
+  const finalTotal = (appliedDiscount
     ? Math.max(0, cartTotal - appliedDiscount.discountAmount)
-    : cartTotal;
+    : cartTotal) + (selectedMethod?.price || 0);
 
   const formRef = useRef(null);
 
@@ -71,6 +89,17 @@ const Checkout = () => {
       const res = await api.post('/orders', {
         items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity })),
         discountCodeId: appliedDiscount?.discountId,
+        shipping: {
+          name,
+          company,
+          address,
+          postcode,
+          city,
+          country: 'NL',
+          phone,
+          method: selectedMethod?.name || 'Standaard verzending',
+          cost: selectedMethod?.price || 0,
+        },
       });
       analytics.trackCheckoutComplete(res.data.id, cartTotal);
       clearCart();
@@ -221,6 +250,28 @@ const Checkout = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Shipping methods */}
+              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <h2 className="font-bold text-gray-900">Verzendmethode</h2>
+                </div>
+                <div className="p-6 space-y-2">
+                  {shippingMethods.map((m) => (
+                    <label key={m.id} className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedMethod?.id === m.id ? 'border-primary bg-primary/5' : 'border-gray-100 hover:border-gray-200'}`}>
+                      <input type="radio" name="shipping" checked={selectedMethod?.id === m.id} onChange={() => setSelectedMethod(m)} className="w-4 h-4 text-primary" />
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900">{m.name}</p>
+                        <p className="text-xs text-gray-400">{m.carrier_name || m.carrier?.name || 'Vervoerder'} • {m.delivery_time || '2-3 werkdagen'}</p>
+                      </div>
+                      <span className="text-sm font-bold text-gray-900">{m.price > 0 ? formatPrice(m.price) : 'Gratis'}</span>
+                    </label>
+                  ))}
+                  {shippingMethods.length === 0 && (
+                    <p className="text-sm text-gray-400">Laden...</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* ─── RIGHT: Summary ─── */}
@@ -294,12 +345,14 @@ const Checkout = () => {
                   )}
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Verzending</span>
-                    <span className="text-emerald-600 font-semibold">Gratis</span>
+                    <span className={`font-semibold ${(selectedMethod?.price || 0) === 0 ? 'text-emerald-600' : 'text-gray-900'}`}>
+                      {(selectedMethod?.price || 0) === 0 ? 'Gratis' : formatPrice(selectedMethod.price * vatMultiplier)}
+                    </span>
                   </div>
                   <div className="flex justify-between items-end pt-2.5 border-t border-gray-200">
                     <span className="font-bold text-gray-900">Totaal</span>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-gray-900">{formatPrice(finalTotal * vatMultiplier)}</p>
+                      <p className="text-2xl font-bold text-gray-900">{formatPrice((finalTotal + (selectedMethod?.price || 0)) * vatMultiplier)}</p>
                       <button
                         type="button"
                         onClick={() => setShowInclVat(v => !v)}
