@@ -4,7 +4,6 @@ import {
   getSendcloudSettings,
   setSendcloudSettings,
   getShippingMethods,
-  getShippingRates,
   createShipment,
   getShipmentLabel,
 } from '../lib/sendcloud';
@@ -42,14 +41,8 @@ export const listShippingMethods = async (req: AuthRequest, res: Response) => {
 
 export const getRates = async (req: AuthRequest, res: Response) => {
   try {
-    const { from, to, country, weight } = req.query;
-    const rates = await getShippingRates(
-      from as string || '7336',
-      to as string || '',
-      (country as string) || 'NL',
-      Number(weight) || 500
-    );
-    res.json(rates);
+    const methods = await getShippingMethods((req.query.country as string) || 'NL');
+    res.json(methods);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
