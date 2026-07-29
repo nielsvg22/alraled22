@@ -152,36 +152,47 @@ interface CreateShipmentParams {
 
 export async function createShipment(params: CreateShipmentParams): Promise<any> {
   const settings = await getSendcloudSettings();
+
+  // Parse house number from address if empty
+  let street = params.receiverAddress;
+  let houseNumber = params.receiverHouseNumber;
+  if (!houseNumber) {
+    const match = street.match(/^(.*?)\s+(\d+\w*)$/);
+    if (match) {
+      street = match[1];
+      houseNumber = match[2];
+    }
+  }
+
   const payload = {
-    shipment: {
-      carrier_id: params.shippingMethodId,
-      sender_address: {
-        contact_name: settings.senderName || 'ALRA LED Solutions',
-        street: settings.senderAddress || '',
-        house_number: settings.senderHouseNumber || '',
-        city: settings.senderCity || '',
-        postal_code: settings.senderPostalCode || '',
-        country: settings.senderCountry || 'NL',
-        telephone: settings.senderTelephone || '',
-      },
-      receiver_address: {
-        contact_name: params.receiverName,
-        company_name: params.receiverCompany || '',
-        street: params.receiverAddress,
-        house_number: params.receiverHouseNumber,
-        city: params.receiverCity,
-        postal_code: params.receiverPostalCode,
-        country: params.receiverCountry,
-        telephone: params.receiverPhone || '',
-      },
-      order_number: params.orderNumber,
-      weight: params.weight || 500,
-      reference: params.reference || '',
-      custom_fields: [],
+    shipping_method: params.shippingMethodId,
+    sender_address: {
+      contact_name: settings.senderName || 'ALRA LED Solutions',
+      street: settings.senderAddress || '',
+      house_number: settings.senderHouseNumber || '',
+      city: settings.senderCity || '',
+      postal_code: settings.senderPostalCode || '',
+      country: settings.senderCountry || 'NL',
+      telephone: settings.senderTelephone || '',
     },
+    receiver_address: {
+      contact_name: params.receiverName,
+      company_name: params.receiverCompany || '',
+      street,
+      house_number: houseNumber,
+      city: params.receiverCity,
+      postal_code: params.receiverPostalCode,
+      country: params.receiverCountry || 'NL',
+      telephone: params.receiverPhone || '',
+    },
+    order_number: params.orderNumber,
+    weight: params.weight || 500,
+    reference: params.reference || '',
   };
 
+  console.log('[sendcloud] Creating shipment:', JSON.stringify(payload, null, 2));
   const data = await scFetch('/shipments', { method: 'POST', body: JSON.stringify(payload) });
+  console.log('[sendcloud] Shipment created:', JSON.stringify(data, null, 2));
   return data?.shipment || data;
 }
 
