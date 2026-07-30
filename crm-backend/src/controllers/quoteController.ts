@@ -32,43 +32,41 @@ function formatEuro(value: number): string {
 
 const DEFAULT_DESIGN = {
   colors: {
-    ink: '#0B1220',
+    ink: '#1A2233',
     paper: '#FFFFFF',
-    surface: '#F3F5FA',
+    surface: '#F6F7FB',
     blue: '#1E40AF',
-    blueDark: '#0E1E52',
-    glow: '#FFC94A',
-    line: '#E1E6F0',
-    muted: '#66708A',
+    blueDark: '#122C7A',
+    glow: '#F5A623',
+    line: '#E7E9F0',
+    muted: '#7A8296',
   },
   company: {
     name: 'ALRA LED Solutions',
     address: 'Dijkgraafweg 4a',
-    postcode: '7336 AT Apeldoorn',
+    postcode: '7327 AT Apeldoorn',
     phone: '085-0021 606',
     email: 'info@alra-led.nl',
-    website: 'www.alra-led.nl',
-    logo: 'https://alra-led.com/wp-content/uploads/2024/06/Alra-led-logo-diap.png',
+    website: 'www.alra-led.com',
+    logo: 'https://alra-led.com/wp-content/uploads/2024/06/cropped-LOGO_WEB-270x270.png',
   },
   texts: {
     docLabel: 'Offerte',
     fromLabel: 'Van',
-    toLabel: 'Aan',
-    itemsLabel: 'Omschrijving',
+    toLabel: 'Naar',
+    itemsLabel: 'Beschrijving',
     qtyLabel: 'Aantal',
-    unitPriceLabel: 'Prijs p/st',
+    unitPriceLabel: 'Tarief',
     totalLabel: 'Totaal',
-    subtotalLabel: 'Subtotaal',
-    vatLabel: 'BTW (21%)',
-    grandTotalLabel: 'Totaal',
+    subtotalLabel: 'Bedrag excl. BTW',
+    vatLabel: 'BTW',
+    grandTotalLabel: 'Totaalbedrag',
     notesLabel: 'Opmerkingen',
     validUntil: '30 dagen',
-    signatureLeftLabel: 'Akkoord namens ALRA LED Solutions',
-    signatureRightLabel: 'Akkoord namens opdrachtgever',
-    signatureLine: 'Naam, datum & handtekening',
-    footerDisclaimer: 'Deze offerte is 30 dagen geldig. Prijzen zijn exclusief tenzij anders vermeld.',
+    signatureLine: 'Handtekening voor akkoord',
+    footerDisclaimer: '',
   },
-  notes: 'Alle producten zijn voorzien van de vereiste keurmerken en vallen onder de ALRA-garantievoorwaarden. Levertijd: circa 3–5 werkdagen na akkoord, montage in overleg in te plannen.',
+  notes: '',
 };
 
 export async function getQuoteDesign(): Promise<typeof DEFAULT_DESIGN> {
@@ -120,14 +118,14 @@ function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
   date: string;
   validUntil: string;
   customer: { name: string; attention?: string; address?: string; postcode?: string; city?: string; email?: string };
-  lines: { name: string; desc?: string; qty: number; unit: number; total: number }[];
+  lines: { name: string; qty: number; unit?: string; unitPrice: number; vatRate: number; total: number }[];
 }) {
   const { colors: c, company, texts: t } = design;
   const { refNr, date, validUntil, customer, lines } = data;
 
-  const subtotal = lines.reduce((s, l) => s + l.total, 0);
-  const vat = subtotal * 0.21;
-  const total = subtotal + vat;
+  const subtotalExcl = lines.reduce((s, l) => s + l.total, 0);
+  const vatAmount = lines.reduce((s, l) => s + (l.total * l.vatRate / 100), 0);
+  const totalIncl = subtotalExcl + vatAmount;
 
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="offerte-${refNr}.pdf"`);
@@ -139,222 +137,218 @@ function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
   const pageH = doc.page.height;
   const mx = 48;
   const contentW = pageW - mx * 2;
+  let y = 0;
 
-  // Helper: draw LED strip
-  const drawLedStrip = (y: number) => {
-    doc.rect(0, y, pageW, 14).fill(c.blueDark);
-    const dotSpacing = 18;
-    const dotCount = Math.floor((contentW) / dotSpacing);
-    for (let i = 0; i <= dotCount; i++) {
-      const dotX = mx + (i * dotSpacing);
-      if (dotX > pageW - mx) break;
-      const is3n = i % 3 === 0;
-      const is5n = i % 5 === 0;
-      const opacity = is5n ? 1 : is3n ? 0.45 : 0.9;
-      const radius = is5n ? 2.5 : 2;
-      doc.circle(dotX, y + 7, radius).fill(`rgba(255,201,74,${opacity})`);
+  // ═══════════════════════════════════════════════════════════════
+  // HEADER — Title left, logo badge right
+  // ═══════════════════════════════════════════════════════════════
+  y = 44;
+
+  // Title
+  doc.fontSize(38).font('Helvetica-Bold').fillColor(c.blue);
+  doc.text(t.docLabel, mx, y);
+
+  // Logo badge (gold circle)
+  const badgeR = 39;
+  const badgeX = pageW - mx - badgeR;
+  const badgeY = y + 19;
+  doc.circle(badgeX, badgeY, badgeR).fill(c.glow);
+  // Company initials inside badge
+  doc.fontSize(22).font('Helvetica-Bold').fillColor(c.blueDark);
+  doc.text(company.name.charAt(0), badgeX - 8, badgeY - 12, { width: 16, align: 'center' });
+
+  y += 70;
+
+  // ═══════════════════════════════════════════════════════════════
+  // TOP GRID — From left, Meta right
+  // ═══════════════════════════════════════════════════════════════
+  y += 10;
+  const metaW = 220;
+  const fromW = contentW - metaW - 24;
+
+  // From (left)
+  doc.fontSize(13).font('Helvetica-Bold').fillColor(c.ink);
+  doc.text(company.name, mx, y, { width: fromW });
+  y += 18;
+  doc.fontSize(10).font('Helvetica').fillColor(c.ink);
+  doc.text(company.address, mx, y, { width: fromW });
+  y += 14;
+  doc.text(company.postcode, mx, y, { width: fromW });
+  y += 14;
+  doc.text(`Telefoon: ${company.phone}`, mx, y, { width: fromW });
+
+  // Meta (right)
+  const metaX = pageW - mx - metaW;
+  let metaY = y - 32;
+
+  const drawMetaRow = (label: string, value: string, bold = false) => {
+    doc.fontSize(10).font('Helvetica').fillColor(c.muted);
+    doc.text(label, metaX, metaY, { width: 120 });
+    if (bold) {
+      doc.fontSize(10).font('Helvetica-Bold').fillColor(c.blue);
+    } else {
+      doc.fontSize(10).font('Helvetica').fillColor(c.ink);
     }
+    doc.text(value, metaX + 120, metaY, { width: metaW - 120, align: 'right' });
+    metaY += 18;
   };
 
-  // ═══════════════════════════════════════════════════════════════
-  // LED STRIP TOP
-  // ═══════════════════════════════════════════════════════════════
-  drawLedStrip(0);
+  drawMetaRow('Offertedatum', date);
+  drawMetaRow('Offertenummer', refNr);
+  drawMetaRow('VERVALDATUM:', validUntil, true);
+
+  y += 30;
 
   // ═══════════════════════════════════════════════════════════════
-  // HEADER
+  // TO
   // ═══════════════════════════════════════════════════════════════
-  const headerY = 14;
-  const headerH = 86;
-  doc.rect(0, headerY, pageW, headerH).fill(c.blueDark);
-
-  // Company name left
-  doc.fontSize(24).font('Helvetica-Bold').fillColor('#FFFFFF');
-  doc.text(company.name, mx, headerY + 34, { width: 300 });
-
-  // Doc meta right
-  const metaW = 200;
-  const metaX = pageW - mx - metaW;
-  doc.fontSize(10).font('Helvetica-Bold').fillColor(c.glow);
-  doc.text(t.docLabel.toUpperCase(), metaX, headerY + 18, { width: metaW, align: 'right' });
-  doc.fontSize(28).font('Helvetica-Bold').fillColor('#FFFFFF');
-  doc.text(`#${refNr}`, metaX, headerY + 34, { width: metaW, align: 'right' });
-  doc.fontSize(10).font('Helvetica').fillColor('#DCE3FF');
-  doc.text(`Datum: ${date}`, metaX, headerY + 66, { width: metaW, align: 'right' });
-  doc.text(`Geldig tot: ${validUntil}`, metaX, headerY + 80, { width: metaW, align: 'right' });
-
-  // ═══════════════════════════════════════════════════════════════
-  // PARTIES (Van / Aan)
-  // ═══════════════════════════════════════════════════════════════
-  let y = headerY + headerH + 30;
-  const halfW = (contentW - 32) / 2;
-
-  // Van (left)
-  doc.roundedRect(mx, y, halfW, 76, 0).fill(c.surface);
-  doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blue);
-  doc.text(t.fromLabel.toUpperCase(), mx + 14, y + 12, { width: halfW - 28 });
-  doc.fontSize(11).font('Helvetica-Bold').fillColor(c.ink);
-  doc.text(company.name, mx + 14, y + 28, { width: halfW - 28 });
-  doc.fontSize(9).font('Helvetica').fillColor(c.muted);
-  doc.text(company.address, mx + 14, y + 44, { width: halfW - 28 });
-  doc.text(company.postcode, mx + 14, y + 56, { width: halfW - 28 });
-  doc.text(`${company.phone} · ${company.email}`, mx + 14, y + 68, { width: halfW - 28 });
-
-  // Aan (right)
-  const rightX = mx + halfW + 32;
-  doc.roundedRect(rightX, y, halfW, 76, 0).fill(c.blueDark);
-  doc.fontSize(9).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.6)');
-  doc.text(t.toLabel.toUpperCase(), rightX + 14, y + 12, { width: halfW - 28 });
-  doc.fontSize(11).font('Helvetica-Bold').fillColor('#FFFFFF');
-  doc.text(customer.name || ' ', rightX + 14, y + 28, { width: halfW - 28 });
-  doc.fontSize(9).font('Helvetica').fillColor('rgba(255,255,255,0.7)');
-  let custY = y + 44;
-  if (customer.attention) { doc.text(`t.a.v. ${customer.attention}`, rightX + 14, custY, { width: halfW - 28 }); custY += 12; }
-  if (customer.address) { doc.text(customer.address, rightX + 14, custY, { width: halfW - 28 }); custY += 12; }
-  if (customer.postcode || customer.city) { doc.text(`${customer.postcode || ''} ${customer.city || ''}`.trim(), rightX + 14, custY, { width: halfW - 28 }); custY += 12; }
-  if (customer.email) { doc.text(customer.email, rightX + 14, custY, { width: halfW - 28 }); }
-
-  // Border bottom of parties section
-  y += 76;
-  doc.moveTo(mx, y).lineTo(pageW - mx, y).lineWidth(0.5).stroke(c.line);
   y += 24;
+  doc.fontSize(13).font('Helvetica-Bold').fillColor(c.ink);
+  doc.text('Naar', mx, y);
+  y += 18;
+  doc.fontSize(10).font('Helvetica').fillColor(c.ink);
+  const custLines = [
+    customer.name,
+    customer.attention ? `t.a.v. ${customer.attention}` : null,
+    customer.address || null,
+    [customer.postcode, customer.city].filter(Boolean).join(' ') || null,
+  ].filter((l): l is string => l !== null && l !== '');
+  for (const cl of custLines) {
+    doc.text(cl, mx, y, { width: contentW });
+    y += 14;
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // TABLE
   // ═══════════════════════════════════════════════════════════════
-  const colDesc = mx;
-  const colQty = mx + contentW * 0.55;
-  const colUnit = mx + contentW * 0.72;
-  const colTotal = mx + contentW * 0.88;
+  y += 20;
+
+  // Column positions (percentages matching HTML: 32%, 12%, 14%, 14%, 10%, 18%)
+  const c1 = mx;                              // Beschrijving
+  const c2 = mx + contentW * 0.32;            // Aantal
+  const c3 = mx + contentW * 0.44;            // Grootte
+  const c4 = mx + contentW * 0.58;            // Tarief
+  const c5 = mx + contentW * 0.72;            // BTW%
+  const c6 = mx + contentW * 0.82;            // Totaal
 
   // Header row
-  doc.roundedRect(mx, y, contentW, 28, 3).fill(c.blue);
+  doc.rect(mx, y, contentW, 26).fill(c.blue);
   doc.fontSize(9).font('Helvetica-Bold').fillColor('#FFFFFF');
-  doc.text(t.itemsLabel.toUpperCase(), colDesc + 12, y + 9, { width: colQty - colDesc - 24 });
-  doc.text(t.qtyLabel.toUpperCase(), colQty, y + 9, { width: colUnit - colQty, align: 'right' });
-  doc.text(t.unitPriceLabel.toUpperCase(), colUnit, y + 9, { width: colTotal - colUnit, align: 'right' });
-  doc.text(t.totalLabel.toUpperCase(), colTotal, y + 9, { width: contentW - (colTotal - mx) - 12, align: 'right' });
-  y += 34;
+  doc.text('Beschrijving', c1 + 10, y + 8, { width: c2 - c1 - 10 });
+  doc.text('Aantal', c2, y + 8, { width: c3 - c2, align: 'left' });
+  doc.text('Grootte', c3, y + 8, { width: c4 - c3, align: 'left' });
+  doc.text('Tarief', c4, y + 8, { width: c5 - c4, align: 'right' });
+  doc.text('BTW%', c5, y + 8, { width: c6 - c5, align: 'right' });
+  doc.text('Totaal', c6, y + 8, { width: contentW - (c6 - mx) - 10, align: 'right' });
+  y += 30;
 
   // Rows
   for (let idx = 0; idx < lines.length; idx++) {
     const line = lines[idx];
     if (!line) continue;
-    const rowH = 26;
 
-    if (idx % 2 === 0) {
-      doc.rect(mx, y, contentW, rowH).fill(c.surface);
+    if (idx % 2 === 1) {
+      doc.rect(mx, y, contentW, 28).fill(c.surface);
     }
 
-    doc.fontSize(10).font('Helvetica-Bold').fillColor(c.ink);
-    doc.text(line.name, colDesc + 12, y + 8, { width: colQty - colDesc - 24 });
-
     doc.fontSize(10).font('Helvetica').fillColor(c.ink);
-    doc.text(String(line.qty), colQty, y + 8, { width: colUnit - colQty, align: 'right' });
-    doc.text(formatEuro(line.unit), colUnit, y + 8, { width: colTotal - colUnit, align: 'right' });
-    doc.font('Helvetica-Bold').fillColor(c.blue);
-    doc.text(formatEuro(line.total), colTotal, y + 8, { width: contentW - (colTotal - mx) - 12, align: 'right' });
+    doc.text(line.name, c1 + 10, y + 9, { width: c2 - c1 - 20 });
+    doc.text(String(line.qty), c2, y + 9, { width: c3 - c2 });
+    doc.text(line.unit || '-', c3, y + 9, { width: c4 - c3 });
 
-    doc.moveTo(mx + 12, y + rowH - 1).lineTo(mx + contentW - 12, y + rowH - 1).lineWidth(0.3).stroke(c.line);
-    y += rowH;
+    doc.text(formatEuro(line.unitPrice), c4, y + 9, { width: c5 - c4, align: 'right' });
+    doc.text(`${line.vatRate}%`, c5, y + 9, { width: c6 - c5, align: 'right' });
+    doc.font('Helvetica-Bold').fillColor(c.blueDark);
+    doc.text(formatEuro(line.total), c6, y + 9, { width: contentW - (c6 - mx) - 10, align: 'right' });
+
+    // Bottom line
+    doc.moveTo(mx, y + 28).lineTo(pageW - mx, y + 28).lineWidth(0.3).stroke(c.line);
+    y += 32;
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // TOTALS (right-aligned, 280px wide like HTML)
+  // TOTALS (right-aligned)
   // ═══════════════════════════════════════════════════════════════
-  y += 22;
-  const totW = 280;
+  y += 6;
+  const totW = 290;
   const totX = pageW - mx - totW;
 
-  // Background
-  doc.roundedRect(totX, y, totW, 100, 0).fill(c.surface);
-
-  // Dark blue top accent line
-  doc.rect(totX, y, totW, 3).fill(c.blueDark);
-
-  let totY = y + 16;
-
-  // Subtotaal
-  doc.fontSize(10).font('Helvetica').fillColor(c.muted);
-  doc.text(t.subtotalLabel, totX + 14, totY, { width: 150 });
-  doc.text(formatEuro(subtotal), totX + totW - 14, totY, { width: 100, align: 'right' });
-  totY += 22;
+  // Excl BTW
+  doc.fontSize(10).font('Helvetica').fillColor(c.ink);
+  doc.text('Bedrag excl. BTW', totX, y, { width: 180 });
+  doc.text(formatEuro(subtotalExcl), totX + totW - 14, y, { width: 100, align: 'right' });
+  y += 24;
 
   // BTW
-  doc.text(t.vatLabel, totX + 14, totY, { width: 150 });
-  doc.text(formatEuro(vat), totX + totW - 14, totY, { width: 100, align: 'right' });
-  totY += 26;
+  doc.text('BTW', totX, y, { width: 180 });
+  doc.text(formatEuro(vatAmount), totX + totW - 14, y, { width: 100, align: 'right' });
+  y += 30;
 
-  // Divider line
-  doc.moveTo(totX + 14, totY).lineTo(totX + totW - 14, totY).lineWidth(2).stroke(c.blueDark);
-  totY += 12;
-
-  // Totaal
-  doc.fontSize(14).font('Helvetica-Bold').fillColor(c.blueDark);
-  doc.text(t.grandTotalLabel.toUpperCase(), totX + 14, totY, { width: 150 });
-  doc.text(formatEuro(total), totX + totW - 14, totY, { width: 100, align: 'right' });
+  // Grand total (blue background, white text)
+  doc.roundedRect(totX, y, totW, 32, 0).fill(c.blue);
+  doc.fontSize(13).font('Helvetica-Bold').fillColor('#FFFFFF');
+  doc.text('Totaalbedrag', totX + 14, y + 9, { width: 180 });
+  doc.text(formatEuro(totalIncl), totX + totW - 14, y + 9, { width: 100, align: 'right' });
+  y += 40;
 
   // ═══════════════════════════════════════════════════════════════
-  // NOTES (blue left border like HTML)
+  // SIGNATURE
   // ═══════════════════════════════════════════════════════════════
-  if (design.notes) {
-    y += 122;
-
-    // Measure text height first
-    const noteTextHeight = doc.heightOfString(design.notes, { width: contentW - 36, lineGap: 3 });
-    const noteBoxH = 42 + noteTextHeight + 12;
-
-    // Background
-    doc.rect(mx, y, contentW, noteBoxH).fill(c.surface);
-    // Blue left border
-    doc.rect(mx, y, 4, noteBoxH).fill(c.blue);
-
-    doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blueDark);
-    doc.text(t.notesLabel.toUpperCase(), mx + 18, y + 14, { width: contentW - 36 });
-    doc.fontSize(10).font('Helvetica').fillColor(c.ink);
-    doc.text(design.notes, mx + 18, y + 30, { width: contentW - 36, lineGap: 3 });
-
-    y += noteBoxH;
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // SIGNATURES
-  // ═══════════════════════════════════════════════════════════════
-  y += 36;
-  const sigGap = 40;
-  const sigColW = (contentW - sigGap) / 2;
-
-  // Left signature
+  y += 30;
   doc.fontSize(10).font('Helvetica').fillColor(c.muted);
-  doc.text(t.signatureLeftLabel, mx, y, { width: sigColW });
-  y += 44;
-  doc.moveTo(mx, y).lineTo(mx + sigColW, y).lineWidth(0.5).stroke(c.ink);
-  doc.fontSize(9).font('Helvetica').fillColor(c.muted);
-  doc.text(t.signatureLine, mx, y + 6, { width: sigColW });
-
-  // Right signature
-  const sigRightX = mx + sigColW + sigGap;
-  doc.fontSize(10).font('Helvetica').fillColor(c.muted);
-  doc.text(t.signatureRightLabel, sigRightX, y - 50, { width: sigColW });
-  doc.moveTo(sigRightX, y).lineTo(sigRightX + sigColW, y).lineWidth(0.5).stroke(c.ink);
-  doc.text(t.signatureLine, sigRightX, y + 6, { width: sigColW });
+  doc.text('Handtekening voor akkoord', mx, y);
+  y += 18;
+  doc.rect(mx, y, contentW, 80).fill(c.surface);
+  doc.rect(mx, y, contentW, 80).lineWidth(0.5).stroke(c.line);
 
   // ═══════════════════════════════════════════════════════════════
-  // FOOTER
+  // FOOTER (3 columns)
   // ═══════════════════════════════════════════════════════════════
-  const footerH = 50;
-  const footerY = pageH - 14 - footerH;
-  doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blueDark);
-  doc.text(company.name, mx, footerY + 10, { width: contentW, align: 'center' });
+  const footerY = pageH - 100;
+
+  // Top border
+  doc.moveTo(mx, footerY).lineTo(pageW - mx, footerY).lineWidth(0.5).stroke(c.line);
+
+  const footColW = (contentW - 40) / 3;
+
+  // Col 1: Ondernemingsgegevens
+  let fy = footerY + 14;
+  doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blue);
+  doc.text('Ondernemingsgegevens', mx, fy, { width: footColW });
+  fy += 16;
+  doc.fontSize(9).font('Helvetica-Bold').fillColor(c.ink);
+  doc.text(company.name, mx, fy, { width: footColW });
+  fy += 14;
   doc.fontSize(8).font('Helvetica').fillColor(c.muted);
-  doc.text(`${company.address}, ${company.postcode}  ·  ${company.phone}  ·  ${company.email}  ·  ${company.website}`, mx, footerY + 24, { width: contentW, align: 'center' });
-  doc.fontSize(7).fillColor(c.muted);
-  doc.text(t.footerDisclaimer, mx, footerY + 38, { width: contentW, align: 'center' });
+  doc.text(company.address, mx, fy, { width: footColW });
+  fy += 12;
+  doc.text(company.postcode, mx, fy, { width: footColW });
 
-  // ═══════════════════════════════════════════════════════════════
-  // LED STRIP BOTTOM
-  // ═══════════════════════════════════════════════════════════════
-  drawLedStrip(pageH - 14);
+  // Col 2: Contact informatie
+  fy = footerY + 14;
+  const col2X = mx + footColW + 20;
+  doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blue);
+  doc.text('Contact informatie', col2X, fy, { width: footColW });
+  fy += 16;
+  doc.fontSize(8).font('Helvetica').fillColor(c.muted);
+  doc.text(`Telefoon: ${company.phone}`, col2X, fy, { width: footColW });
+  fy += 12;
+  doc.text(`E-mail: ${company.email}`, col2X, fy, { width: footColW });
+  fy += 12;
+  doc.text(company.website, col2X, fy, { width: footColW });
+
+  // Col 3: Betalingsgegevens
+  fy = footerY + 14;
+  const col3X = mx + (footColW + 20) * 2;
+  doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blue);
+  doc.text('Betalingsgegevens', col3X, fy, { width: footColW });
+  fy += 16;
+  doc.fontSize(8).font('Helvetica').fillColor(c.muted);
+  doc.text('Bank: NL00 BANK 0000 0000 00', col3X, fy, { width: footColW });
+  fy += 12;
+  doc.text('BIC: BANKNL2A', col3X, fy, { width: footColW });
+  fy += 12;
+  doc.text('BTW: NL000000000B01', col3X, fy, { width: footColW });
 
   doc.end();
 }
@@ -373,7 +367,7 @@ export const createQuotePdf = async (req: AuthRequest, res: Response) => {
     const lines = await Promise.all(prods.map(async (p) => {
       const q = qtyMap.get(p.id) || 1;
       const unit = await getEffectiveUnitPrice(p.id, q, pricing.discountPercent);
-      return { name: p.name, desc: p.description || '', qty: q, unit, total: q * unit };
+      return { name: p.name, qty: q, unit: 'Stuk', unitPrice: unit, vatRate: 21, total: q * unit };
     }));
 
     try {
