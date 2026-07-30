@@ -256,22 +256,39 @@ const Checkout = () => {
                 <div className="px-6 py-4 border-b border-gray-100">
                   <h2 className="font-bold text-gray-900">Verzendmethode</h2>
                 </div>
-                <div className="p-6 space-y-2">
-                  {shippingMethods.map((m) => (
-                    <label key={m.id} className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedMethod?.id === m.id ? 'border-primary bg-primary/5' : 'border-gray-100 hover:border-gray-200'}`}>
-                      <input type="radio" name="shipping" checked={selectedMethod?.id === m.id} onChange={() => setSelectedMethod(m)} className="w-4 h-4 text-primary" />
-                      {m.carrier?.image && (
-                        <img src={m.carrier.image} alt={m.carrier?.name || ''} className="w-10 h-10 object-contain shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-900">{m.name}</p>
-                        <p className="text-xs text-gray-400">{m.carrier?.name || 'Vervoerder'} • {m.delivery_time || ''}</p>
-                      </div>
-                      <span className="text-sm font-bold text-gray-900">{m.price > 0 ? formatPrice(m.price) : 'Gratis'}</span>
-                    </label>
-                  ))}
+                <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {shippingMethods.map((m) => {
+                    const colors = {
+                      postnl: 'bg-orange-100 text-orange-700',
+                      dhl: 'bg-yellow-100 text-yellow-700',
+                      dpd: 'bg-red-100 text-red-700',
+                      sendcloud: 'bg-blue-100 text-blue-700',
+                    };
+                    const bgColor = colors[m.carrier?.code] || 'bg-gray-100 text-gray-700';
+                    return (
+                      <label key={m.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${selectedMethod?.id === m.id ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-gray-100 hover:border-gray-200'}`}>
+                        <input type="radio" name="shipping" checked={selectedMethod?.id === m.id} onChange={() => setSelectedMethod(m)} className="w-4 h-4 text-primary" />
+                        {m.carrier?.logo ? (
+                          <img
+                            src={m.carrier.logo}
+                            alt={m.carrier?.name || ''}
+                            className="w-10 h-10 object-contain shrink-0"
+                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                          />
+                        ) : null}
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${m.carrier?.logo ? 'hidden' : 'flex'} ${bgColor}`}>
+                          {(m.carrier?.name || '?').slice(0, 3).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{m.name}</p>
+                          <p className="text-xs text-gray-400">{m.delivery_time || ''}</p>
+                        </div>
+                        <span className="text-xs font-bold text-gray-900 shrink-0">{m.price > 0 ? formatPrice(m.price) : 'Gratis'}</span>
+                      </label>
+                    );
+                  })}
                   {shippingMethods.length === 0 && (
-                    <p className="text-sm text-gray-400">Laden...</p>
+                    <p className="text-sm text-gray-400 col-span-2">Laden...</p>
                   )}
                 </div>
               </div>
