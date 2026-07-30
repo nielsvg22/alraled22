@@ -103,18 +103,12 @@ export const saveDesign = async (req: AuthRequest, res: Response) => {
 export const previewDesign = async (req: AuthRequest, res: Response) => {
   try {
     const design = { ...DEFAULT_DESIGN, ...req.body };
-    const previewItems = req.body.previewItems || [
-      { name: 'LED Bedrijfswagenverlichting — set', desc: 'Compleet verlichtingspakket, incl. bekabeling en montagemateriaal', qty: 3, unit: 245, total: 735 },
-      { name: 'LED Bouwlichtslang 25 meter', desc: 'Koppelbare uitvoering, geschikt voor bouwplaats en werkplaats', qty: 2, unit: 99.75, total: 199.50 },
-      { name: 'LED Hefbrugverlichting', desc: 'Inclusief T-kabel en bevestigingsset', qty: 2, unit: 189, total: 378 },
-      { name: 'Montage & installatie op locatie', desc: 'Werkzaamheden door ALRA-monteur, incl. functiecheck', qty: 1, unit: 195, total: 195 },
-    ];
     generateQuotePdf(res, design, {
-      refNr: '2026-0143',
+      refNr: '0000',
       date: new Date().toLocaleDateString('nl-NL'),
       validUntil: new Date(Date.now() + 30 * 86400000).toLocaleDateString('nl-NL'),
-      customer: { name: 'Jansen Transport B.V.', attention: 'dhr. R. Jansen', address: 'Parkweg 45', postcode: '3011 AB', city: 'Rotterdam', email: 'r.jansen@voorbeeld.nl' },
-      lines: previewItems,
+      customer: { name: '', address: '', postcode: '', city: '', email: '' },
+      lines: [],
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -146,97 +140,97 @@ function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
   const mx = 48;
   const contentW = pageW - mx * 2;
 
-  const hexToRgb = (hex: string) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return { r, g, b };
+  // Helper: draw LED strip
+  const drawLedStrip = (y: number) => {
+    doc.rect(0, y, pageW, 14).fill(c.blueDark);
+    const dotSpacing = 18;
+    const dotCount = Math.floor((contentW) / dotSpacing);
+    for (let i = 0; i <= dotCount; i++) {
+      const dotX = mx + (i * dotSpacing);
+      if (dotX > pageW - mx) break;
+      const is3n = i % 3 === 0;
+      const is5n = i % 5 === 0;
+      const opacity = is5n ? 1 : is3n ? 0.45 : 0.9;
+      const radius = is5n ? 2.5 : 2;
+      doc.circle(dotX, y + 7, radius).fill(`rgba(255,201,74,${opacity})`);
+    }
   };
-  const rgb = (hex: string) => hexToRgb(hex);
 
   // ═══════════════════════════════════════════════════════════════
   // LED STRIP TOP
   // ═══════════════════════════════════════════════════════════════
-  const ledY = 0;
-  const ledH = 14;
-  const { r: dr, g: dg, b: db_ } = rgb(c.blueDark);
-  doc.rect(0, ledY, pageW, ledH).fill(c.blueDark);
-
-  for (let i = 0; i < 40; i++) {
-    const dotX = mx + (i * 18);
-    if (dotX > pageW - mx) break;
-    const opacity = (i % 5 === 0) ? 1 : (i % 3 === 0) ? 0.45 : 0.9;
-    const size = (i % 5 === 0) ? 5 : 4;
-    doc.circle(dotX, ledY + ledH / 2, size / 2).fill(`rgba(255,201,74,${opacity})`);
-  }
+  drawLedStrip(0);
 
   // ═══════════════════════════════════════════════════════════════
   // HEADER
   // ═══════════════════════════════════════════════════════════════
-  const headerY = ledH;
-  const headerH = 80;
+  const headerY = 14;
+  const headerH = 86;
   doc.rect(0, headerY, pageW, headerH).fill(c.blueDark);
 
-  // Logo placeholder (text-based fallback)
-  doc.fontSize(22).font('Helvetica-Bold').fillColor('#FFFFFF');
-  doc.text(company.name, mx, headerY + 28, { width: 300 });
+  // Company name left
+  doc.fontSize(24).font('Helvetica-Bold').fillColor('#FFFFFF');
+  doc.text(company.name, mx, headerY + 34, { width: 300 });
 
-  // Doc meta right side
-  const metaX = pageW - mx - 200;
-  doc.fontSize(9).font('Helvetica-Bold').fillColor(c.glow);
-  doc.text(t.docLabel.toUpperCase(), metaX, headerY + 16, { width: 200, align: 'right' });
-  doc.fontSize(22).font('Helvetica-Bold').fillColor('#FFFFFF');
-  doc.text(`#${refNr}`, metaX, headerY + 30, { width: 200, align: 'right' });
-  doc.fontSize(9).font('Helvetica').fillColor('#DCE3FF');
-  doc.text(`Datum: ${date}`, metaX, headerY + 56, { width: 200, align: 'right' });
-  doc.text(`Geldig tot: ${validUntil}`, metaX, headerY + 68, { width: 200, align: 'right' });
+  // Doc meta right
+  const metaW = 200;
+  const metaX = pageW - mx - metaW;
+  doc.fontSize(10).font('Helvetica-Bold').fillColor(c.glow);
+  doc.text(t.docLabel.toUpperCase(), metaX, headerY + 18, { width: metaW, align: 'right' });
+  doc.fontSize(28).font('Helvetica-Bold').fillColor('#FFFFFF');
+  doc.text(`#${refNr}`, metaX, headerY + 34, { width: metaW, align: 'right' });
+  doc.fontSize(10).font('Helvetica').fillColor('#DCE3FF');
+  doc.text(`Datum: ${date}`, metaX, headerY + 66, { width: metaW, align: 'right' });
+  doc.text(`Geldig tot: ${validUntil}`, metaX, headerY + 80, { width: metaW, align: 'right' });
 
   // ═══════════════════════════════════════════════════════════════
   // PARTIES (Van / Aan)
   // ═══════════════════════════════════════════════════════════════
-  let y = headerY + headerH + 24;
-  const colW = contentW / 2 - 10;
+  let y = headerY + headerH + 30;
+  const halfW = (contentW - 32) / 2;
 
   // Van (left)
-  doc.roundedRect(mx, y, colW, 80, 4).fill(c.surface);
-  doc.fontSize(8).font('Helvetica-Bold').fillColor(c.blue);
-  doc.text(t.fromLabel.toUpperCase(), mx + 14, y + 10);
-  doc.fontSize(10).font('Helvetica-Bold').fillColor(c.ink);
-  doc.text(company.name, mx + 14, y + 24);
+  doc.roundedRect(mx, y, halfW, 76, 0).fill(c.surface);
+  doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blue);
+  doc.text(t.fromLabel.toUpperCase(), mx + 14, y + 12, { width: halfW - 28 });
+  doc.fontSize(11).font('Helvetica-Bold').fillColor(c.ink);
+  doc.text(company.name, mx + 14, y + 28, { width: halfW - 28 });
   doc.fontSize(9).font('Helvetica').fillColor(c.muted);
-  doc.text(`${company.address}`, mx + 14, y + 38);
-  doc.text(`${company.postcode}`, mx + 14, y + 50);
-  doc.text(`${company.phone} · ${company.email}`, mx + 14, y + 62);
+  doc.text(company.address, mx + 14, y + 44, { width: halfW - 28 });
+  doc.text(company.postcode, mx + 14, y + 56, { width: halfW - 28 });
+  doc.text(`${company.phone} · ${company.email}`, mx + 14, y + 68, { width: halfW - 28 });
 
   // Aan (right)
-  const rightX = mx + colW + 20;
-  doc.roundedRect(rightX, y, colW, 80, 4).fill(c.blueDark);
-  doc.fontSize(8).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.6)');
-  doc.text(t.toLabel.toUpperCase(), rightX + 14, y + 10);
-  doc.fontSize(10).font('Helvetica-Bold').fillColor('#FFFFFF');
-  doc.text(customer.name, rightX + 14, y + 24);
+  const rightX = mx + halfW + 32;
+  doc.roundedRect(rightX, y, halfW, 76, 0).fill(c.blueDark);
+  doc.fontSize(9).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.6)');
+  doc.text(t.toLabel.toUpperCase(), rightX + 14, y + 12, { width: halfW - 28 });
+  doc.fontSize(11).font('Helvetica-Bold').fillColor('#FFFFFF');
+  doc.text(customer.name || ' ', rightX + 14, y + 28, { width: halfW - 28 });
   doc.fontSize(9).font('Helvetica').fillColor('rgba(255,255,255,0.7)');
-  let custY = y + 38;
-  if (customer.attention) { doc.text(`t.a.v. ${customer.attention}`, rightX + 14, custY); custY += 12; }
-  if (customer.address) { doc.text(customer.address, rightX + 14, custY); custY += 12; }
-  if (customer.postcode || customer.city) { doc.text(`${customer.postcode || ''} ${customer.city || ''}`.trim(), rightX + 14, custY); custY += 12; }
-  if (customer.email) { doc.text(customer.email, rightX + 14, custY); }
+  let custY = y + 44;
+  if (customer.attention) { doc.text(`t.a.v. ${customer.attention}`, rightX + 14, custY, { width: halfW - 28 }); custY += 12; }
+  if (customer.address) { doc.text(customer.address, rightX + 14, custY, { width: halfW - 28 }); custY += 12; }
+  if (customer.postcode || customer.city) { doc.text(`${customer.postcode || ''} ${customer.city || ''}`.trim(), rightX + 14, custY, { width: halfW - 28 }); custY += 12; }
+  if (customer.email) { doc.text(customer.email, rightX + 14, custY, { width: halfW - 28 }); }
 
-  y += 100;
+  // Border bottom of parties section
+  y += 76;
+  doc.moveTo(mx, y).lineTo(pageW - mx, y).lineWidth(0.5).stroke(c.line);
+  y += 24;
 
   // ═══════════════════════════════════════════════════════════════
   // TABLE
   // ═══════════════════════════════════════════════════════════════
-  y += 10;
   const colDesc = mx;
-  const colQty = mx + contentW * 0.58;
-  const colUnit = mx + contentW * 0.73;
+  const colQty = mx + contentW * 0.55;
+  const colUnit = mx + contentW * 0.72;
   const colTotal = mx + contentW * 0.88;
 
   // Header row
   doc.roundedRect(mx, y, contentW, 28, 3).fill(c.blue);
-  doc.fontSize(8).font('Helvetica-Bold').fillColor('#FFFFFF');
-  doc.text(t.itemsLabel.toUpperCase(), colDesc + 12, y + 9, { width: colQty - colDesc - 12 });
+  doc.fontSize(9).font('Helvetica-Bold').fillColor('#FFFFFF');
+  doc.text(t.itemsLabel.toUpperCase(), colDesc + 12, y + 9, { width: colQty - colDesc - 24 });
   doc.text(t.qtyLabel.toUpperCase(), colQty, y + 9, { width: colUnit - colQty, align: 'right' });
   doc.text(t.unitPriceLabel.toUpperCase(), colUnit, y + 9, { width: colTotal - colUnit, align: 'right' });
   doc.text(t.totalLabel.toUpperCase(), colTotal, y + 9, { width: contentW - (colTotal - mx) - 12, align: 'right' });
@@ -246,7 +240,7 @@ function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
   for (let idx = 0; idx < lines.length; idx++) {
     const line = lines[idx];
     if (!line) continue;
-    const rowH = line.desc ? 38 : 28;
+    const rowH = 26;
 
     if (idx % 2 === 0) {
       doc.rect(mx, y, contentW, rowH).fill(c.surface);
@@ -254,10 +248,6 @@ function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
 
     doc.fontSize(10).font('Helvetica-Bold').fillColor(c.ink);
     doc.text(line.name, colDesc + 12, y + 8, { width: colQty - colDesc - 24 });
-    if (line.desc) {
-      doc.fontSize(8).font('Helvetica').fillColor(c.muted);
-      doc.text(line.desc, colDesc + 12, y + 22, { width: colQty - colDesc - 24 });
-    }
 
     doc.fontSize(10).font('Helvetica').fillColor(c.ink);
     doc.text(String(line.qty), colQty, y + 8, { width: colUnit - colQty, align: 'right' });
@@ -270,84 +260,101 @@ function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // TOTALS
+  // TOTALS (right-aligned, 280px wide like HTML)
   // ═══════════════════════════════════════════════════════════════
-  y += 20;
-  const totW = 260;
+  y += 22;
+  const totW = 280;
   const totX = pageW - mx - totW;
 
-  doc.roundedRect(totX - 16, y - 10, totW + 32, 100, 6).fill(c.surface);
-  doc.roundedRect(totX - 16, y - 10, totW + 32, 3, 1.5).fill(c.blueDark);
+  // Background
+  doc.roundedRect(totX, y, totW, 100, 0).fill(c.surface);
 
-  doc.fontSize(9).font('Helvetica').fillColor(c.muted);
-  doc.text(t.subtotalLabel, totX, y + 6, { width: 150 });
-  doc.text(formatEuro(subtotal), totX + 150, y + 6, { width: 90, align: 'right' });
-  y += 22;
+  // Dark blue top accent line
+  doc.rect(totX, y, totW, 3).fill(c.blueDark);
 
-  doc.text(t.vatLabel, totX, y + 6, { width: 150 });
-  doc.text(formatEuro(vat), totX + 150, y + 6, { width: 90, align: 'right' });
-  y += 28;
+  let totY = y + 16;
 
-  doc.moveTo(totX, y).lineTo(totX + totW, y).lineWidth(1.5).stroke(c.blueDark);
-  y += 10;
+  // Subtotaal
+  doc.fontSize(10).font('Helvetica').fillColor(c.muted);
+  doc.text(t.subtotalLabel, totX + 14, totY, { width: 150 });
+  doc.text(formatEuro(subtotal), totX + totW - 14, totY, { width: 100, align: 'right' });
+  totY += 22;
 
+  // BTW
+  doc.text(t.vatLabel, totX + 14, totY, { width: 150 });
+  doc.text(formatEuro(vat), totX + totW - 14, totY, { width: 100, align: 'right' });
+  totY += 26;
+
+  // Divider line
+  doc.moveTo(totX + 14, totY).lineTo(totX + totW - 14, totY).lineWidth(2).stroke(c.blueDark);
+  totY += 12;
+
+  // Totaal
   doc.fontSize(14).font('Helvetica-Bold').fillColor(c.blueDark);
-  doc.text(t.grandTotalLabel.toUpperCase(), totX, y + 4, { width: 150 });
-  doc.text(formatEuro(total), totX + 150, y + 4, { width: 90, align: 'right' });
+  doc.text(t.grandTotalLabel.toUpperCase(), totX + 14, totY, { width: 150 });
+  doc.text(formatEuro(total), totX + totW - 14, totY, { width: 100, align: 'right' });
 
   // ═══════════════════════════════════════════════════════════════
-  // NOTES
+  // NOTES (blue left border like HTML)
   // ═══════════════════════════════════════════════════════════════
   if (design.notes) {
-    y += 50;
-    doc.roundedRect(mx, y, contentW, 0, 4).fill(c.surface);
-    doc.roundedRect(mx, y, 4, 0, 2).fill(c.blue);
-    const noteY = y + 12;
-    doc.fontSize(8).font('Helvetica-Bold').fillColor(c.blueDark);
-    doc.text(t.notesLabel.toUpperCase(), mx + 16, noteY);
-    doc.fontSize(9).font('Helvetica').fillColor(c.ink);
-    doc.text(design.notes, mx + 16, noteY + 16, { width: contentW - 32, lineGap: 3 });
+    y += 122;
+
+    // Measure text height first
+    const noteTextHeight = doc.heightOfString(design.notes, { width: contentW - 36, lineGap: 3 });
+    const noteBoxH = 42 + noteTextHeight + 12;
+
+    // Background
+    doc.rect(mx, y, contentW, noteBoxH).fill(c.surface);
+    // Blue left border
+    doc.rect(mx, y, 4, noteBoxH).fill(c.blue);
+
+    doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blueDark);
+    doc.text(t.notesLabel.toUpperCase(), mx + 18, y + 14, { width: contentW - 36 });
+    doc.fontSize(10).font('Helvetica').fillColor(c.ink);
+    doc.text(design.notes, mx + 18, y + 30, { width: contentW - 36, lineGap: 3 });
+
+    y += noteBoxH;
   }
 
   // ═══════════════════════════════════════════════════════════════
   // SIGNATURES
   // ═══════════════════════════════════════════════════════════════
-  y += 70;
-  const sigColW = contentW / 2 - 16;
+  y += 36;
+  const sigGap = 40;
+  const sigColW = (contentW - sigGap) / 2;
 
-  doc.fontSize(9).font('Helvetica').fillColor(c.muted);
+  // Left signature
+  doc.fontSize(10).font('Helvetica').fillColor(c.muted);
   doc.text(t.signatureLeftLabel, mx, y, { width: sigColW });
-  doc.moveTo(mx, y + 50).lineTo(mx + sigColW, y + 50).lineWidth(0.5).stroke(c.ink);
-  doc.fontSize(8).font('Helvetica').fillColor(c.muted);
-  doc.text(t.signatureLine, mx, y + 54, { width: sigColW });
+  y += 44;
+  doc.moveTo(mx, y).lineTo(mx + sigColW, y).lineWidth(0.5).stroke(c.ink);
+  doc.fontSize(9).font('Helvetica').fillColor(c.muted);
+  doc.text(t.signatureLine, mx, y + 6, { width: sigColW });
 
-  doc.text(t.signatureRightLabel, mx + sigColW + 32, y, { width: sigColW });
-  doc.moveTo(mx + sigColW + 32, y + 50).lineTo(mx + sigColW + 32 + sigColW, y + 50).lineWidth(0.5).stroke(c.ink);
-  doc.text(t.signatureLine, mx + sigColW + 32, y + 54, { width: sigColW });
-
-  // ═══════════════════════════════════════════════════════════════
-  // LED STRIP BOTTOM
-  // ═══════════════════════════════════════════════════════════════
-  const footLedY = pageH - 14;
-  doc.rect(0, footLedY, pageW, 14).fill(c.blueDark);
-  for (let i = 0; i < 40; i++) {
-    const dotX = mx + (i * 18);
-    if (dotX > pageW - mx) break;
-    const opacity = (i % 5 === 0) ? 1 : (i % 3 === 0) ? 0.45 : 0.9;
-    const size = (i % 5 === 0) ? 5 : 4;
-    doc.circle(dotX, footLedY + 7, size / 2).fill(`rgba(255,201,74,${opacity})`);
-  }
+  // Right signature
+  const sigRightX = mx + sigColW + sigGap;
+  doc.fontSize(10).font('Helvetica').fillColor(c.muted);
+  doc.text(t.signatureRightLabel, sigRightX, y - 50, { width: sigColW });
+  doc.moveTo(sigRightX, y).lineTo(sigRightX + sigColW, y).lineWidth(0.5).stroke(c.ink);
+  doc.text(t.signatureLine, sigRightX, y + 6, { width: sigColW });
 
   // ═══════════════════════════════════════════════════════════════
   // FOOTER
   // ═══════════════════════════════════════════════════════════════
-  const footerY = footLedY - 40;
-  doc.fontSize(8).font('Helvetica-Bold').fillColor(c.blueDark);
-  doc.text(company.name, mx, footerY, { width: contentW, align: 'center' });
-  doc.fontSize(7).font('Helvetica').fillColor(c.muted);
-  doc.text(`${company.address}, ${company.postcode}  ·  ${company.phone}  ·  ${company.email}  ·  ${company.website}`, mx, footerY + 12, { width: contentW, align: 'center' });
-  doc.fontSize(6).fillColor(c.muted);
-  doc.text(t.footerDisclaimer, mx, footerY + 24, { width: contentW, align: 'center' });
+  const footerH = 50;
+  const footerY = pageH - 14 - footerH;
+  doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blueDark);
+  doc.text(company.name, mx, footerY + 10, { width: contentW, align: 'center' });
+  doc.fontSize(8).font('Helvetica').fillColor(c.muted);
+  doc.text(`${company.address}, ${company.postcode}  ·  ${company.phone}  ·  ${company.email}  ·  ${company.website}`, mx, footerY + 24, { width: contentW, align: 'center' });
+  doc.fontSize(7).fillColor(c.muted);
+  doc.text(t.footerDisclaimer, mx, footerY + 38, { width: contentW, align: 'center' });
+
+  // ═══════════════════════════════════════════════════════════════
+  // LED STRIP BOTTOM
+  // ═══════════════════════════════════════════════════════════════
+  drawLedStrip(pageH - 14);
 
   doc.end();
 }
