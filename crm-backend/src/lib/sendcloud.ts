@@ -215,6 +215,24 @@ async function scFetchV2(path: string, options: RequestInit = {}): Promise<any> 
 }
 
 // ── Shipping Methods ──
+const SHIPPING_METHOD_MAP: Record<string, string> = {
+  '1': 'postnl:standard',
+  '2': 'postnl:express',
+  '3': 'dhl Parcel NL:parcel',
+  '4': 'dhl Parcel NL:extra_at_home',
+  '5': 'dpd:dpd_nl_32480',
+  '8': 'dhl Parcel NL:parcel',
+  '11': 'dpd:dpd_nl_32480',
+  'postnl:standard': 'postnl:standard',
+  'dhl Parcel NL:parcel': 'dhl Parcel NL:parcel',
+  'dpd:dpd_nl_32480': 'dpd:dpd_nl_32480',
+};
+
+export function resolveShippingOptionCode(method: string | undefined | null): string {
+  if (!method) return 'postnl:standard';
+  return SHIPPING_METHOD_MAP[method] || 'postnl:standard';
+}
+
 export async function getShippingMethods(country: string = 'NL'): Promise<any[]> {
   return [
     { id: 1, name: 'PostNL Standaard', shipping_option_code: 'postnl:standard', carrier: { name: 'PostNL' }, price: 0, delivery_time: '2-3 werkdagen' },
@@ -234,7 +252,8 @@ interface CreateShipmentParams {
   receiverPostalCode: string;
   receiverCountry: string;
   receiverPhone?: string;
-  shippingMethodId: number;
+  shippingMethodId?: number;
+  shippingMethod?: string;
   weight?: number;
   reference?: string;
 }
@@ -245,12 +264,16 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
   let street: string = params.receiverAddress || '';
   let houseNumber: string = params.receiverHouseNumber || '';
   if (!houseNumber) {
-    const match = street.match(/^(.*?)\s+(\d+\w*)$/);
+    const match = street.match(/^(.*?)\s+(\d+\w*[a-zA-Z]?)$/);
     if (match) {
       street = match[1] || street;
       houseNumber = match[2] || houseNumber;
     }
   }
+
+  const shippingCode = resolveShippingOptionCode(
+    params.shippingMethod || String(params.shippingMethodId || '')
+  );
 
   const payload = {
     to_address: {
@@ -275,7 +298,7 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
     ship_with: {
       type: 'shipping_option_code',
       properties: {
-        shipping_option_code: 'postnl:standard',
+        shipping_option_code: shippingCode,
       },
     },
     order_number: params.orderNumber,

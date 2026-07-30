@@ -190,7 +190,6 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
           const scSettings = await getSendcloudSettings();
           if (!scSettings.apiKey || !shipping?.address) return;
 
-          const shippingMethodId = Number(shipping?.method) || Number(scSettings.defaultShippingMethod) || 1;
           const weight = fullOrder.items?.reduce((sum: number, item: any) => sum + (item.quantity * 500), 0) || 500;
 
           const shipment = await createShipment({
@@ -203,7 +202,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
             receiverPostalCode: shipping?.postcode || '',
             receiverCountry: shipping?.country || 'NL',
             receiverPhone: shipping?.phone || '',
-            shippingMethodId,
+            shippingMethod: shipping?.method,
             weight,
             reference: newOrder.id,
           });
