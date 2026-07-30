@@ -3,8 +3,8 @@ import api from '../lib/api';
 import { Settings, Truck, Save, CheckCircle, AlertCircle, RefreshCw, Send, Package } from 'lucide-react';
 
 const DEFAULT_FIELDS = [
-  { key: 'apiKey', label: 'API Key', type: 'password', section: 'credentials' },
-  { key: 'apiSecret', label: 'API Secret', type: 'password', section: 'credentials' },
+  { key: 'apiKey', label: 'Public Key', type: 'password', section: 'credentials', hint: 'Gebruikersnaam van je SendCloud API integratie' },
+  { key: 'apiSecret', label: 'Private Key', type: 'password', section: 'credentials', hint: 'Wachtwoord van je SendCloud API integratie' },
   { key: 'senderName', label: 'Afzendernaam', type: 'text', section: 'sender' },
   { key: 'senderAddress', label: 'Straat', type: 'text', section: 'sender' },
   { key: 'senderHouseNumber', label: 'Huisnummer', type: 'text', section: 'sender' },
@@ -29,7 +29,7 @@ const DEFAULT_FIELDS = [
 ];
 
 const SECTIONS = {
-  credentials: { label: 'API Credentials', icon: '🔑' },
+  credentials: { label: 'API Credentials', icon: '🔑', description: 'Vind je keys in SendCloud > Settings > Integrations > API' },
   sender: { label: 'Afzender gegevens', icon: '📦' },
   return: { label: 'Retour adres', icon: '↩️' },
   shipping: { label: 'Verzendopties', icon: '🚚' },
@@ -188,12 +188,16 @@ export default function SendcloudSettings() {
         <div key={sectionKey} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
             <span className="text-lg">{section.icon}</span>
-            <h2 className="font-bold text-gray-900">{section.label}</h2>
+            <div>
+              <h2 className="font-bold text-gray-900">{section.label}</h2>
+              {section.description && <p className="text-xs text-gray-500">{section.description}</p>}
+            </div>
           </div>
           <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {DEFAULT_FIELDS.filter(f => f.section === sectionKey).map(field => (
               <div key={field.key} className={`space-y-1.5 ${field.type === 'toggle' ? 'sm:col-span-2' : ''}`}>
                 <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{field.label}</label>
+                {field.hint && <p className="text-xs text-gray-400 -mt-1">{field.hint}</p>}
                 {field.type === 'toggle' ? (
                   <button
                     type="button"

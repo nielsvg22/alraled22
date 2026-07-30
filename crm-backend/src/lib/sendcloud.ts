@@ -88,7 +88,11 @@ async function getOAuthToken(): Promise<string> {
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`OAuth2 token fout (${res.status}): ${body}`);
+    let msg = `OAuth2 token fout (${res.status}): ${body}`;
+    if (res.status === 401) {
+      msg = 'SendCloud API authenticatie mislukt. Controleer of je Public Key (gebruikersnaam) en Private Key (wachtwoord) correct zijn. Vind je keys in SendCloud > Settings > Integrations > API.';
+    }
+    throw new Error(msg);
   }
 
   const data = await res.json() as any;
@@ -153,10 +157,14 @@ async function scFetch(path: string, options: RequestInit = {}): Promise<any> {
   try { responseData = JSON.parse(responseText); } catch { responseData = responseText; }
 
   if (!res.ok) {
+    let errorMsg = `SendCloud API fout (${res.status}): ${responseText}`;
+    if (res.status === 401) {
+      errorMsg = 'SendCloud API authenticatie mislukt. Controleer of je Public Key en Private Key correct zijn. Vind je keys in SendCloud > Settings > Integrations > API.';
+    }
     await logEvent('sendcloud', 'ERROR', 'scFetch', `API fout ${res.status}: ${responseText.slice(0, 500)}`, {
       status: res.status, path, response: responseData,
     });
-    throw new Error(`SendCloud API fout (${res.status}): ${responseText}`);
+    throw new Error(errorMsg);
   }
 
   await logEvent('sendcloud', 'INFO', 'scFetch', `Response OK: ${path}`, {
