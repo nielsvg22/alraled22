@@ -260,9 +260,12 @@ const Checkout = () => {
                   {shippingMethods.map((m) => (
                     <label key={m.id} className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedMethod?.id === m.id ? 'border-primary bg-primary/5' : 'border-gray-100 hover:border-gray-200'}`}>
                       <input type="radio" name="shipping" checked={selectedMethod?.id === m.id} onChange={() => setSelectedMethod(m)} className="w-4 h-4 text-primary" />
+                      {m.carrier?.image && (
+                        <img src={m.carrier.image} alt={m.carrier?.name || ''} className="w-10 h-10 object-contain shrink-0" />
+                      )}
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-gray-900">{m.name}</p>
-                        <p className="text-xs text-gray-400">{m.carrier_name || m.carrier?.name || 'Vervoerder'} • {m.delivery_time || '2-3 werkdagen'}</p>
+                        <p className="text-xs text-gray-400">{m.carrier?.name || 'Vervoerder'} • {m.delivery_time || ''}</p>
                       </div>
                       <span className="text-sm font-bold text-gray-900">{m.price > 0 ? formatPrice(m.price) : 'Gratis'}</span>
                     </label>

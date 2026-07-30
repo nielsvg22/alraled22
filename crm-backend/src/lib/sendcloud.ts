@@ -214,7 +214,7 @@ async function scFetchV2(path: string, options: RequestInit = {}): Promise<any> 
   return responseData;
 }
 
-// ── Shipping Methods ──
+// ── Shipping Methods (dynamisch via SendCloud API) ──
 const SHIPPING_METHOD_MAP: Record<string, string> = {
   '1': 'postnl:standard',
   '2': 'postnl:express',
@@ -232,15 +232,85 @@ const SHIPPING_METHOD_MAP: Record<string, string> = {
 
 export function resolveShippingOptionCode(method: string | undefined | null): string {
   if (!method) return 'postnl:standard';
-  return SHIPPING_METHOD_MAP[method] || 'postnl:standard';
+  return SHIPPING_METHOD_MAP[method] || method;
 }
 
+const CARRIER_IMAGES: Record<string, string> = {
+  postnl: 'https://panel.sendcloud.sc/assets/dist/img/carriers/postnl.png',
+  dhl: 'https://panel.sendcloud.sc/assets/dist/img/carriers/dhl.png',
+  dpd: 'https://panel.sendcloud.sc/assets/dist/img/carriers/dpd.png',
+  gls: 'https://panel.sendcloud.sc/assets/dist/img/carriers/gls.png',
+  bpost: 'https://panel.sendcloud.sc/assets/dist/img/carriers/bpost.png',
+  ups: 'https://panel.sendcloud.sc/assets/dist/img/carriers/ups.png',
+  fedex: 'https://panel.sendcloud.sc/assets/dist/img/carriers/fedex.png',
+  hermes: 'https://panel.sendcloud.sc/assets/dist/img/carriers/hermes.png',
+  colissimo: 'https://panel.sendcloud.sc/assets/dist/img/carriers/colissimo.png',
+  mondial_relay: 'https://panel.sendcloud.sc/assets/dist/img/carriers/mondialrelay.png',
+  dhl_express: 'https://panel.sendcloud.sc/assets/dist/img/carriers/dhl_express.png',
+};
+
 export async function getShippingMethods(country: string = 'NL'): Promise<any[]> {
+  try {
+    const settings = await getSendcloudSettings();
+    if (!settings.apiKey || !settings.apiSecret) {
+      return getFallbackMethods();
+    }
+
+    const data = await scFetch('/shipping-options', {
+      method: 'POST',
+      body: JSON.stringify({
+        from_country_code: settings.senderCountry || 'NL',
+        to_country_code: country,
+        from_postal_code: settings.senderPostalCode || '',
+        parcels: [{ weight: { value: '1', unit: 'kg' } }],
+        calculate_quotes: false,
+      }),
+    });
+
+    const options = data?.data;
+    if (!Array.isArray(options) || options.length === 0) {
+      return getFallbackMethods();
+    }
+
+    const methods = options
+      .filter((opt: any) => opt.form_factor !== 'letter' || opt.code === 'sendcloud:letter')
+      .map((opt: any, index: number) => ({
+        id: index + 1,
+        name: opt.name || opt.code,
+        shipping_option_code: opt.code,
+        carrier: {
+          name: opt.carrier?.name || 'Onbekend',
+          code: opt.carrier?.code || '',
+          image: CARRIER_IMAGES[opt.carrier?.code] || '',
+        },
+        price: opt.quotes?.[0]?.price?.total?.value ? parseFloat(opt.quotes[0].price.total.value) : 0,
+        delivery_time: opt.lead_time ? `${opt.lead_time}u` : '',
+        service_area: opt.service_area || 'domestic',
+      }));
+
+    methods.push({
+      id: 99,
+      name: 'Test verzending (gratis)',
+      shipping_option_code: 'sendcloud:letter',
+      carrier: { name: 'SendCloud', code: 'sendcloud', image: '' },
+      price: 0,
+      delivery_time: 'Test',
+      service_area: 'domestic',
+    });
+
+    return methods;
+  } catch (err: any) {
+    console.error('[sendcloud] Dynamisch ophalen verzendmethoden mislukt:', err.message);
+    return getFallbackMethods();
+  }
+}
+
+function getFallbackMethods() {
   return [
-    { id: 1, name: 'PostNL Standaard', shipping_option_code: 'postnl:standard', carrier: { name: 'PostNL' }, price: 0, delivery_time: '2-3 werkdagen' },
-    { id: 8, name: 'DHL Pakket', shipping_option_code: 'dhl Parcel NL:parcel', carrier: { name: 'DHL' }, price: 0, delivery_time: '1-2 werkdagen' },
-    { id: 11, name: 'DPD Pakket', shipping_option_code: 'dpd:dpd_nl_32480', carrier: { name: 'DPD' }, price: 0, delivery_time: '1-2 werkdagen' },
-    { id: 99, name: 'Test verzending (gratis)', shipping_option_code: 'sendcloud:letter', carrier: { name: 'SendCloud' }, price: 0, delivery_time: 'Test' },
+    { id: 1, name: 'PostNL Standaard', shipping_option_code: 'postnl:standard', carrier: { name: 'PostNL', code: 'postnl', image: CARRIER_IMAGES.postnl }, price: 0, delivery_time: '2-3 werkdagen' },
+    { id: 8, name: 'DHL Pakket', shipping_option_code: 'dhl Parcel NL:parcel', carrier: { name: 'DHL', code: 'dhl', image: CARRIER_IMAGES.dhl }, price: 0, delivery_time: '1-2 werkdagen' },
+    { id: 11, name: 'DPD Pakket', shipping_option_code: 'dpd:dpd_nl_32480', carrier: { name: 'DPD', code: 'dpd', image: CARRIER_IMAGES.dpd }, price: 0, delivery_time: '1-2 werkdagen' },
+    { id: 99, name: 'Test verzending (gratis)', shipping_option_code: 'sendcloud:letter', carrier: { name: 'SendCloud', code: 'sendcloud', image: '' }, price: 0, delivery_time: 'Test' },
   ];
 }
 
