@@ -111,3 +111,32 @@ export const testShipment = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const uploadCarrierLogo = async (req: AuthRequest, res: Response) => {
+  try {
+    const { carrierCode } = req.params;
+    if (!req.file) {
+      return res.status(400).json({ error: 'Geen bestand geüpload' });
+    }
+
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.get('host');
+    const url = `${protocol}://${host}/uploads/${req.file.filename}`;
+
+    await setSendcloudSettings({ [`carrier_logo_${carrierCode}`]: url } as any);
+
+    res.json({ ok: true, url, carrierCode });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const deleteCarrierLogo = async (req: AuthRequest, res: Response) => {
+  try {
+    const { carrierCode } = req.params;
+    await setSendcloudSettings({ [`carrier_logo_${carrierCode}`]: '' } as any);
+    res.json({ ok: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+};

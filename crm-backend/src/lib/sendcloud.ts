@@ -235,26 +235,9 @@ export function resolveShippingOptionCode(method: string | undefined | null): st
   return SHIPPING_METHOD_MAP[method] || method;
 }
 
-const CARRIER_LOGOS: Record<string, string> = {
-  postnl: 'https://cdn.sendcloud.cloud/assets/carriers/postnl/logo.png',
-  dhl: 'https://cdn.sendcloud.cloud/assets/carriers/dhl/logo.png',
-  dhl_express: 'https://cdn.sendcloud.cloud/assets/carriers/dhl_express/logo.png',
-  dpd: 'https://cdn.sendcloud.cloud/assets/carriers/dpd/logo.png',
-  gls: 'https://cdn.sendcloud.cloud/assets/carriers/gls/logo.png',
-  ups: 'https://cdn.sendcloud.cloud/assets/carriers/ups/logo.png',
-  fedex: 'https://cdn.sendcloud.cloud/assets/carriers/fedex/logo.png',
-  bpost: 'https://cdn.sendcloud.cloud/assets/carriers/bpost/logo.png',
-  colissimo: 'https://cdn.sendcloud.cloud/assets/carriers/colissimo/logo.png',
-  hermes: 'https://cdn.sendcloud.cloud/assets/carriers/hermes/logo.png',
-  'dhl Parcel NL': 'https://cdn.sendcloud.cloud/assets/carriers/dhl/logo.png',
-};
-
-function getCarrierLogo(carrierCode: string, carrierName: string): string {
-  if (CARRIER_LOGOS[carrierCode]) return CARRIER_LOGOS[carrierCode];
-  const nameLower = (carrierName || '').toLowerCase().replace(/\s+/g, '');
-  for (const [key, url] of Object.entries(CARRIER_LOGOS)) {
-    if (nameLower.includes(key)) return url;
-  }
+function getCarrierLogo(carrierCode: string, settings: Record<string, string>): string {
+  const dbKey = `carrier_logo_${carrierCode}`;
+  if (settings[dbKey]) return settings[dbKey];
   return '';
 }
 
@@ -307,6 +290,11 @@ export async function getShippingMethods(country: string = 'NL'): Promise<any[]>
       }
     }
 
+    const settingsMap: Record<string, string> = {};
+    for (const [key, value] of Object.entries(settings)) {
+      if (typeof value === 'string') settingsMap[key] = value;
+    }
+
     const methods = Object.values(bestPerCarrier).map((opt: any, index: number) => ({
       id: index + 1,
       name: opt.name || opt.code,
@@ -314,7 +302,7 @@ export async function getShippingMethods(country: string = 'NL'): Promise<any[]>
       carrier: {
         name: opt.carrier?.name || 'Onbekend',
         code: opt.carrier?.code || '',
-        logo: getCarrierLogo(opt.carrier?.code, opt.carrier?.name),
+        logo: getCarrierLogo(opt.carrier?.code, settingsMap),
       },
       price: opt.quotes?.[0]?.price?.total?.value ? parseFloat(opt.quotes[0].price.total.value) : 0,
       delivery_time: opt.lead_time ? `${opt.lead_time}u` : '',
@@ -340,9 +328,9 @@ export async function getShippingMethods(country: string = 'NL'): Promise<any[]>
 
 function getFallbackMethods() {
   return [
-    { id: 1, name: 'PostNL Standaard', shipping_option_code: 'postnl:standard', carrier: { name: 'PostNL', code: 'postnl', logo: CARRIER_LOGOS.postnl }, price: 0, delivery_time: '2-3 werkdagen' },
-    { id: 8, name: 'DHL Pakket', shipping_option_code: 'dhl Parcel NL:parcel', carrier: { name: 'DHL', code: 'dhl', logo: CARRIER_LOGOS.dhl }, price: 0, delivery_time: '1-2 werkdagen' },
-    { id: 11, name: 'DPD Pakket', shipping_option_code: 'dpd:dpd_nl_32480', carrier: { name: 'DPD', code: 'dpd', logo: CARRIER_LOGOS.dpd }, price: 0, delivery_time: '1-2 werkdagen' },
+    { id: 1, name: 'PostNL Standaard', shipping_option_code: 'postnl:standard', carrier: { name: 'PostNL', code: 'postnl', logo: '' }, price: 0, delivery_time: '2-3 werkdagen' },
+    { id: 8, name: 'DHL Pakket', shipping_option_code: 'dhl Parcel NL:parcel', carrier: { name: 'DHL', code: 'dhl', logo: '' }, price: 0, delivery_time: '1-2 werkdagen' },
+    { id: 11, name: 'DPD Pakket', shipping_option_code: 'dpd:dpd_nl_32480', carrier: { name: 'DPD', code: 'dpd', logo: '' }, price: 0, delivery_time: '1-2 werkdagen' },
     { id: 99, name: 'Test verzending (gratis)', shipping_option_code: 'sendcloud:letter', carrier: { name: 'SendCloud', code: 'sendcloud', logo: '' }, price: 0, delivery_time: 'Test' },
   ];
 }

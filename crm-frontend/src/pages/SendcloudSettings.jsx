@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { Settings, Truck, Save, CheckCircle, AlertCircle, RefreshCw, Send, Package } from 'lucide-react';
+import { Settings, Truck, Save, CheckCircle, AlertCircle, RefreshCw, Send, Package, Upload, X } from 'lucide-react';
 
 const DEFAULT_FIELDS = [
   { key: 'apiKey', label: 'Public Key', type: 'password', section: 'credentials', hint: 'Gebruikersnaam van je SendCloud API integratie' },
@@ -59,10 +59,22 @@ export default function SendcloudSettings() {
   });
   const [testShipmentLoading, setTestShipmentLoading] = useState(false);
   const [testShipmentResult, setTestShipmentResult] = useState(null);
+  const [carrierLogos, setCarrierLogos] = useState({});
+  const [uploadingCarrier, setUploadingCarrier] = useState(null);
 
   useEffect(() => {
     api.get('/shipping/settings')
-      .then(r => { setSettings(r.data); setLoading(false); })
+      .then(r => {
+        setSettings(r.data);
+        const logos = {};
+        for (const [key, value] of Object.entries(r.data)) {
+          if (key.startsWith('carrier_logo_') && value) {
+            logos[key.replace('carrier_logo_', '')] = value;
+          }
+        }
+        setCarrierLogos(logos);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, []);
 
@@ -122,6 +134,32 @@ export default function SendcloudSettings() {
       setTestShipmentResult({ ok: false, msg: err.response?.data?.error || 'Test verzending mislukt' });
     } finally {
       setTestShipmentLoading(false);
+    }
+  };
+
+  const uploadCarrierLogo = async (carrierCode, file) => {
+    if (!file) return;
+    setUploadingCarrier(carrierCode);
+    try {
+      const formData = new FormData();
+      formData.append('logo', file);
+      const r = await api.post(`/shipping/carrier-logo/${carrierCode}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setCarrierLogos(prev => ({ ...prev, [carrierCode]: r.data.url }));
+    } catch (err) {
+      console.error('Upload mislukt:', err);
+    } finally {
+      setUploadingCarrier(null);
+    }
+  };
+
+  const deleteCarrierLogo = async (carrierCode) => {
+    try {
+      await api.delete(`/shipping/carrier-logo/${carrierCode}`);
+      setCarrierLogos(prev => ({ ...prev, [carrierCode]: '' }));
+    } catch (err) {
+      console.error('Verwijderen mislukt:', err);
     }
   };
 
@@ -329,6 +367,52 @@ export default function SendcloudSettings() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Carrier Logo's */}
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+          <Upload className="w-5 h-5 text-purple-600" />
+          <h2 className="font-bold text-gray-900">Carrier Logo's</h2>
+        </div>
+        <div className="p-6">
+          <p className="text-sm text-gray-500 mb-4">Upload logo's per vervoerder. Deze worden getoond in de checkout van de webshop.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { code: 'postnl', name: 'PostNL' },
+              { code: 'dhl', name: 'DHL' },
+              { code: 'dpd', name: 'DPD' },
+              { code: 'ups', name: 'UPS' },
+              { code: 'gls', name: 'GLS' },
+              { code: 'fedex', name: 'FedEx' },
+            ].map(carrier => (
+              <div key={carrier.code} className="border border-gray-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-700">{carrier.name}</span>
+                  {carrierLogos[carrier.code] && (
+                    <button onClick={() => deleteCarrierLogo(carrier.code)} className="text-gray-400 hover:text-red-500 transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                {carrierLogos[carrier.code] ? (
+                  <div className="h-12 bg-gray-50 rounded-lg flex items-center justify-center p-2">
+                    <img src={carrierLogos[carrier.code]} alt={carrier.name} className="max-h-full max-w-full object-contain" />
+                  </div>
+                ) : (
+                  <label className="block h-12 bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center cursor-pointer hover:border-purple-300 transition-colors">
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => uploadCarrierLogo(carrier.code, e.target.files?.[0])} />
+                    {uploadingCarrier === carrier.code ? (
+                      <span className="text-xs text-gray-400">Uploaden...</span>
+                    ) : (
+                      <span className="text-xs text-gray-400">Klik om logo te uploaden</span>
+                    )}
+                  </label>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
