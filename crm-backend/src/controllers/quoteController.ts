@@ -261,12 +261,12 @@ async function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, da
   // Header row
   doc.rect(mx, y, colW, 26).fill(c.blue);
   doc.fontSize(9).font('Helvetica-Bold').fillColor('#FFFFFF');
-  doc.text('Beschrijving', c1 + 10, y + 8, { width: w1 - 14 });
-  doc.text('Aantal', c2 + 4, y + 8, { width: w2 - 8, align: 'center' });
-  doc.text('Grootte', c3 + 4, y + 8, { width: w3 - 8, align: 'center' });
-  doc.text('Tarief', c4 + 4, y + 8, { width: w4 - 8, align: 'right' });
-  doc.text('BTW%', c5 + 4, y + 8, { width: w5 - 8, align: 'right' });
-  doc.text('Totaal', c6 + 2, y + 8, { width: w6 - 4, align: 'right' });
+  doc.text('Beschrijving', c1 + 10, y + 8, { width: w1 - 14, align: 'left' });
+  doc.text('Aantal', c2, y + 8, { width: w2, align: 'center' });
+  doc.text('Grootte', c3, y + 8, { width: w3, align: 'center' });
+  doc.text('Tarief', c4, y + 8, { width: w4, align: 'right' });
+  doc.text('BTW%', c5, y + 8, { width: w5, align: 'right' });
+  doc.text('Totaal', c6, y + 8, { width: w6, align: 'right' });
   y += 30;
 
   // Rows
@@ -279,13 +279,13 @@ async function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, da
     }
 
     doc.fontSize(10).font('Helvetica').fillColor(c.ink);
-    doc.text(line.name, c1 + 10, y + 9, { width: w1 - 14 });
-    doc.text(String(line.qty), c2 + 4, y + 9, { width: w2 - 8, align: 'center' });
-    doc.text(line.unit || '-', c3 + 4, y + 9, { width: w3 - 8, align: 'center' });
-    doc.text(formatEuro(line.unitPrice), c4 + 4, y + 9, { width: w4 - 8, align: 'right' });
-    doc.text(`${line.vatRate}%`, c5 + 4, y + 9, { width: w5 - 8, align: 'right' });
+    doc.text(line.name, c1 + 10, y + 9, { width: w1 - 14, align: 'left' });
+    doc.text(String(line.qty), c2, y + 9, { width: w2, align: 'center' });
+    doc.text(line.unit || '-', c3, y + 9, { width: w3, align: 'center' });
+    doc.text(formatEuro(line.unitPrice), c4, y + 9, { width: w4, align: 'right' });
+    doc.text(`${line.vatRate}%`, c5, y + 9, { width: w5, align: 'right' });
     doc.font('Helvetica-Bold').fillColor(c.blueDark);
-    doc.text(formatEuro(line.total), c6 + 2, y + 9, { width: w6 - 4, align: 'right' });
+    doc.text(formatEuro(line.total), c6, y + 9, { width: w6, align: 'right' });
 
     // Bottom line
     doc.moveTo(mx, y + 28).lineTo(mx + colW, y + 28).lineWidth(0.3).stroke(c.line);
