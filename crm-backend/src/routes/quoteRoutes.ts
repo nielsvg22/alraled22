@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { createQuotePdf } from '../controllers/quoteController';
+import { createQuotePdf, getDesign, saveDesign, previewDesign } from '../controllers/quoteController';
 import { db } from '../lib/db';
 import { quotes, notifications } from '../db/schema';
 import { eq, desc, sql, and } from 'drizzle-orm';
@@ -8,6 +8,9 @@ import { authMiddleware, AuthRequest } from '../middleware/authMiddleware';
 const router = Router();
 
 router.post('/pdf', createQuotePdf);
+router.get('/design', authMiddleware, getDesign);
+router.put('/design', authMiddleware, saveDesign);
+router.post('/design/preview', authMiddleware, previewDesign);
 
 router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {

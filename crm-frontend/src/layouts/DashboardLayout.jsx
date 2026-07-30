@@ -77,6 +77,7 @@ export default function DashboardLayout() {
 
   if (isAdmin) {
     navigation.push({ name: 'Offertes', href: '/quotes', icon: FileText });
+    navigation.push({ name: 'Offerte Design', href: '/quote-design', icon: Palette });
     navigation.push({ name: 'Verzending', href: '/shipping', icon: Truck });
     navigation.push({ name: 'Logs', href: '/logs', icon: ScrollText });
     navigation.push({ name: 'Users', href: '/users', icon: Users });
