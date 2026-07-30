@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
+import { ChevronDown, ChevronUp, MapPin, Phone, Mail, Building2, FileText, Euro } from 'lucide-react';
 
 const STATUS_COLORS = {
   NEW: 'bg-blue-100 text-blue-700',
@@ -16,6 +17,8 @@ const STATUS_LABELS = {
   CONVERTED: 'Omgezet',
   ARCHIVED: 'Gearchiveerd',
 };
+
+const fmt = (v) => new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(v || 0);
 
 export default function Quotes() {
   const [quotesList, setQuotesList] = useState([]);
@@ -39,11 +42,15 @@ export default function Quotes() {
   if (loading) return <div className="flex items-center justify-center py-20"><div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /></div>;
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-6xl">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Offertes</h1>
-          <p className="text-sm text-gray-500 mt-1">{quotesList.length} offerte{quotesList.length !== 1 ? 's' : ''} gevraagd</p>
+          <p className="text-sm text-gray-500 mt-1">{quotesList.length} offerte{quotesList.length !== 1 ? 's' : ''}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-gray-500">Totaal waarde</p>
+          <p className="text-lg font-bold text-gray-900">{fmt(quotesList.reduce((s, q) => s + (q.total || 0), 0))}</p>
         </div>
       </div>
 
@@ -68,48 +75,107 @@ export default function Quotes() {
           let items = [];
           try { items = JSON.parse(q.items || '[]'); } catch {}
           const isExpanded = expanded === q.id;
+          const subtotal = q.subtotal || items.reduce((s, i) => s + (i.total || 0), 0);
+          const vat = q.vat || subtotal * 0.21;
+
           return (
             <div key={q.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              {/* Header row */}
               <div className="px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setExpanded(isExpanded ? null : q.id)}>
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                {/* Avatar */}
+                <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <span className="text-primary font-bold text-sm">{q.name?.[0]?.toUpperCase() || '?'}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-gray-900 text-sm">{q.name}</p>
-                    {q.company && <span className="text-xs text-gray-400">({q.company})</span>}
+
+                {/* Main info */}
+                <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-4 gap-1">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{q.name}</p>
+                      {q.company && <Building2 className="w-3.5 h-3.5 text-gray-400 shrink-0" />}
+                    </div>
+                    {q.company && <p className="text-xs text-gray-500 truncate">{q.company}</p>}
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">{q.email} {q.phone ? `• ${q.phone}` : ''}</p>
+                  <div>
+                    <p className="text-xs text-gray-500">{q.quoteNumber || `#${q.id.slice(0, 8).toUpperCase()}`}</p>
+                    <p className="text-xs text-gray-400">{new Date(q.createdAt).toLocaleDateString('nl-NL', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 flex items-center gap-1"><Mail className="w-3 h-3" /> {q.email || '-'}</p>
+                    {q.phone && <p className="text-xs text-gray-400 flex items-center gap-1"><Phone className="w-3 h-3" /> {q.phone}</p>}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">{items.length} product{items.length !== 1 ? 'en' : ''}</p>
+                    <p className="text-sm font-bold text-gray-900">{fmt(q.total)}</p>
+                  </div>
                 </div>
+
+                {/* Status + expand */}
                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${STATUS_COLORS[q.status] || STATUS_COLORS.NEW}`}>
                   {STATUS_LABELS[q.status] || q.status}
                 </span>
-                <p className="text-sm font-bold text-gray-900 shrink-0">
-                  {new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(q.total || 0)}
-                </p>
-                <p className="text-xs text-gray-400 shrink-0 hidden sm:block">
-                  {new Date(q.createdAt).toLocaleDateString('nl-NL', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </p>
-                <svg className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
               </div>
 
+              {/* Expanded details */}
               {isExpanded && (
                 <div className="px-5 pb-5 border-t border-gray-100 pt-4 space-y-4">
-                  {/* Products */}
+                  {/* Customer address */}
+                  {(q.address || q.postcode || q.city) && (
+                    <div className="flex items-start gap-2 text-sm text-gray-600">
+                      <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                      <span>{q.address}{q.postcode ? `, ${q.postcode}` : ''}{q.city ? ` ${q.city}` : ''}</span>
+                    </div>
+                  )}
+
+                  {/* Products table */}
                   <div>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Producten</p>
                     <div className="bg-gray-50 rounded-lg overflow-hidden">
                       <table className="w-full text-sm">
-                        <thead><tr className="border-b border-gray-200 text-left text-xs text-gray-500 uppercase"><th className="px-3 py-2">Product</th><th className="px-3 py-2 text-right">Aantal</th><th className="px-3 py-2 text-right">Prijs</th><th className="px-3 py-2 text-right">Totaal</th></tr></thead>
+                        <thead>
+                          <tr className="border-b border-gray-200 text-left text-xs text-gray-500 uppercase">
+                            <th className="px-3 py-2">Product</th>
+                            <th className="px-3 py-2 text-right">Aantal</th>
+                            <th className="px-3 py-2 text-right">Prijs p/st</th>
+                            <th className="px-3 py-2 text-right">BTW</th>
+                            <th className="px-3 py-2 text-right">Totaal</th>
+                          </tr>
+                        </thead>
                         <tbody>
                           {items.map((item, i) => (
-                            <tr key={i} className="border-b border-gray-100 last:border-0"><td className="px-3 py-2 font-medium text-gray-900">{item.name}</td><td className="px-3 py-2 text-right text-gray-600">{item.qty}</td><td className="px-3 py-2 text-right text-gray-600">{new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(item.unit)}</td><td className="px-3 py-2 text-right font-semibold text-gray-900">{new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(item.total)}</td></tr>
+                            <tr key={i} className="border-b border-gray-100 last:border-0">
+                              <td className="px-3 py-2 font-medium text-gray-900">{item.name}</td>
+                              <td className="px-3 py-2 text-right text-gray-600">{item.qty}</td>
+                              <td className="px-3 py-2 text-right text-gray-600">{fmt(item.unitPrice || item.unit)}</td>
+                              <td className="px-3 py-2 text-right text-gray-500">{item.vatRate || 21}%</td>
+                              <td className="px-3 py-2 text-right font-semibold text-gray-900">{fmt(item.total)}</td>
+                            </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
                   </div>
 
+                  {/* Totals */}
+                  <div className="flex justify-end">
+                    <div className="w-64 space-y-1">
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>Subtotaal excl. BTW</span>
+                        <span>{fmt(subtotal)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>BTW (21%)</span>
+                        <span>{fmt(vat)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm font-bold text-gray-900 pt-2 border-t border-gray-200">
+                        <span>Totaal incl. BTW</span>
+                        <span>{fmt(q.total)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Message */}
                   {q.message && (
                     <div>
                       <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Opmerkingen</p>

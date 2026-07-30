@@ -3,11 +3,12 @@ import PDFDocument from 'pdfkit';
 import { z } from 'zod';
 import { products } from '../db/schema';
 import { db } from '../lib/db';
-import { inArray } from 'drizzle-orm';
+import { inArray, sql } from 'drizzle-orm';
 import { quotes, notifications } from '../db/schema';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { getEffectiveUnitPrice, getPricingContextForUser } from '../lib/pricing';
 import { getContent, setContent } from '../db/contentRepo';
+import fetch from 'node-fetch';
 
 const quoteSchema = z.object({
   customer: z.object({
@@ -113,7 +114,7 @@ export const previewDesign = async (req: AuthRequest, res: Response) => {
   }
 };
 
-function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
+async function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
   refNr: string;
   date: string;
   validUntil: string;
@@ -140,7 +141,7 @@ function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
   let y = 0;
 
   // ═══════════════════════════════════════════════════════════════
-  // HEADER — Title left, logo badge right
+  // HEADER — Title left, logo right
   // ═══════════════════════════════════════════════════════════════
   y = 44;
 
@@ -148,16 +149,35 @@ function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
   doc.fontSize(38).font('Helvetica-Bold').fillColor(c.blue);
   doc.text(t.docLabel, mx, y);
 
-  // Logo badge (gold circle)
-  const badgeR = 39;
-  const badgeX = pageW - mx - badgeR;
-  const badgeY = y + 19;
-  doc.circle(badgeX, badgeY, badgeR).fill(c.glow);
-  // Company initials inside badge
-  doc.fontSize(22).font('Helvetica-Bold').fillColor(c.blueDark);
-  doc.text(company.name.charAt(0), badgeX - 8, badgeY - 12, { width: 16, align: 'center' });
+  // Logo (right side)
+  const logoSize = 78;
+  const logoX = pageW - mx - logoSize;
+  const logoY = y;
 
-  y += 70;
+  if (company.logo) {
+    try {
+      const protocol = company.logo.startsWith('https') ? 'https' : 'http';
+      const logoUrl = company.logo.replace('http://', 'https://');
+      const response = await fetch(logoUrl, { timeout: 5000 } as any);
+      if (response.ok) {
+        const buffer = await response.buffer();
+        doc.image(buffer, logoX, logoY, { width: logoSize, height: logoSize });
+      } else {
+        throw new Error('Logo fetch failed');
+      }
+    } catch {
+      // Fallback: gold circle with initial
+      doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2).fill(c.glow);
+      doc.fontSize(28).font('Helvetica-Bold').fillColor(c.blueDark);
+      doc.text(company.name.charAt(0), logoX + 24, logoY + 24, { width: 30, align: 'center' });
+    }
+  } else {
+    doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2).fill(c.glow);
+    doc.fontSize(28).font('Helvetica-Bold').fillColor(c.blueDark);
+    doc.text(company.name.charAt(0), logoX + 24, logoY + 24, { width: 30, align: 'center' });
+  }
+
+  y += 90;
 
   // ═══════════════════════════════════════════════════════════════
   // TOP GRID — From left, Meta right
@@ -223,23 +243,30 @@ function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
   // ═══════════════════════════════════════════════════════════════
   y += 20;
 
-  // Column positions (percentages matching HTML: 32%, 12%, 14%, 14%, 10%, 18%)
-  const c1 = mx;                              // Beschrijving
-  const c2 = mx + contentW * 0.32;            // Aantal
-  const c3 = mx + contentW * 0.44;            // Grootte
-  const c4 = mx + contentW * 0.58;            // Tarief
-  const c5 = mx + contentW * 0.72;            // BTW%
-  const c6 = mx + contentW * 0.82;            // Totaal
+  // Column positions — fixed widths for perfect alignment
+  const colW = contentW;
+  const c1 = mx;                          // Beschrijving (40%)
+  const w1 = colW * 0.40;
+  const c2 = c1 + w1;                     // Aantal (10%)
+  const w2 = colW * 0.10;
+  const c3 = c2 + w2;                     // Grootte (12%)
+  const w3 = colW * 0.12;
+  const c4 = c3 + w3;                     // Tarief (14%)
+  const w4 = colW * 0.14;
+  const c5 = c4 + w4;                     // BTW% (10%)
+  const w5 = colW * 0.10;
+  const c6 = c5 + w5;                     // Totaal (14%)
+  const w6 = colW * 0.14;
 
   // Header row
-  doc.rect(mx, y, contentW, 26).fill(c.blue);
+  doc.rect(mx, y, colW, 26).fill(c.blue);
   doc.fontSize(9).font('Helvetica-Bold').fillColor('#FFFFFF');
-  doc.text('Beschrijving', c1 + 10, y + 8, { width: c2 - c1 - 10 });
-  doc.text('Aantal', c2, y + 8, { width: c3 - c2, align: 'left' });
-  doc.text('Grootte', c3, y + 8, { width: c4 - c3, align: 'left' });
-  doc.text('Tarief', c4, y + 8, { width: c5 - c4, align: 'right' });
-  doc.text('BTW%', c5, y + 8, { width: c6 - c5, align: 'right' });
-  doc.text('Totaal', c6, y + 8, { width: contentW - (c6 - mx) - 10, align: 'right' });
+  doc.text('Beschrijving', c1 + 10, y + 8, { width: w1 - 14 });
+  doc.text('Aantal', c2 + 4, y + 8, { width: w2 - 8, align: 'center' });
+  doc.text('Grootte', c3 + 4, y + 8, { width: w3 - 8, align: 'center' });
+  doc.text('Tarief', c4 + 4, y + 8, { width: w4 - 8, align: 'right' });
+  doc.text('BTW%', c5 + 4, y + 8, { width: w5 - 8, align: 'right' });
+  doc.text('Totaal', c6 + 2, y + 8, { width: w6 - 4, align: 'right' });
   y += 30;
 
   // Rows
@@ -248,21 +275,20 @@ function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
     if (!line) continue;
 
     if (idx % 2 === 1) {
-      doc.rect(mx, y, contentW, 28).fill(c.surface);
+      doc.rect(mx, y, colW, 28).fill(c.surface);
     }
 
     doc.fontSize(10).font('Helvetica').fillColor(c.ink);
-    doc.text(line.name, c1 + 10, y + 9, { width: c2 - c1 - 20 });
-    doc.text(String(line.qty), c2, y + 9, { width: c3 - c2 });
-    doc.text(line.unit || '-', c3, y + 9, { width: c4 - c3 });
-
-    doc.text(formatEuro(line.unitPrice), c4, y + 9, { width: c5 - c4, align: 'right' });
-    doc.text(`${line.vatRate}%`, c5, y + 9, { width: c6 - c5, align: 'right' });
+    doc.text(line.name, c1 + 10, y + 9, { width: w1 - 14 });
+    doc.text(String(line.qty), c2 + 4, y + 9, { width: w2 - 8, align: 'center' });
+    doc.text(line.unit || '-', c3 + 4, y + 9, { width: w3 - 8, align: 'center' });
+    doc.text(formatEuro(line.unitPrice), c4 + 4, y + 9, { width: w4 - 8, align: 'right' });
+    doc.text(`${line.vatRate}%`, c5 + 4, y + 9, { width: w5 - 8, align: 'right' });
     doc.font('Helvetica-Bold').fillColor(c.blueDark);
-    doc.text(formatEuro(line.total), c6, y + 9, { width: contentW - (c6 - mx) - 10, align: 'right' });
+    doc.text(formatEuro(line.total), c6 + 2, y + 9, { width: w6 - 4, align: 'right' });
 
     // Bottom line
-    doc.moveTo(mx, y + 28).lineTo(pageW - mx, y + 28).lineWidth(0.3).stroke(c.line);
+    doc.moveTo(mx, y + 28).lineTo(mx + colW, y + 28).lineWidth(0.3).stroke(c.line);
     y += 32;
   }
 
@@ -359,17 +385,32 @@ export const createQuotePdf = async (req: AuthRequest, res: Response) => {
       return { name: p.name, qty: q, unit: 'Stuk', unitPrice: unit, vatRate: 21, total: q * unit };
     }));
 
-    try {
-      const itemsJson = JSON.stringify(lines.map(l => ({ name: l.name, qty: l.qty, unit: l.unit, total: l.total })));
-      await db.insert(quotes).values({
-        name: payload.customer.name,
-        email: payload.customer.email || '',
-        phone: payload.customer.phone,
-        company: payload.customer.company,
-        message: payload.message,
-        items: itemsJson,
-        total: lines.reduce((s, l) => s + l.total, 0),
-      });
+  try {
+    const itemsJson = JSON.stringify(lines.map(l => ({ name: l.name, qty: l.qty, unit: l.unit, unitPrice: l.unitPrice, vatRate: l.vatRate, total: l.total })));
+    const subtotalExcl = lines.reduce((s, l) => s + l.total, 0);
+    const vatAmount = lines.reduce((s, l) => s + (l.total * l.vatRate / 100), 0);
+    const totalIncl = subtotalExcl + vatAmount;
+
+    const year = new Date().getFullYear();
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(quotes);
+    const count = (countResult?.count || 0) + 1;
+    const quoteNumber = `${year}-${String(count).padStart(4, '0')}`;
+
+    await db.insert(quotes).values({
+      quoteNumber,
+      name: payload.customer.name,
+      email: payload.customer.email || '',
+      phone: payload.customer.phone,
+      company: payload.customer.company,
+      address: payload.customer.address,
+      postcode: payload.customer.postcode,
+      city: payload.customer.city,
+      message: payload.message,
+      items: itemsJson,
+      subtotal: subtotalExcl,
+      vat: vatAmount,
+      total: totalIncl,
+    });
 
       await db.insert(notifications).values({
         type: 'quote',

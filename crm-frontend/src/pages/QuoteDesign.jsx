@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../lib/api';
-import { Save, CheckCircle, AlertCircle, Eye, Palette, Type, Building2, FileText } from 'lucide-react';
+import { Save, CheckCircle, AlertCircle, Eye, Palette, Type, Building2, FileText, Upload } from 'lucide-react';
 
 const SECTIONS = {
   colors: { label: 'Kleuren', icon: Palette },
@@ -15,7 +15,7 @@ const COLOR_FIELDS = [
   { key: 'surface', label: 'Oppervlak accent' },
   { key: 'blue', label: 'Primaire kleur' },
   { key: 'blueDark', label: 'Donkere accent' },
-  { key: 'glow', label: 'LED gloed kleur' },
+  { key: 'glow', label: 'Goud kleur (logo)' },
   { key: 'line', label: 'Lijn kleur' },
   { key: 'muted', label: 'Subtiele tekst' },
 ];
@@ -27,7 +27,6 @@ const COMPANY_FIELDS = [
   { key: 'phone', label: 'Telefoon' },
   { key: 'email', label: 'E-mail' },
   { key: 'website', label: 'Website' },
-  { key: 'logo', label: 'Logo URL' },
 ];
 
 const TEXT_FIELDS = [
@@ -96,6 +95,18 @@ export default function QuoteDesign() {
 
   const updateCompany = (key, value) => {
     setDesign(prev => ({ ...prev, company: { ...prev.company, [key]: value } }));
+  };
+
+  const uploadLogo = async (file) => {
+    if (!file) return;
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const r = await api.post('/uploads', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      updateCompany('logo', r.data.url);
+    } catch (err) {
+      console.error('Logo upload mislukt:', err);
+    }
   };
 
   const updateText = (key, value) => {
@@ -184,6 +195,24 @@ export default function QuoteDesign() {
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none transition-all" />
                 </div>
               ))}
+
+              {/* Logo upload */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Logo</label>
+                {design.company.logo ? (
+                  <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-3">
+                    <img src={design.company.logo} alt="Logo" className="h-12 object-contain" />
+                    <button onClick={() => updateCompany('logo', '')} className="text-xs text-red-500 hover:text-red-600 font-semibold">Verwijderen</button>
+                  </div>
+                ) : (
+                  <label className="block bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-blue-300 transition-colors">
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => uploadLogo(e.target.files?.[0])} />
+                    <Upload className="w-6 h-6 mx-auto text-gray-400 mb-2" />
+                    <p className="text-sm text-gray-500">Klik om logo te uploaden</p>
+                    <p className="text-xs text-gray-400 mt-1">PNG, JPG of SVG</p>
+                  </label>
+                )}
+              </div>
             </div>
           )}
 
