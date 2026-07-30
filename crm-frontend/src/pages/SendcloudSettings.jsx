@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { Settings, Truck, Save, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Settings, Truck, Save, CheckCircle, AlertCircle, RefreshCw, Send, Package } from 'lucide-react';
 
 const DEFAULT_FIELDS = [
   { key: 'apiKey', label: 'API Key', type: 'password', section: 'credentials' },
@@ -46,6 +46,19 @@ export default function SendcloudSettings() {
   const [testResult, setTestResult] = useState(null);
   const [migrating, setMigrating] = useState(false);
   const [migrationResult, setMigrationResult] = useState(null);
+  const [testShipmentForm, setTestShipmentForm] = useState({
+    receiverName: '',
+    receiverAddress: '',
+    receiverHouseNumber: '',
+    receiverCity: '',
+    receiverPostalCode: '',
+    receiverCountry: 'NL',
+    receiverPhone: '',
+    receiverEmail: '',
+    orderNumber: '',
+  });
+  const [testShipmentLoading, setTestShipmentLoading] = useState(false);
+  const [testShipmentResult, setTestShipmentResult] = useState(null);
 
   useEffect(() => {
     api.get('/shipping/settings')
@@ -92,6 +105,23 @@ export default function SendcloudSettings() {
       setMigrationResult({ ok: false, error: err.response?.data?.error || 'Migratie mislukt' });
     } finally {
       setMigrating(false);
+    }
+  };
+
+  const updateTestField = (key, value) => {
+    setTestShipmentForm(prev => ({ ...prev, [key]: value }));
+  };
+
+  const createTestShipment = async () => {
+    setTestShipmentLoading(true);
+    setTestShipmentResult(null);
+    try {
+      const r = await api.post('/shipping/test-shipment', testShipmentForm);
+      setTestShipmentResult({ ok: true, msg: 'Test verzending aangemaakt!', data: r.data.shipment });
+    } catch (err) {
+      setTestShipmentResult({ ok: false, msg: err.response?.data?.error || 'Test verzending mislukt' });
+    } finally {
+      setTestShipmentLoading(false);
     }
   };
 
@@ -204,6 +234,99 @@ export default function SendcloudSettings() {
           </div>
         </div>
       )}
+
+      {/* Test Verzending */}
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+          <Package className="w-5 h-5 text-blue-600" />
+          <h2 className="font-bold text-gray-900">Test Verzending</h2>
+          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">Gratis (Unstamped Letter)</span>
+        </div>
+        <div className="p-6 space-y-4">
+          <p className="text-sm text-gray-500">
+            Maak een gratis test verzending aan via SendCloud. Er worden geen kosten in rekening gebracht.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Naam *</label>
+              <input type="text" value={testShipmentForm.receiverName} onChange={e => updateTestField('receiverName', e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none transition-all"
+                placeholder="Jan de Vries" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Straat *</label>
+              <input type="text" value={testShipmentForm.receiverAddress} onChange={e => updateTestField('receiverAddress', e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none transition-all"
+                placeholder="Damstraat" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Huisnummer</label>
+              <input type="text" value={testShipmentForm.receiverHouseNumber} onChange={e => updateTestField('receiverHouseNumber', e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none transition-all"
+                placeholder="1" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Stad *</label>
+              <input type="text" value={testShipmentForm.receiverCity} onChange={e => updateTestField('receiverCity', e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none transition-all"
+                placeholder="Amsterdam" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Postcode *</label>
+              <input type="text" value={testShipmentForm.receiverPostalCode} onChange={e => updateTestField('receiverPostalCode', e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none transition-all"
+                placeholder="1012AB" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Land</label>
+              <input type="text" value={testShipmentForm.receiverCountry} onChange={e => updateTestField('receiverCountry', e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none transition-all"
+                placeholder="NL" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Telefoon</label>
+              <input type="tel" value={testShipmentForm.receiverPhone} onChange={e => updateTestField('receiverPhone', e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none transition-all"
+                placeholder="+31612345678" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">E-mail</label>
+              <input type="email" value={testShipmentForm.receiverEmail} onChange={e => updateTestField('receiverEmail', e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none transition-all"
+                placeholder="jan@example.com" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Order nummer</label>
+              <input type="text" value={testShipmentForm.orderNumber} onChange={e => updateTestField('orderNumber', e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none transition-all"
+                placeholder="TEST-001 (optioneel)" />
+            </div>
+          </div>
+          <button onClick={createTestShipment} disabled={testShipmentLoading || !testShipmentForm.receiverName || !testShipmentForm.receiverAddress || !testShipmentForm.receiverCity || !testShipmentForm.receiverPostalCode}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+            {testShipmentLoading ? '...' : <><Send className="w-4 h-4" /> Test verzending aanmaken</>}
+          </button>
+          {testShipmentResult && (
+            <div className={`rounded-xl px-5 py-4 text-sm font-medium flex items-start gap-3 ${testShipmentResult.ok ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-red-50 border border-red-200 text-red-600'}`}>
+              {testShipmentResult.ok ? <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" /> : <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />}
+              <div>
+                <p>{testShipmentResult.msg}</p>
+                {testShipmentResult.ok && testShipmentResult.data?.parcels?.[0] && (
+                  <div className="mt-2 space-y-1 text-xs text-emerald-600">
+                    <p>Parcel ID: {testShipmentResult.data.parcels[0].id}</p>
+                    {testShipmentResult.data.parcels[0].tracking_number && (
+                      <p>Tracking: {testShipmentResult.data.parcels[0].tracking_number}</p>
+                    )}
+                    {testShipmentResult.data.parcels[0].tracking_url && (
+                      <a href={testShipmentResult.data.parcels[0].tracking_url} target="_blank" rel="noopener noreferrer" className="underline">Bekijk tracking</a>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

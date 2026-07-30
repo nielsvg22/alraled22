@@ -7,6 +7,7 @@ import {
   getRates,
   createShipmentLabel,
   downloadLabel,
+  testShipment,
 } from '../controllers/shippingController';
 
 const router = Router();
@@ -17,6 +18,7 @@ router.get('/methods', authMiddleware, listShippingMethods);
 router.get('/rates', authMiddleware, getRates);
 router.post('/shipment', authMiddleware, createShipmentLabel);
 router.get('/label/:id', authMiddleware, downloadLabel);
+router.post('/test-shipment', authMiddleware, testShipment);
 
 // Public endpoint for checkout
 router.get('/methods/public', async (req, res) => {

@@ -5,6 +5,7 @@ import {
   setSendcloudSettings,
   getShippingMethods,
   createShipment,
+  createTestShipment,
   getShipmentLabel,
 } from '../lib/sendcloud';
 
@@ -64,6 +65,48 @@ export const downloadLabel = async (req: AuthRequest, res: Response) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="label-${req.params.id}.pdf"`);
     res.send(label);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const testShipment = async (req: AuthRequest, res: Response) => {
+  try {
+    const {
+      receiverName,
+      receiverAddress,
+      receiverHouseNumber,
+      receiverCity,
+      receiverPostalCode,
+      receiverCountry,
+      receiverPhone,
+      receiverEmail,
+      orderNumber,
+    } = req.body;
+
+    if (!receiverName || !receiverAddress || !receiverCity || !receiverPostalCode) {
+      return res.status(400).json({
+        error: 'Verplichte velden ontbreken: receiverName, receiverAddress, receiverCity, receiverPostalCode',
+      });
+    }
+
+    const shipment = await createTestShipment({
+      receiverName,
+      receiverAddress,
+      receiverHouseNumber: receiverHouseNumber || '',
+      receiverCity,
+      receiverPostalCode,
+      receiverCountry: receiverCountry || 'NL',
+      receiverPhone,
+      receiverEmail,
+      orderNumber,
+    });
+
+    res.json({
+      ok: true,
+      message: 'Test shipment aangemaakt (Unstamped Letter - gratis)',
+      shipment,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

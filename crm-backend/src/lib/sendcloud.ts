@@ -307,3 +307,72 @@ export async function getTrackingUrl(parcelId: number): Promise<string | null> {
     return null;
   }
 }
+
+// ── Test Shipment (Unstamped Letter - free test label) ──
+interface TestShipmentParams {
+  receiverName: string;
+  receiverAddress: string;
+  receiverHouseNumber: string;
+  receiverCity: string;
+  receiverPostalCode: string;
+  receiverCountry?: string;
+  receiverPhone?: string;
+  receiverEmail?: string;
+  orderNumber?: string;
+}
+
+export async function createTestShipment(params: TestShipmentParams): Promise<any> {
+  const settings = await getSendcloudSettings();
+
+  let street: string = params.receiverAddress || '';
+  let houseNumber: string = params.receiverHouseNumber || '';
+  if (!houseNumber) {
+    const match = street.match(/^(.*?)\s+(\d+\w*)$/);
+    if (match) {
+      street = match[1] || street;
+      houseNumber = match[2] || houseNumber;
+    }
+  }
+
+  const payload = {
+    to_address: {
+      name: params.receiverName,
+      company_name: '',
+      address_line_1: street,
+      house_number: houseNumber,
+      postal_code: params.receiverPostalCode,
+      city: params.receiverCity,
+      country_code: params.receiverCountry || 'NL',
+      phone_number: params.receiverPhone || '',
+      email: params.receiverEmail || '',
+    },
+    from_address: {
+      name: settings.senderName || 'ALRA LED Solutions',
+      company_name: '',
+      address_line_1: settings.senderAddress || '',
+      house_number: settings.senderHouseNumber || '',
+      postal_code: settings.senderPostalCode || '',
+      city: settings.senderCity || '',
+      country_code: settings.senderCountry || 'NL',
+      phone_number: settings.senderTelephone || '',
+    },
+    ship_with: {
+      type: 'shipping_option_code',
+      properties: {
+        shipping_option_code: 'sendcloud:letter',
+      },
+    },
+    order_number: params.orderNumber || `TEST-${Date.now()}`,
+    parcels: [{
+      weight: {
+        value: '0.1',
+        unit: 'kg',
+      },
+    }],
+  };
+
+  await logEvent('sendcloud', 'INFO', 'createTestShipment', `Test shipment aanmaken`, payload);
+  const data = await scFetch('/shipments/announce', { method: 'POST', body: JSON.stringify(payload) });
+  await logEvent('sendcloud', 'INFO', 'createTestShipment', `Test shipment aangemaakt`, data);
+  return data?.data || data;
+}
