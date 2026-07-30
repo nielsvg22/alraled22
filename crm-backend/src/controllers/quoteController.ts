@@ -48,7 +48,7 @@ const DEFAULT_DESIGN = {
     phone: '085-0021 606',
     email: 'info@alra-led.nl',
     website: 'www.alra-led.com',
-    logo: 'https://alra-led.com/wp-content/uploads/2024/06/cropped-LOGO_WEB-270x270.png',
+    logo: 'https://alra-led.com/wp-content/uploads/2024/06/Alra-led-logo-diap.png',
   },
   texts: {
     docLabel: 'Offerte',
@@ -269,37 +269,26 @@ function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
   // ═══════════════════════════════════════════════════════════════
   // TOTALS (right-aligned)
   // ═══════════════════════════════════════════════════════════════
-  y += 6;
+  y += 12;
   const totW = 290;
   const totX = pageW - mx - totW;
 
   // Excl BTW
   doc.fontSize(10).font('Helvetica').fillColor(c.ink);
   doc.text('Bedrag excl. BTW', totX, y, { width: 180 });
-  doc.text(formatEuro(subtotalExcl), totX + totW - 14, y, { width: 100, align: 'right' });
-  y += 24;
+  doc.text(formatEuro(subtotalExcl), totX, y, { width: totW, align: 'right' });
+  y += 22;
 
   // BTW
   doc.text('BTW', totX, y, { width: 180 });
-  doc.text(formatEuro(vatAmount), totX + totW - 14, y, { width: 100, align: 'right' });
-  y += 30;
+  doc.text(formatEuro(vatAmount), totX, y, { width: totW, align: 'right' });
+  y += 28;
 
   // Grand total (blue background, white text)
-  doc.roundedRect(totX, y, totW, 32, 0).fill(c.blue);
+  doc.rect(totX, y, totW, 34).fill(c.blue);
   doc.fontSize(13).font('Helvetica-Bold').fillColor('#FFFFFF');
-  doc.text('Totaalbedrag', totX + 14, y + 9, { width: 180 });
-  doc.text(formatEuro(totalIncl), totX + totW - 14, y + 9, { width: 100, align: 'right' });
-  y += 40;
-
-  // ═══════════════════════════════════════════════════════════════
-  // SIGNATURE
-  // ═══════════════════════════════════════════════════════════════
-  y += 30;
-  doc.fontSize(10).font('Helvetica').fillColor(c.muted);
-  doc.text('Handtekening voor akkoord', mx, y);
-  y += 18;
-  doc.rect(mx, y, contentW, 80).fill(c.surface);
-  doc.rect(mx, y, contentW, 80).lineWidth(0.5).stroke(c.line);
+  doc.text('Totaalbedrag', totX + 14, y + 10, { width: 180 });
+  doc.text(formatEuro(totalIncl), totX + 14, y + 10, { width: totW - 28, align: 'right' });
 
   // ═══════════════════════════════════════════════════════════════
   // FOOTER (3 columns)
