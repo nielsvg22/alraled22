@@ -102,7 +102,7 @@ export const saveDesign = async (req: AuthRequest, res: Response) => {
 export const previewDesign = async (req: AuthRequest, res: Response) => {
   try {
     const design = { ...DEFAULT_DESIGN, ...req.body };
-    generateQuotePdf(res, design, {
+    await generateQuotePdf(res, design, {
       refNr: '0000',
       date: new Date().toLocaleDateString('nl-NL'),
       validUntil: new Date(Date.now() + 30 * 86400000).toLocaleDateString('nl-NL'),
@@ -424,7 +424,7 @@ export const createQuotePdf = async (req: AuthRequest, res: Response) => {
 
     const design = await getQuoteDesign();
     const refNr = `ALR-${Date.now().toString(36).toUpperCase().slice(-6)}`;
-    generateQuotePdf(res, design, {
+    await generateQuotePdf(res, design, {
       refNr,
       date: new Date().toLocaleDateString('nl-NL'),
       validUntil: new Date(Date.now() + 30 * 86400000).toLocaleDateString('nl-NL'),
