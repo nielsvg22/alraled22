@@ -223,9 +223,11 @@ const SHIPPING_METHOD_MAP: Record<string, string> = {
   '5': 'dpd:dpd_nl_32480',
   '8': 'dhl Parcel NL:parcel',
   '11': 'dpd:dpd_nl_32480',
+  '99': 'sendcloud:letter',
   'postnl:standard': 'postnl:standard',
   'dhl Parcel NL:parcel': 'dhl Parcel NL:parcel',
   'dpd:dpd_nl_32480': 'dpd:dpd_nl_32480',
+  'sendcloud:letter': 'sendcloud:letter',
 };
 
 export function resolveShippingOptionCode(method: string | undefined | null): string {
@@ -238,6 +240,7 @@ export async function getShippingMethods(country: string = 'NL'): Promise<any[]>
     { id: 1, name: 'PostNL Standaard', shipping_option_code: 'postnl:standard', carrier: { name: 'PostNL' }, price: 0, delivery_time: '2-3 werkdagen' },
     { id: 8, name: 'DHL Pakket', shipping_option_code: 'dhl Parcel NL:parcel', carrier: { name: 'DHL' }, price: 0, delivery_time: '1-2 werkdagen' },
     { id: 11, name: 'DPD Pakket', shipping_option_code: 'dpd:dpd_nl_32480', carrier: { name: 'DPD' }, price: 0, delivery_time: '1-2 werkdagen' },
+    { id: 99, name: 'Test verzending (gratis)', shipping_option_code: 'sendcloud:letter', carrier: { name: 'SendCloud' }, price: 0, delivery_time: 'Test' },
   ];
 }
 
