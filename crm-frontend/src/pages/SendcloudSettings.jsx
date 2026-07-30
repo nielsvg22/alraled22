@@ -10,7 +10,7 @@ const DEFAULT_FIELDS = [
   { key: 'senderHouseNumber', label: 'Huisnummer', type: 'text', section: 'sender' },
   { key: 'senderCity', label: 'Stad', type: 'text', section: 'sender' },
   { key: 'senderPostalCode', label: 'Postcode', type: 'text', section: 'sender' },
-  { key: 'senderCountry', label: 'Land (ISO)', type: 'text', section: 'sender' },
+  { key: 'senderCountry', label: 'Land (ISO)', type: 'text', section: 'sender', hint: '2-letter landcode, bijv. NL, BE, DE' },
   { key: 'senderTelephone', label: 'Telefoon', type: 'tel', section: 'sender' },
   { key: 'returnAddress', label: 'Retour straat', type: 'text', section: 'return' },
   { key: 'returnHouseNumber', label: 'Retour huisnummer', type: 'text', section: 'return' },

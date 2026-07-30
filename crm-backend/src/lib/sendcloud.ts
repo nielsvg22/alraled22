@@ -260,7 +260,7 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
       house_number: houseNumber,
       postal_code: params.receiverPostalCode,
       city: params.receiverCity,
-      country_code: params.receiverCountry || 'NL',
+      country_code: normalizeCountryCode(params.receiverCountry || 'NL'),
       phone_number: params.receiverPhone || '',
     },
     from_address: {
@@ -269,7 +269,7 @@ export async function createShipment(params: CreateShipmentParams): Promise<any>
       house_number: settings.senderHouseNumber || '',
       postal_code: settings.senderPostalCode || '',
       city: settings.senderCity || '',
-      country_code: settings.senderCountry || 'NL',
+      country_code: normalizeCountryCode(settings.senderCountry || 'NL'),
       phone_number: settings.senderTelephone || '',
     },
     ship_with: {
@@ -316,6 +316,38 @@ export async function getTrackingUrl(parcelId: number): Promise<string | null> {
   }
 }
 
+// ── Country code normalizer ──
+const COUNTRY_MAP: Record<string, string> = {
+  'nederland': 'NL', 'the netherlands': 'NL', 'holland': 'NL',
+  'belgië': 'BE', 'belgium': 'BE', 'belgique': 'BE',
+  'deutschland': 'DE', 'germany': 'DE', 'allemagne': 'DE',
+  'france': 'FR', 'frankrijk': 'FR',
+  'spain': 'ES', 'españa': 'ES', 'spanje': 'ES',
+  'united kingdom': 'GB', 'england': 'GB', 'uk': 'GB', 'groot-brittannië': 'GB',
+  'united states': 'US', 'usa': 'US', 'amerika': 'US', 'verenigde staten': 'US',
+  'italy': 'IT', 'italië': 'IT', 'italia': 'IT',
+  'portugal': 'PT',
+  'poland': 'PL', 'polen': 'PL', 'polska': 'PL',
+  'austria': 'AT', 'oostenrijk': 'AT', 'österreich': 'AT',
+  'switzerland': 'CH', 'zwitserland': 'CH', 'schweiz': 'CH',
+  'sweden': 'SE', 'zweden': 'SE', 'sverige': 'SE',
+  'denmark': 'DK', 'denemarken': 'DK', 'danmark': 'DK',
+  'finland': 'FI', 'finnland': 'FI',
+  'norway': 'NO', 'noorwegen': 'NO', 'norge': 'NO',
+  'ireland': 'IE', 'ierland': 'IE',
+  'luxembourg': 'LU', 'luxemburg': 'LU',
+};
+
+function normalizeCountryCode(code: string): string {
+  if (!code) return 'NL';
+  const trimmed = code.trim();
+  if (trimmed.length === 2) return trimmed.toUpperCase();
+  const upper = trimmed.toUpperCase();
+  if (upper.length === 2) return upper;
+  const lower = trimmed.toLowerCase();
+  return COUNTRY_MAP[lower] || trimmed.toUpperCase().slice(0, 2);
+}
+
 // ── Test Shipment (Unstamped Letter - free test label) ──
 interface TestShipmentParams {
   receiverName: string;
@@ -350,7 +382,7 @@ export async function createTestShipment(params: TestShipmentParams): Promise<an
       house_number: houseNumber,
       postal_code: params.receiverPostalCode,
       city: params.receiverCity,
-      country_code: params.receiverCountry || 'NL',
+      country_code: normalizeCountryCode(params.receiverCountry || 'NL'),
       phone_number: params.receiverPhone || '',
       email: params.receiverEmail || '',
     },
@@ -361,7 +393,7 @@ export async function createTestShipment(params: TestShipmentParams): Promise<an
       house_number: settings.senderHouseNumber || '',
       postal_code: settings.senderPostalCode || '',
       city: settings.senderCity || '',
-      country_code: settings.senderCountry || 'NL',
+      country_code: normalizeCountryCode(settings.senderCountry || 'NL'),
       phone_number: settings.senderTelephone || '',
     },
     ship_with: {
