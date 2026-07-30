@@ -33,19 +33,16 @@ const COMPANY_FIELDS = [
 const TEXT_FIELDS = [
   { key: 'docLabel', label: 'Document type' },
   { key: 'fromLabel', label: '"Van" label' },
-  { key: 'toLabel', label: '"Aan" label' },
-  { key: 'itemsLabel', label: 'Kolom: Omschrijving' },
+  { key: 'toLabel', label: '"Naar" label' },
+  { key: 'itemsLabel', label: 'Kolom: Beschrijving' },
   { key: 'qtyLabel', label: 'Kolom: Aantal' },
-  { key: 'unitPriceLabel', label: 'Kolom: Prijs p/st' },
+  { key: 'unitPriceLabel', label: 'Kolom: Tarief' },
   { key: 'totalLabel', label: 'Kolom: Totaal' },
   { key: 'subtotalLabel', label: 'Subtotaal label' },
   { key: 'vatLabel', label: 'BTW label' },
-  { key: 'grandTotalLabel', label: 'Totaal label' },
+  { key: 'grandTotalLabel', label: 'Totaalbedrag label' },
   { key: 'notesLabel', label: 'Opmerkingen label' },
   { key: 'validUntil', label: 'Geldigheid' },
-  { key: 'signatureLeftLabel', label: 'Handtekening links' },
-  { key: 'signatureRightLabel', label: 'Handtekening rechts' },
-  { key: 'signatureLine', label: 'Handtekening lijn tekst' },
   { key: 'footerDisclaimer', label: 'Footer disclaimer' },
 ];
 
