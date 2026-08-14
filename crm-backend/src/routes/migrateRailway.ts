@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { pool } from '../lib/db';
+import { createConnection } from 'mysql2/promise';
 
 const router = Router();
 
 router.get('/', async (req, res) => {
   try {
-    const src = await (global as any).__nfImportMySQL2().createConnection({
+    const src = await createConnection({
       host: 'nozomi.proxy.rlwy.net',
       port: 23687,
       user: 'root',
