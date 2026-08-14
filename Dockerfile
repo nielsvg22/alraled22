@@ -7,7 +7,8 @@ RUN npm ci
 
 COPY crm-backend/ .
 RUN npm run build
+RUN chmod +x start.sh
 
 EXPOSE 3001
 
-CMD sh -c "npx drizzle-kit push 2>&1 || true && node dist/index.js"
+CMD ["./start.sh"]
