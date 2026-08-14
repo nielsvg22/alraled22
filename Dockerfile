@@ -2,10 +2,10 @@ FROM node:20-slim
 
 WORKDIR /workspace
 
-COPY package.json package-lock.json* ./
+COPY crm-backend/package.json crm-backend/package-lock.json* ./
 RUN npm ci
 
-COPY . .
+COPY crm-backend/ .
 RUN npm run build
 
 EXPOSE 3001
