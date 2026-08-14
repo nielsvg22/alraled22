@@ -5,6 +5,7 @@ dotenv.config();
 
 const rawUrl = process.env.DATABASE_URL || process.env.MYSQL_URL || '';
 const url = new URL(rawUrl);
+const sslEnabled = url.searchParams.get('ssl') === 'true' || process.env.TLS_ENABLED === 'true';
 url.searchParams.delete('ssl');
 const cleanUrl = url.toString();
 
@@ -13,7 +14,11 @@ export default defineConfig({
   out: './drizzle',
   dialect: 'mysql',
   dbCredentials: {
-    url: cleanUrl,
-    ssl: process.env.TLS_ENABLED === 'true' ? { rejectUnauthorized: true } : undefined,
+    host: url.hostname,
+    port: Number(url.port) || 3306,
+    user: url.username,
+    password: url.password,
+    database: url.pathname.replace('/', ''),
+    ssl: sslEnabled ? { rejectUnauthorized: true } : undefined,
   },
 });
