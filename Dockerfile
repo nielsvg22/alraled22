@@ -7,7 +7,8 @@ RUN npm ci
 
 COPY crm-backend/ .
 RUN npm run build
+RUN chmod +x start.sh
 
 EXPOSE 3001
 
-CMD ["node", "dist/index.js"]
+CMD ["./start.sh"]
