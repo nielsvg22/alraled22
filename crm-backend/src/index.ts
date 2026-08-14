@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import mysql from 'mysql2/promise';
 import productRoutes from './routes/productRoutes';
 import authRoutes from './routes/authJsonRoutes';
 import orderRoutes from './routes/orderRoutes';
@@ -161,8 +162,7 @@ app.get('/', (req, res) => {
 // TEMPORARY: Migration endpoint
 app.get('/api/migrate-railway', async (req, res) => {
   try {
-    const mysql2 = await import('mysql2/promise');
-    const source = await mysql2.createConnection({
+    const source = await mysql.createConnection({
       host: 'nozomi.proxy.rlwy.net',
       port: 23687,
       user: 'root',

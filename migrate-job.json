@@ -1,0 +1,33 @@
+{
+  "name": "db-migrate",
+  "description": "Migrate data from Railway to Northflank MySQL",
+  "billing": {
+    "deploymentPlan": "nf-compute-10"
+  },
+  "backoffLimit": 0,
+  "runtime": {
+    "type": "container",
+    "cpu": 100,
+    "memory": 512,
+    "image": "",
+    "source": {
+      "type": "git",
+      "repo": "nielsvg22/alraled22",
+      "branch": "main",
+      "buildContext": "migrate",
+      "dockerfile": "Dockerfile"
+    }
+  },
+  "networking": {
+    "ports": []
+  },
+  "environment": {},
+  "addonDependencies": [
+    {
+      "addonId": "alraled-mysql"
+    }
+  ],
+  "trigger": {
+    "type": "manual"
+  }
+}
