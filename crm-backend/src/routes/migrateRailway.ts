@@ -18,12 +18,11 @@ router.get('/', async (req, res) => {
     const tableNames: string[] = (tables as any[]).map((t: any) => Object.values(t)[0] as string);
     const results: any[] = [];
 
-    // Step 1: Drop all tables (with foreign key checks disabled)
+    // Step 1: Drop all tables
     await pool.query('SET FOREIGN_KEY_CHECKS = 0');
     for (const table of tableNames) {
       await pool.query(`DROP TABLE IF EXISTS \`${table}\``);
     }
-    await pool.query('SET FOREIGN_KEY_CHECKS = 1');
 
     // Step 2: Create all tables
     for (const table of tableNames) {
@@ -46,7 +45,6 @@ router.get('/', async (req, res) => {
           continue;
         }
 
-        await pool.query('SET FOREIGN_KEY_CHECKS = 0');
         const columns = Object.keys(rowArr[0]);
         const colNames = columns.map(c => `\`${c}\``).join(', ');
         const placeholders = columns.map(() => '?').join(', ');
@@ -56,17 +54,17 @@ router.get('/', async (req, res) => {
           const values = columns.map(c => row[c]);
           await pool.query(insertSQL, values);
         }
-        await pool.query('SET FOREIGN_KEY_CHECKS = 1');
         results.push({ table, migrated: rowArr.length });
       } catch (err: any) {
-        await pool.query('SET FOREIGN_KEY_CHECKS = 1');
         results.push({ table, error: err.message });
       }
     }
 
+    await pool.query('SET FOREIGN_KEY_CHECKS = 1');
     await src.end();
     res.json({ success: true, tables: results });
   } catch (err: any) {
+    await pool.query('SET FOREIGN_KEY_CHECKS = 1');
     res.status(500).json({ error: err.message });
   }
 });
