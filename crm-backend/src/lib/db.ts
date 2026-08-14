@@ -11,8 +11,18 @@ if (!connectionUrl) {
   throw new Error('DATABASE_URL or MYSQL_URL is not set. Please add a MySQL database in Railway and link it.');
 }
 
-// Create the connection pool
-export const pool = mysql.createPool(connectionUrl);
+// Create the connection pool with SSL support
+const url = new URL(connectionUrl);
+const sslEnabled = url.searchParams.get('ssl') === 'true' || process.env.TLS_ENABLED === 'true';
+
+export const pool = mysql.createPool({
+  host: url.hostname,
+  port: Number(url.port) || 3306,
+  user: url.username,
+  password: url.password,
+  database: url.pathname.replace('/', ''),
+  ssl: sslEnabled ? { rejectUnauthorized: true } : undefined,
+});
 
 export const db = drizzle(pool, { schema, mode: 'default' });
 
