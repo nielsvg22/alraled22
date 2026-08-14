@@ -161,8 +161,8 @@ app.get('/', (req, res) => {
 // TEMPORARY: Migration endpoint
 app.get('/api/migrate-railway', async (req, res) => {
   try {
-    const mysql = require('mysql2/promise');
-    const source = await mysql.createConnection({
+    const mysql2 = await import('mysql2/promise');
+    const source = await mysql2.createConnection({
       host: 'nozomi.proxy.rlwy.net',
       port: 23687,
       user: 'root',
