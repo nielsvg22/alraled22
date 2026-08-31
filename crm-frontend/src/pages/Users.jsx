@@ -1,9 +1,128 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import api from '../lib/api';
-import { Shield, User, Search, Users, UserCheck, UserX, RefreshCw, Mail, Calendar, Crown } from 'lucide-react';
+import { Shield, User, Search, Users, UserCheck, UserX, RefreshCw, Mail, Calendar, Crown, KeyRound, Copy, Check, AlertTriangle } from 'lucide-react';
 import { errorText } from '../lib/errorText';
 
 const euro = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
+
+function formatDateTime(value) {
+  if (!value) return 'Nooit';
+  return new Date(value).toLocaleString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function ResetPasswordModal({ user, onClose, onSuccess }) {
+  const [mode, setMode] = useState('auto');
+  const [manualPassword, setManualPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [result, setResult] = useState(null); // { temporaryPassword }
+  const [copied, setCopied] = useState(false);
+
+  const handleSubmit = async () => {
+    setError('');
+    if (mode === 'manual' && manualPassword.length < 8) {
+      setError('Wachtwoord moet minimaal 8 tekens zijn');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const body = mode === 'auto' ? { mode: 'auto' } : { mode: 'manual', password: manualPassword };
+      const res = await api.post(`/auth/users/${user.id}/reset-password`, body);
+      setResult(res.data);
+      onSuccess?.(res.data.user);
+    } catch (err) {
+      setError(errorText(err, 'Wachtwoord resetten mislukt'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(result.temporaryPassword);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard not available; user can still select the text manually
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+      onClick={result ? undefined : onClose}>
+      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        {!result ? (
+          <>
+            <div className="px-6 py-5" style={{ background: 'linear-gradient(135deg,#0f172a,#1e293b)' }}>
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1">Wachtwoord resetten</p>
+              <h3 className="text-lg font-black text-white">{user.name || user.email}</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              {error && <div className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-red-600 text-xs font-medium">{error}</div>}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 p-3 rounded-xl border cursor-pointer" style={{ borderColor: mode === 'auto' ? '#1e40af' : '#e5e7eb', background: mode === 'auto' ? '#eff6ff' : '#fff' }}>
+                  <input type="radio" checked={mode === 'auto'} onChange={() => setMode('auto')} />
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">Automatisch genereren</p>
+                    <p className="text-xs text-gray-400">Sterk willekeurig wachtwoord (16 tekens)</p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-2 p-3 rounded-xl border cursor-pointer" style={{ borderColor: mode === 'manual' ? '#1e40af' : '#e5e7eb', background: mode === 'manual' ? '#eff6ff' : '#fff' }}>
+                  <input type="radio" checked={mode === 'manual'} onChange={() => setMode('manual')} />
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">Zelf tijdelijk wachtwoord invoeren</p>
+                    <p className="text-xs text-gray-400">Minimaal 8 tekens</p>
+                  </div>
+                </label>
+                {mode === 'manual' && (
+                  <input
+                    type="text"
+                    autoFocus
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Tijdelijk wachtwoord"
+                    value={manualPassword}
+                    onChange={e => setManualPassword(e.target.value)}
+                  />
+                )}
+              </div>
+              <div className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2.5 text-amber-700 text-xs font-medium flex items-start gap-2">
+                <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                <span>De gebruiker moet na inloggen direct zelf een nieuw persoonlijk wachtwoord kiezen. Bestaande sessies van deze gebruiker worden meteen ongeldig.</span>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-gray-600 border border-gray-200 hover:bg-gray-50">Annuleren</button>
+                <button onClick={handleSubmit} disabled={submitting}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60">
+                  {submitting ? 'Bezig…' : 'Wachtwoord resetten'}
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="px-6 py-5" style={{ background: 'linear-gradient(135deg,#065f46,#10b981)' }}>
+              <p className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em] mb-1">Nieuw wachtwoord</p>
+              <h3 className="text-lg font-black text-white">{user.name || user.email}</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 flex items-center justify-between gap-3">
+                <code className="text-sm font-mono font-bold text-gray-900 break-all">{result.temporaryPassword}</code>
+                <button onClick={handleCopy} className="shrink-0 p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50">
+                  {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} className="text-gray-500" />}
+                </button>
+              </div>
+              <div className="rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-red-700 text-xs font-semibold flex items-start gap-2">
+                <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                <span>Dit wachtwoord wordt slechts één keer weergegeven. Kopieer het voordat je dit venster sluit — het kan daarna niet opnieuw worden opgehaald.</span>
+              </div>
+              <button onClick={onClose} className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-gray-900 hover:bg-gray-800">Sluiten</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function StatCard({ label, value, gradient, icon: Icon }) {
   return (
@@ -45,7 +164,7 @@ function RoleBadge({ role }) {
   );
 }
 
-function UserModal({ user, orders, onClose }) {
+function UserModal({ user, orders, onClose, onResetPassword, resetByName }) {
   const total = orders.reduce((s, o) => s + o.total, 0);
 
   return (
@@ -106,6 +225,42 @@ function UserModal({ user, orders, onClose }) {
             </div>
           </div>
 
+          {/* Beveiliging */}
+          <div className="rounded-2xl p-4 space-y-3" style={{ background:'#f8fafc', border:'1px solid #f1f5f9' }}>
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Beveiliging</p>
+              {user.mustChangePassword ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-100">
+                  <AlertTriangle size={10} /> Moet wachtwoord wijzigen
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  Actief
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <p className="text-gray-400 font-semibold mb-0.5">Laatste login</p>
+                <p className="text-gray-800 font-medium">{formatDateTime(user.lastLoginAt)}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-semibold mb-0.5">Laatste wachtwoordwijziging</p>
+                <p className="text-gray-800 font-medium">{formatDateTime(user.passwordChangedAt)}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-gray-400 font-semibold mb-0.5">Laatste wachtwoordreset door AIG</p>
+                <p className="text-gray-800 font-medium">
+                  {user.passwordResetAt ? `${formatDateTime(user.passwordResetAt)}${resetByName ? ` door ${resetByName}` : ''}` : 'Nooit'}
+                </p>
+              </div>
+            </div>
+            <button onClick={() => onResetPassword(user)}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white bg-gray-900 hover:bg-gray-800 transition-colors">
+              <KeyRound size={14} /> Wachtwoord resetten
+            </button>
+          </div>
+
           {/* Orders */}
           {orders.length > 0 && (
             <div>
@@ -148,6 +303,13 @@ export default function UsersPage() {
   const [search, setSearch]     = useState('');
   const [roleFilter, setRole]   = useState('ALL');
   const [selected, setSelected] = useState(null);
+  const [resetUser, setResetUser] = useState(null);
+
+  const resetByName = (u) => {
+    if (!u?.passwordResetByUserId) return '';
+    const resetter = users.find(x => x.id === u.passwordResetByUserId);
+    return resetter?.name || resetter?.email || '';
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -306,7 +468,35 @@ export default function UsersPage() {
       </div>
 
       {selected && (
-        <UserModal user={selected.user} orders={selected.orders} onClose={() => setSelected(null)} />
+        <UserModal
+          user={selected.user}
+          orders={selected.orders}
+          onClose={() => setSelected(null)}
+          onResetPassword={setResetUser}
+          resetByName={resetByName(selected.user)}
+        />
+      )}
+
+      {resetUser && (
+        <ResetPasswordModal
+          user={resetUser}
+          onClose={() => { setResetUser(null); fetchData(); }}
+          onSuccess={(updated) => {
+            if (selected?.user?.id === updated.id) {
+              setSelected(sel => ({
+                ...sel,
+                user: {
+                  ...sel.user,
+                  mustChangePassword: updated.security.mustChangePassword ? 1 : 0,
+                  lastLoginAt: updated.security.lastLoginAt,
+                  passwordChangedAt: updated.security.passwordChangedAt,
+                  passwordResetAt: updated.security.passwordResetAt,
+                  passwordResetByUserId: updated.security.passwordResetBy?.id ?? null,
+                },
+              }));
+            }
+          }}
+        />
       )}
     </div>
   );

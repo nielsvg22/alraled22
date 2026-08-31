@@ -3,12 +3,10 @@ import api from '../lib/api';
 
 const AuthContext = createContext();
 
-// TODO: TEMP – bypass auth for testing. Remove this and restore the original bootstrapAuth block.
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState({ id: 'dev', name: 'Dev Admin', email: 'dev@test.local', role: 'ADMIN' });
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  /* Original bootstrapAuth – uncomment to restore login:
   useEffect(() => {
     const bootstrapAuth = async () => {
       try {
@@ -45,7 +43,6 @@ export const AuthProvider = ({ children }) => {
 
     bootstrapAuth();
   }, []);
-  */
 
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
@@ -63,6 +60,14 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
+  const changePassword = async (currentPassword, newPassword) => {
+    const res = await api.post('/auth/change-password', { currentPassword, newPassword });
+    localStorage.setItem('token', res.data.token);
+    localStorage.setItem('user', JSON.stringify(res.data.user));
+    setUser(res.data.user);
+    return res.data;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -70,7 +75,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading, isAdmin: user?.role === 'ADMIN' }}>
+    <AuthContext.Provider value={{
+      user,
+      login,
+      register,
+      changePassword,
+      logout,
+      loading,
+      isAdmin: user?.role === 'ADMIN',
+      mustChangePassword: !!user?.security?.mustChangePassword,
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -19,6 +19,12 @@ export const users = mysqlTable('User', {
   name: varchar('name', { length: 255 }),
   role: mysqlEnum('role', ['USER', 'ADMIN']).notNull().default('USER'),
   customerGroupId: varchar('customerGroupId', { length: 36 }).references(() => customerGroups.id, { onDelete: 'set null' }),
+  mustChangePassword: int('mustChangePassword').notNull().default(0),
+  sessionVersion: int('sessionVersion').notNull().default(1),
+  passwordChangedAt: timestamp('passwordChangedAt'),
+  passwordResetAt: timestamp('passwordResetAt'),
+  passwordResetByUserId: varchar('passwordResetByUserId', { length: 36 }),
+  lastLoginAt: timestamp('lastLoginAt'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });

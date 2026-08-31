@@ -36,6 +36,24 @@ export async function runMigrations(): Promise<void> {
       }
     }
 
+    // Add password-security columns to User
+    const userColumns = [
+      { name: 'mustChangePassword', def: 'int NOT NULL DEFAULT 0' },
+      { name: 'sessionVersion', def: 'int NOT NULL DEFAULT 1' },
+      { name: 'passwordChangedAt', def: 'timestamp NULL' },
+      { name: 'passwordResetAt', def: 'timestamp NULL' },
+      { name: 'passwordResetByUserId', def: 'varchar(36)' },
+      { name: 'lastLoginAt', def: 'timestamp NULL' },
+    ];
+
+    for (const col of userColumns) {
+      try {
+        await conn.execute(`ALTER TABLE \`User\` ADD COLUMN \`${col.name}\` ${col.def}`);
+      } catch {
+        // Column already exists
+      }
+    }
+
     // Add foreign key if not exists
     try {
       await conn.execute(

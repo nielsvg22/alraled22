@@ -46,6 +46,12 @@ export async function listUsers() {
       customerGroupId: true,
       createdAt: true,
       updatedAt: true,
+      mustChangePassword: true,
+      sessionVersion: true,
+      passwordChangedAt: true,
+      passwordResetAt: true,
+      passwordResetByUserId: true,
+      lastLoginAt: true,
     },
     with: { customerGroup: true },
     orderBy: (u, { desc }) => [desc(u.createdAt)],
@@ -75,6 +81,36 @@ export async function createUser(input: { email: string; name: string; password:
 
 export async function verifyPassword(user: { password: string }, password: string): Promise<boolean> {
   return bcrypt.compare(password, user.password);
+}
+
+export async function touchLastLogin(userId: string) {
+  await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, userId));
+}
+
+/** Self-service password change (user already knows their current password). */
+export async function setOwnPassword(userId: string, passwordHash: string) {
+  await db.update(users).set({
+    password: passwordHash,
+    passwordChangedAt: new Date(),
+    mustChangePassword: 0,
+    sessionVersion: sql`${users.sessionVersion} + 1`,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+  return await findUserByIdWithGroup(userId);
+}
+
+/** Admin-initiated reset: sets a new (temporary) password and forces the user to change it on next login. */
+export async function adminResetPassword(userId: string, passwordHash: string, resetByUserId: string) {
+  await db.update(users).set({
+    password: passwordHash,
+    passwordChangedAt: new Date(),
+    passwordResetAt: new Date(),
+    passwordResetByUserId: resetByUserId,
+    mustChangePassword: 1,
+    sessionVersion: sql`${users.sessionVersion} + 1`,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+  return await findUserByIdWithGroup(userId);
 }
 
 export async function setUserCustomerGroup(userId: string, customerGroupId: string | null) {
