@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
 import { useAuth } from '../lib/AuthContext';
 import api from '../lib/api';
-import { formatPrice } from '../lib/productHelpers';
+import { formatPrice, getImageSrc } from '../lib/productHelpers';
 
 const statusLabel = {
   PENDING: 'In behandeling',
@@ -150,7 +150,7 @@ const Account = () => {
                         {order.items.map((item) => (
                           <div key={item.id} className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
                             {item.product?.imageUrl && (
-                              <img src={item.product.imageUrl} alt={item.product.name} className="w-8 h-8 rounded-lg object-cover" />
+                              <img src={getImageSrc(item.product)} alt={item.product.name} className="w-8 h-8 rounded-lg object-cover" />
                             )}
                             <span className="text-xs font-black text-secondary uppercase italic">{item.product?.name}</span>
                             <span className="text-[10px] text-gray-400 font-bold">x{item.quantity}</span>

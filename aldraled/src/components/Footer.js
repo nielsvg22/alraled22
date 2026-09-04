@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
-import { API_URL } from '../lib/api';
+import { API_URL, getMediaUrl } from '../lib/api';
 import { ROUTES, FOOTER_NAV_LINKS } from '../lib/routes';
 
 const DEFAULTS = {
@@ -67,7 +67,7 @@ const Footer = () => {
           <div className="md:col-span-1 space-y-4">
             <Link to={ROUTES.home} className="block">
               {general.logoUrl ? (
-                <img src={general.logoUrl} alt="ALRA LED" className="h-10 w-auto" loading="lazy" decoding="async" />
+                <img src={getMediaUrl(general.logoUrl)} alt="ALRA LED" className="h-10 w-auto" loading="lazy" decoding="async" />
               ) : (
                 <span className="text-xl font-black tracking-tight">
                   ALRA<span className="text-primary">LED</span>

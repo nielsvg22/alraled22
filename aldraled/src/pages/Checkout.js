@@ -3,7 +3,7 @@ import { useCart } from '../lib/CartContext';
 import { useAuth } from '../lib/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
-import api from '../lib/api';
+import api, { getMediaUrl } from '../lib/api';
 import analytics from '../lib/analytics';
 import { getImageSrc, formatPrice } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
@@ -271,7 +271,7 @@ const Checkout = () => {
                         <input type="radio" name="shipping" checked={selectedMethod?.id === m.id} onChange={() => setSelectedMethod(m)} className="w-4 h-4 text-primary" />
                         {m.carrier?.logo ? (
                           <img
-                            src={m.carrier.logo}
+                            src={getMediaUrl(m.carrier.logo)}
                             alt={m.carrier?.name || ''}
                             className="w-10 h-10 object-contain shrink-0"
                             onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}

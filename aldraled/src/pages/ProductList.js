@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
-import { API_URL } from '../lib/api';
+import { API_URL, getMediaUrl } from '../lib/api';
 import { getImageSrc, formatPrice } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
 import { ROUTES } from '../lib/routes';
@@ -211,7 +211,7 @@ const ProductList = () => {
   // 2. eerste productfoto binnen die categorie
   // 3. anders de eerste beschikbare productfoto in de webshop
   const imageForCat = (cat) => {
-    if (cat && cat.imageUrl) return cat.imageUrl;
+    if (cat && cat.imageUrl) return getMediaUrl(cat.imageUrl);
     const pick = (p) => {
       if (!p) return null;
       const src = getImageSrc(p);

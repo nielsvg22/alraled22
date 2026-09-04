@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import Counter from '../components/Counter';
 import CustomBlocks from '../components/CustomBlocks';
+import { getMediaUrl } from '../lib/api';
 import { ROUTES } from '../lib/routes';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -104,7 +105,7 @@ const About = () => {
               <div className="absolute -inset-6 bg-gradient-to-br from-primary/10 via-primary/5 to-accent/5 rounded-3xl blur-2xl" />
               <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl group">
                 <img
-                  src={data.image}
+                  src={getMediaUrl(data.image)}
                   alt="ALRA LED Team"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   loading="lazy"

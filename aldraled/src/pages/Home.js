@@ -6,6 +6,7 @@ import LogoCarousel from '../components/LogoCarousel';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { getImageSrc, formatPrice } from '../lib/productHelpers';
+import { getMediaUrl } from '../lib/api';
 import { ROUTES } from '../lib/routes';
 
 const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
@@ -210,7 +211,7 @@ const Home = () => {
       return (
         <section className="relative min-h-[75vh] flex flex-col justify-end overflow-hidden">
           <div className="absolute inset-0">
-            <img src={hero.backgroundImage} alt="" className="w-full h-full object-cover" />
+            <img src={getMediaUrl(hero.backgroundImage)} alt="" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/60 to-secondary/10" />
           </div>
 
@@ -345,7 +346,7 @@ const Home = () => {
                 <div className="absolute -inset-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-3xl blur-2xl" />
                 <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
                   <img
-                    src={is.image || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600"}
+                    src={getMediaUrl(is.image) || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600"}
                     alt={is.heading}
                     className="w-full h-full object-cover"
                     loading="lazy"
@@ -407,7 +408,7 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {specializations.map((cat, idx) => (
                 <Link to={ROUTES.shop} key={idx} className="group relative overflow-hidden rounded-2xl aspect-[4/3] block bg-gray-200">
-                  <img src={cat.image} alt={cat.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" />
+                  <img src={getMediaUrl(cat.image)} alt={cat.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" />
                   <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 p-6">
                     <h3 className="text-white font-black text-lg leading-tight">{cat.title}</h3>
@@ -579,7 +580,7 @@ const Home = () => {
                   <div className={`relative overflow-hidden group ${idx % 2 === 1 ? 'lg:order-2' : ''}`}>
                     <div className="aspect-[4/3] lg:aspect-auto lg:h-full">
                       <img
-                        src={item.image}
+                        src={getMediaUrl(item.image)}
                         alt={item.title}
                         className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                         loading="lazy"
