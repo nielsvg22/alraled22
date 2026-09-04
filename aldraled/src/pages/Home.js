@@ -5,7 +5,7 @@ import CustomBlocks from '../components/CustomBlocks';
 import LogoCarousel from '../components/LogoCarousel';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
-import { getImageSrc, formatPrice } from '../lib/productHelpers';
+import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { getMediaUrl } from '../lib/api';
 import { ROUTES } from '../lib/routes';
 
@@ -451,7 +451,7 @@ const Home = () => {
                 <Link key={product.id} to={ROUTES.product(product.id)} className="group block">
                   <div className="relative aspect-square overflow-hidden rounded-xl bg-gray-100 mb-3">
                     <img
-                      src={getImageSrc(product, 'https://via.placeholder.com/400')}
+                      src={getImageSrc(product, PLACEHOLDER_IMAGE)}
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       loading="lazy"

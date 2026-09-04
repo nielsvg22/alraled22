@@ -1,4 +1,4 @@
-import { getMediaUrl } from './api';
+import { getMediaUrl, PLACEHOLDER_IMAGE } from './api';
 
 const priceFormatter = new Intl.NumberFormat('nl-NL', {
   style: 'currency',
@@ -23,7 +23,9 @@ export function getPrimaryImage(product) {
   return getProductImages(product)[0] || null;
 }
 
-export function getImageSrc(product, placeholder = 'https://via.placeholder.com/800') {
+export function getImageSrc(product, placeholder = PLACEHOLDER_IMAGE) {
   const url = getPrimaryImage(product);
   return getMediaUrl(url) || placeholder;
 }
+
+export { PLACEHOLDER_IMAGE };

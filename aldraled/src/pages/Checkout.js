@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
 import api, { getMediaUrl } from '../lib/api';
 import analytics from '../lib/analytics';
-import { getImageSrc, formatPrice } from '../lib/productHelpers';
+import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
 
 const Checkout = () => {
@@ -170,7 +170,7 @@ const Checkout = () => {
                   {cartItems.map((item) => (
                     <div key={item.id} className="p-5 flex gap-4">
                       <div className="w-16 h-16 bg-gray-50 rounded-xl overflow-hidden shrink-0 border border-gray-100">
-                        <img src={getImageSrc(item, 'https://via.placeholder.com/150')} alt={item.name} className="w-full h-full object-contain p-1.5" />
+                        <img src={getImageSrc(item, PLACEHOLDER_IMAGE)} alt={item.name} className="w-full h-full object-contain p-1.5" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-3">
@@ -307,7 +307,7 @@ const Checkout = () => {
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex gap-3">
                       <div className="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden shrink-0 border border-gray-100 relative">
-                        <img src={getImageSrc(item, 'https://via.placeholder.com/100')} alt={item.name} className="w-full h-full object-contain p-1" />
+                        <img src={getImageSrc(item, PLACEHOLDER_IMAGE)} alt={item.name} className="w-full h-full object-contain p-1" />
                         <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                           {item.quantity}
                         </span>

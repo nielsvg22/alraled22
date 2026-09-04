@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useCart } from '../lib/CartContext';
 import { getMediaUrl, API_URL } from '../lib/api';
 import analytics from '../lib/analytics';
-import { getProductImages, getImageSrc, formatPrice } from '../lib/productHelpers';
+import { getProductImages, getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
 import QuoteModal from '../components/QuoteModal';
 
@@ -156,7 +156,7 @@ const ProductDetail = () => {
           <div className="lg:col-span-6 space-y-3">
             <div className="relative aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 group">
               <img
-                src={getMediaUrl(images[selectedImage] || product.imageUrl) || 'https://via.placeholder.com/800'}
+                src={getMediaUrl(images[selectedImage] || product.imageUrl) || PLACEHOLDER_IMAGE}
                 alt={product.name}
                 className="w-full h-full object-contain p-8 md:p-12 transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"

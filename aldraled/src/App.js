@@ -8,6 +8,7 @@ import Layout from './components/Layout';
 import ChatBubble from './components/ChatBubble';
 import PasswordWall from './components/PasswordWall';
 import analytics from './lib/analytics';
+import { PLACEHOLDER_IMAGE } from './lib/api';
 import './App.css';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -84,6 +85,22 @@ function PageLoader() {
   );
 }
 
+// Vangt overal afbeeldingen op die niet laden (404/offline) en toont een
+// nette lokale placeholder in plaats van een kapot afbeelding-icoon.
+function GlobalImageFallback() {
+  React.useEffect(() => {
+    const handler = (e) => {
+      const t = e.target;
+      if (t && t.tagName === 'IMG' && t.src && !t.src.startsWith('data:')) {
+        t.src = PLACEHOLDER_IMAGE;
+      }
+    };
+    document.addEventListener('error', handler, true);
+    return () => document.removeEventListener('error', handler, true);
+  }, []);
+  return null;
+}
+
 function App() {
   return (
     <HelmetProvider>
@@ -93,6 +110,7 @@ function App() {
             <Router>
               <ThemeLoader />
               <RouteTracker />
+              <GlobalImageFallback />
               <PasswordWall>
                 <Layout>
                   <Suspense fallback={<PageLoader />}>

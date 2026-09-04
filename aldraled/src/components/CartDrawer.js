@@ -3,7 +3,7 @@ import { useCart } from '../lib/CartContext';
 import { Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
 import { useTranslation } from 'react-i18next';
-import { getImageSrc, formatPrice } from '../lib/productHelpers';
+import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 
 const CartDrawer = () => {
   const { t } = useTranslation();
@@ -49,7 +49,7 @@ const CartDrawer = () => {
                 <div key={item.id} className="flex gap-6 group">
                   <div className="w-24 h-24 bg-gray-50 rounded-2xl overflow-hidden shrink-0">
                     <img
-                      src={getImageSrc(item, 'https://via.placeholder.com/150')}
+                      src={getImageSrc(item, PLACEHOLDER_IMAGE)}
                       alt={item.name}
                       className="w-full h-full object-contain"
                       loading="lazy"

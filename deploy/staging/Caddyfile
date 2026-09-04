@@ -9,6 +9,10 @@
     reverse_proxy api:5000
   }
 
+  handle_path /uploads/* {
+    reverse_proxy api:5000
+  }
+
   handle_path /crm/* {
     root * /srv/crm
     try_files {path} /index.html
