@@ -206,6 +206,25 @@ const ProductList = () => {
     return matchesSearch && matchesCat;
   });
 
+  // Kies een bestaande foto voor een productgroep-card:
+  // 1. eigen categorie-afbeelding (cat.imageUrl)
+  // 2. eerste productfoto binnen die categorie
+  // 3. anders de eerste beschikbare productfoto in de webshop
+  const imageForCat = (cat) => {
+    if (cat && cat.imageUrl) return cat.imageUrl;
+    const pick = (p) => {
+      if (!p) return null;
+      const src = getImageSrc(p);
+      return src && !String(src).includes('placeholder') ? src : null;
+    };
+    if (cat && cat.id && cat.id !== 'Alle') {
+      const byId = products.find(p => p.categoryId === cat.id);
+      const byName = products.find(p => (p.category || '').toLowerCase() === String(cat.name || '').toLowerCase());
+      return pick(byId) || pick(byName) || null;
+    }
+    return pick(products.find(p => pick(p)));
+  };
+
   const scrollToProducts = () => {
     setTimeout(() => gridAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
@@ -271,6 +290,7 @@ const ProductList = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {[{ id: 'Alle', name: 'Alle producten', slug: '', productCount: products.length }, ...categories].map((cat) => {
                 const isActive = activeCategory === cat.id;
+                const cardImage = imageForCat(cat);
                 return (
                   <button
                     key={cat.id}
@@ -280,8 +300,8 @@ const ProductList = () => {
                     className={`group text-left bg-white rounded-2xl border overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${isActive ? 'border-secondary ring-1 ring-secondary' : 'border-gray-100 hover:border-primary/40'}`}
                   >
                     <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50 overflow-hidden">
-                      {cat.imageUrl ? (
-                        <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async" />
+                      {cardImage ? (
+                        <img src={cardImage} alt={cat.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async" />
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center text-4xl text-gray-300">🛍️</div>
                       )}
