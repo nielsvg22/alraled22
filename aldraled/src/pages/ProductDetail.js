@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { ROUTES } from "../lib/routes";
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
 import { getMediaUrl, API_URL } from '../lib/api';
@@ -99,7 +100,7 @@ const ProductDetail = () => {
   if (!product) return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50">
       <p className="text-gray-400 font-medium">Product niet gevonden</p>
-      <Link to="/producten" className="text-sm font-bold text-gray-600 underline hover:text-gray-900">Terug naar shop</Link>
+      <Link to={ROUTES.shop} className="text-sm font-bold text-gray-600 underline hover:text-gray-900">Terug naar shop</Link>
     </div>
   );
 
@@ -139,9 +140,9 @@ const ProductDetail = () => {
       {/* ─── BREADCRUMB ─── */}
       <div className="border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-2.5 flex items-center gap-1.5 text-[11px] text-gray-400">
-          <Link to="/" className="hover:text-gray-700 transition-colors">Home</Link>
+          <Link to={ROUTES.home} className="hover:text-gray-700 transition-colors">Home</Link>
           <span className="text-gray-300">/</span>
-          <Link to="/producten" className="hover:text-gray-700 transition-colors">Webshop</Link>
+          <Link to={ROUTES.shop} className="hover:text-gray-700 transition-colors">Webshop</Link>
           <span className="text-gray-300">/</span>
           <span className="text-gray-700 truncate max-w-[200px]">{product.name}</span>
         </div>
@@ -395,7 +396,7 @@ const ProductDetail = () => {
                 <h2 className="text-lg font-bold text-gray-900 mb-5">Alternatieven</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {related.map(p => (
-                    <Link key={p.id} to={`/product/${p.id}`} className="group block">
+                    <Link key={p.id} to={ROUTES.product(p.id)} className="group block">
                       <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 mb-3">
                         <img src={getImageSrc(p)} alt={p.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" />
                       </div>

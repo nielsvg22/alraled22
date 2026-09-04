@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
 import { API_URL } from '../lib/api';
 import { getImageSrc, formatPrice } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
+import { ROUTES } from '../lib/routes';
 
 /* ── QUICK-VIEW MODAL ─────────────────────────── */
 function QuickViewModal({ product, onClose }) {
@@ -61,7 +62,7 @@ function QuickViewModal({ product, onClose }) {
                 {added ? '✓ Toegevoegd' : 'In winkelwagen'}
               </button>
             </div>
-            <Link to={`/product/${product.id}`} onClick={onClose} className="text-center text-xs font-bold text-gray-400 hover:text-primary transition-colors">
+            <Link to={ROUTES.product(product.id)} onClick={onClose} className="text-center text-xs font-bold text-gray-400 hover:text-primary transition-colors">
               Volledige productpagina →
             </Link>
           </div>
@@ -154,7 +155,7 @@ function CompareModal({ list, onClose }) {
             <div />
             {list.map(p => (
               <div key={p.id} className="text-center">
-                <Link to={`/product/${p.id}`} onClick={onClose}
+                <Link to={ROUTES.product(p.id)} onClick={onClose}
                   className="block bg-secondary text-white text-xs font-bold py-2.5 rounded-xl hover:bg-primary transition-all">
                   Bekijk product →
                 </Link>
@@ -178,7 +179,8 @@ const ProductList = () => {
   const [compareList, setCompareList] = useState([]);
   const [showCompare, setShowCompare] = useState(false);
   const [showInclVat, setShowInclVat] = useState(false);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const gridAnchorRef = useRef(null);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products`)
@@ -203,6 +205,26 @@ const ProductList = () => {
     const matchesCat = activeCategory === 'Alle' || p.categoryId === activeCategory || (p.category || '').toLowerCase() === String(activeCategory).toLowerCase();
     return matchesSearch && matchesCat;
   });
+
+  const scrollToProducts = () => {
+    setTimeout(() => gridAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  };
+
+  const selectAllCategories = () => {
+    setActiveCategory('Alle');
+    setSearchParams({});
+    scrollToProducts();
+  };
+
+  const handleCategorySelect = (cat) => {
+    if (cat.id === 'Alle') {
+      selectAllCategories();
+      return;
+    }
+    setActiveCategory(cat.id);
+    setSearchParams({ categorie: cat.slug || cat.id });
+    scrollToProducts();
+  };
 
   const [compareLimitWarning, setCompareLimitWarning] = useState(false);
 
@@ -230,8 +252,58 @@ const ProductList = () => {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 md:px-10 py-8">
+        {/* Subgroepen / productcategorieën */}
+        {categories.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-end justify-between gap-4 mb-6">
+              <div>
+                <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Productgroepen</p>
+                <h2 className="text-2xl md:text-3xl font-black text-secondary">Kies uw productgroep</h2>
+              </div>
+              <button
+                type="button"
+                onClick={selectAllCategories}
+                className="hidden md:flex items-center gap-1 text-xs font-bold text-secondary hover:text-primary transition-colors uppercase tracking-widest shrink-0"
+              >
+                Alle producten <span>&rarr;</span>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[{ id: 'Alle', name: 'Alle producten', slug: '', productCount: products.length }, ...categories].map((cat) => {
+                const isActive = activeCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => handleCategorySelect(cat)}
+                    aria-pressed={isActive}
+                    className={`group text-left bg-white rounded-2xl border overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${isActive ? 'border-secondary ring-1 ring-secondary' : 'border-gray-100 hover:border-primary/40'}`}
+                  >
+                    <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50 overflow-hidden">
+                      {cat.imageUrl ? (
+                        <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-4xl text-gray-300">🛍️</div>
+                      )}
+                      {typeof cat.productCount === 'number' && (
+                        <span className="absolute top-3 left-3 bg-white/95 backdrop-blur text-[10px] font-bold text-secondary px-2.5 py-1 rounded-full shadow-sm">
+                          {cat.productCount} producten
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-4 flex items-center justify-between gap-2">
+                      <span className={`text-sm font-bold leading-snug truncate transition-colors ${isActive ? 'text-secondary' : 'text-secondary group-hover:text-primary'}`}>{cat.name}</span>
+                      <span className="w-6 h-6 rounded-full bg-gray-50 group-hover:bg-primary group-hover:text-white flex items-center justify-center text-gray-300 text-xs transition-all shrink-0">&rarr;</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pb-6 border-b border-gray-100 mb-8">
+        <div ref={gridAnchorRef} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pb-6 border-b border-gray-100 mb-8">
           <div className="flex flex-wrap gap-2 flex-1">
             <button onClick={() => setActiveCategory('Alle')}
               className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeCategory === 'Alle' ? 'bg-secondary text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
@@ -320,7 +392,7 @@ const ProductList = () => {
                     👁
                   </button>
 
-                  <Link to={`/product/${product.id}`} className="block">
+                  <Link to={ROUTES.product(product.id)} className="block">
                     <div className={`relative overflow-hidden rounded-xl bg-gray-50 aspect-square mb-3 border-2 transition-all duration-200 ${inCompare ? 'border-primary' : 'border-gray-100'}`}>
                       <img src={getImageSrc(product)} alt={product.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async" />

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useCart } from '../lib/CartContext';
 import { Link } from 'react-router-dom';
+import { ROUTES } from "../lib/routes";
 import { useTranslation } from 'react-i18next';
 import { getImageSrc, formatPrice } from '../lib/productHelpers';
 
@@ -84,7 +85,7 @@ const CartDrawer = () => {
                 {t('cart.shippingNote')}
               </p>
               <Link
-                to="/checkout"
+                to={ROUTES.checkout}
                 onClick={() => setIsCartOpen(false)}
                 className="block w-full bg-primary text-white text-center py-6 rounded-[2rem] font-black text-xl uppercase italic shadow-2xl hover:scale-[1.02] transition-all"
               >

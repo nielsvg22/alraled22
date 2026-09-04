@@ -6,6 +6,7 @@ import axios from 'axios';
 import { useTranslation, Trans } from 'react-i18next';
 import { getMediaUrl, API_URL } from '../lib/api';
 import { formatPrice } from '../lib/productHelpers';
+import { ROUTES, shopWithCategory, NAV_LINKS } from '../lib/routes';
 
 const DEFAULT_GENERAL = {
   tagline: '',
@@ -77,7 +78,7 @@ function LiveSearch() {
           {results.map(product => (
             <Link
               key={product.id}
-              to={`/product/${product.id}`}
+              to={ROUTES.product(product.id)}
               onClick={() => { setQuery(''); setOpen(false); }}
               className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
             >
@@ -95,7 +96,7 @@ function LiveSearch() {
             </Link>
           ))}
           <Link
-            to={`/producten`}
+            to={ROUTES.shop}
             onClick={() => { setQuery(''); setOpen(false); }}
             className="block px-4 py-2.5 text-center text-xs font-bold text-primary hover:bg-primary/5 transition-colors border-t border-gray-100"
           >
@@ -171,12 +172,7 @@ const Header = () => {
   ];
   const activeLanguage = languages.find(l => l.code === languageCode) || languages[0];
 
-  const navLinks = [
-    { to: '/', label: t('nav.home') },
-    { to: '/over-ons', label: t('nav.about') },
-    { to: '/blog', label: t('nav.blog') },
-    { to: '/contact', label: t('nav.contact') },
-  ];
+  const navLinks = NAV_LINKS.map(({ to, labelKey }) => ({ to, label: t(labelKey) }));
 
   return (
     <>
@@ -224,9 +220,9 @@ const Header = () => {
             )}
           </div>
           {user ? (
-            <Link to="/account" className="font-semibold text-primary hover:text-white transition-colors">{user.username}</Link>
+            <Link to={ROUTES.account} className="font-semibold text-primary hover:text-white transition-colors">{user.username}</Link>
           ) : (
-            <Link to="/login" className="font-semibold text-white/60 hover:text-primary transition-colors">{t('nav.login')}</Link>
+            <Link to={ROUTES.login} className="font-semibold text-white/60 hover:text-primary transition-colors">{t('nav.login')}</Link>
           )}
         </div>
       </div>
@@ -236,7 +232,7 @@ const Header = () => {
         <div className="max-w-6xl mx-auto px-4 md:px-10 h-12 flex items-center justify-between gap-4">
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
+          <Link to={ROUTES.home} className="flex items-center gap-2 shrink-0">
             {general.logoUrl ? (
               <img src={general.logoUrl} alt="ALRA LED" className="h-8 w-auto" />
             ) : (
@@ -260,7 +256,7 @@ const Header = () => {
             <li className="relative"
               onMouseEnter={() => { clearTimeout(closeTimeoutRef.current); setShowCategories(true); }}
               onMouseLeave={() => { closeTimeoutRef.current = setTimeout(() => { setShowCategories(false); setHoveredCategory(null); }, 150); }}>
-              <Link to="/producten"
+              <Link to={ROUTES.shop}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 ${isActive('/producten') ? 'text-primary bg-primary/5' : 'text-gray-600 hover:text-secondary hover:bg-gray-50'}`}>
                 {t('nav.products')}
                 <svg className={`w-3 h-3 transition-transform ${showCategories ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -294,7 +290,7 @@ const Header = () => {
             </button>
 
             {/* CTA */}
-            <Link to="/producten" className="hidden md:flex bg-secondary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary transition-all ml-1">
+            <Link to={ROUTES.shop} className="hidden md:flex bg-secondary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary transition-all ml-1">
               {t('nav.shopNow')}
             </Link>
 
@@ -320,7 +316,7 @@ const Header = () => {
             <div className="max-w-6xl mx-auto flex" style={{ minHeight: '360px' }}>
               {/* Left: category sidebar */}
               <div className="w-[280px] border-r border-gray-100 py-1 shrink-0">
-                <Link to="/producten" onClick={() => setShowCategories(false)}
+                <Link to={ROUTES.shop} onClick={() => setShowCategories(false)}
                   className="flex items-center justify-between px-6 py-3.5 text-sm font-bold text-gray-900 hover:bg-gray-50 transition-colors border-b border-gray-100">
                   <span>Alle producten</span>
                   <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -330,7 +326,7 @@ const Header = () => {
                 {categories.map(cat => (
                   <Link
                     key={cat.id}
-                    to={`/producten?categorie=${cat.slug || cat.id}`}
+                    to={shopWithCategory(cat)}
                     onClick={() => setShowCategories(false)}
                     onMouseEnter={() => setHoveredCategory(cat)}
                     className="flex items-center justify-between px-6 py-3.5 text-[13px] font-semibold transition-all duration-150 border-b border-gray-50 last:border-0 group"
@@ -399,7 +395,7 @@ const Header = () => {
         {/* Mobile menu */}
         {mobileOpen && (
           <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-1">
-            <Link to="/producten"
+            <Link to={ROUTES.shop}
               className={`block px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive('/producten') ? 'text-primary bg-primary/5' : 'text-gray-600 hover:bg-gray-50'}`}>
               {t('nav.products')}
             </Link>
@@ -412,7 +408,7 @@ const Header = () => {
                   {categories.map(cat => (
                     <Link
                       key={cat.id}
-                      to={`/producten?categorie=${cat.slug || cat.id}`}
+                      to={shopWithCategory(cat)}
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gray-50 hover:bg-primary/5 border border-gray-100 hover:border-primary/20 transition-all group"
                     >
@@ -427,7 +423,7 @@ const Header = () => {
                   ))}
                 </div>
                 <Link
-                  to="/producten"
+                  to={ROUTES.shop}
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center justify-center gap-2 mx-2 mt-3 px-4 py-2.5 rounded-xl border border-dashed border-gray-300 hover:border-primary/40 hover:bg-primary/5 text-xs font-semibold text-gray-500 hover:text-primary transition-all"
                 >
@@ -447,7 +443,7 @@ const Header = () => {
                 {label}
               </Link>
             ))}
-            <Link to="/account" className="block px-4 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">
+            <Link to={ROUTES.account} className="block px-4 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">
               {user ? `${t('nav.account')} (${user.username})` : t('nav.login')}
             </Link>
           </div>

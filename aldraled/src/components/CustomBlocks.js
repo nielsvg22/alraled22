@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { ROUTES } from "../lib/routes";
 import { getMediaUrl } from '../lib/api';
 
 /* ─────────────────────────────────────────────────────────
@@ -7,6 +8,31 @@ import { getMediaUrl } from '../lib/api';
    Contact, Blog and any future page.
    Each block: { id, type, data, visible }
 ───────────────────────────────────────────────────────── */
+
+// Split tekst op regeleindes en <br> naar losse alinea's zodat lange
+// blokken leesbaar worden in plaats van één groot tekstblok.
+function splitParagraphs(text) {
+  if (!text) return [];
+  return String(text)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .split(/\n{1,}/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function Paragraphs({ text, className = '', align = 'text-left', space = 'space-y-5' }) {
+  const paragraphs = splitParagraphs(text);
+  if (paragraphs.length <= 1) {
+    return <p className={`${className} ${align} leading-relaxed`}>{text}</p>;
+  }
+  return (
+    <div className={space}>
+      {paragraphs.map((p, i) => (
+        <p key={i} className={`${className} ${align} leading-relaxed`}>{p}</p>
+      ))}
+    </div>
+  );
+}
 
 /* ── Banner ──────────────────────────────────────────── */
 function BannerBlock({ data }) {
@@ -33,7 +59,7 @@ function BannerBlock({ data }) {
         )}
         {data.buttonText && (
           <div className="pt-2">
-            <Link to="/contact"
+            <Link to={ROUTES.contact}
               className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-gray-900 rounded-full font-bold text-sm hover:scale-105 hover:shadow-xl transition-all duration-300">
               {data.buttonText}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,9 +87,9 @@ function TextBlock({ data }) {
           {data.heading}
         </h2>
         {data.body && (
-          <p className="text-gray-500 text-lg leading-relaxed font-light whitespace-pre-wrap">
-            {data.body}
-          </p>
+          <div className="text-gray-500 text-lg">
+            <Paragraphs text={data.body} align="text-center" />
+          </div>
         )}
       </div>
     </section>
@@ -118,7 +144,9 @@ function ImageTextBlock({ data }) {
         <div className="flex-1 space-y-5">
           <div className="h-1 w-12 rounded-full bg-primary" />
           <h2 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight">{data.heading}</h2>
-          <p className="text-gray-500 leading-relaxed text-lg font-light whitespace-pre-wrap">{data.body}</p>
+          <div className="text-gray-500 text-lg font-light">
+            <Paragraphs text={data.body} />
+          </div>
         </div>
       </div>
     </section>
@@ -154,13 +182,13 @@ function CtaBlock({ data }) {
         {data.subtext && <p className="text-white/50 text-lg font-light">{data.subtext}</p>}
         <div className="flex flex-wrap justify-center gap-4 pt-3">
           {data.primaryButton && (
-            <Link to="/contact"
+            <Link to={ROUTES.contact}
               className="px-8 py-3.5 bg-primary text-white rounded-full font-bold text-sm hover:brightness-110 hover:scale-105 transition-all shadow-lg shadow-primary/30">
               {data.primaryButton}
             </Link>
           )}
           {data.secondaryButton && (
-            <Link to="/producten"
+            <Link to={ROUTES.shop}
               className="px-8 py-3.5 bg-white/10 border border-white/20 text-white rounded-full font-bold text-sm hover:bg-white/20 hover:scale-105 transition-all">
               {data.secondaryButton}
             </Link>
@@ -281,9 +309,9 @@ function LayoutBuilderBlock({ data }) {
               if (e.type === 'text') {
                 const align = e.align === 'center' ? 'text-center' : 'text-left';
                 return (
-                  <p key={e.id} className={`text-lg leading-relaxed font-light whitespace-pre-wrap ${subTextColor} ${align}`}>
-                    {e.text}
-                  </p>
+                  <div key={e.id} className={`${subTextColor} text-lg font-light`}>
+                    <Paragraphs text={e.text} align={align} />
+                  </div>
                 );
               }
 
@@ -388,9 +416,9 @@ function AboutAlraBlock({ data }) {
             )}
             <div className="w-12 h-1 bg-primary rounded-full" />
             {data.body && (
-              <p className="text-gray-500 text-sm md:text-base leading-relaxed max-w-lg whitespace-pre-wrap">
-                {data.body}
-              </p>
+              <div className="text-gray-500 text-sm md:text-base max-w-lg">
+                <Paragraphs text={data.body} />
+              </div>
             )}
             {features.length > 0 && (
               <div className="space-y-3 pt-1">
@@ -492,7 +520,9 @@ function ProductHighlightBlock({ data }) {
             <h3 className="text-3xl md:text-4xl font-black text-secondary leading-tight mb-4">{data.heading}</h3>
           )}
           {data.body && (
-            <p className="text-gray-500 text-sm md:text-base leading-relaxed mb-6 max-w-md whitespace-pre-wrap">{data.body}</p>
+            <div className="text-gray-500 text-sm md:text-base mb-6 max-w-md">
+              <Paragraphs text={data.body} />
+            </div>
           )}
           {features.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-8">

@@ -6,6 +6,7 @@ import LogoCarousel from '../components/LogoCarousel';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { getImageSrc, formatPrice } from '../lib/productHelpers';
+import { ROUTES } from '../lib/routes';
 
 const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
 
@@ -41,6 +42,12 @@ const DEFAULTS = {
     linkText: "Meer over ons",
     deliveryTitle: "Direct leverbaar uit voorraad",
     deliverySubtitle: "Snelle levering in heel Nederland en België",
+    usps: [
+      'Specialist in professionele LED-oplossingen',
+      'Persoonlijk advies en meedenken in oplossingen',
+      'Betrouwbare, gecertificeerde producten',
+      'Voor zakelijke en professionele toepassingen',
+    ],
     image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600",
   },
   highlights: {
@@ -52,7 +59,7 @@ const DEFAULTS = {
         description: "Hoogwaardige LED-werkverlichting voor bedrijfswagens, trucks en bestelwagens. Optimale lichtopbrengst en laag stroomverbruik.",
         features: ["IP67 waterdicht", "3-jaar garantie", "ECE R10 gecertificeerd"],
         image: "https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80&w=1600",
-        link: "/producten",
+        link: ROUTES.shop,
         linkText: "Bekijk assortiment",
       },
       {
@@ -60,7 +67,7 @@ const DEFAULTS = {
         description: "Robuuste LED-verlichting speciaal ontwikkeld voor zware bouwplaatsomstandigheden. Stof- en waterbestendig met IP65-certificering.",
         features: ["IP65 stofdicht", "Schokbestendig", "50.000+ branduren"],
         image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=1600",
-        link: "/producten",
+        link: ROUTES.shop,
         linkText: "Bekijk assortiment",
       },
       {
@@ -68,7 +75,7 @@ const DEFAULTS = {
         description: "Perfecte lichtopbrengst onder het voertuig voor een veilige en efficiënte werkplaatsomgeving. Eenvoudig te monteren.",
         features: ["Montage in 15 min", "Universele pasvorm", "CAN-bus compatibel"],
         image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&q=80&w=1600",
-        link: "/producten",
+        link: ROUTES.shop,
         linkText: "Bekijk assortiment",
       },
     ],
@@ -227,10 +234,10 @@ const Home = () => {
               </p>
 
               <div className="flex flex-wrap gap-3 pt-2">
-                <Link to="/producten" className="bg-primary text-white px-7 py-3 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
+                <Link to={ROUTES.shop} className="bg-primary text-white px-7 py-3 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
                   {hero.primaryButtonText}
                 </Link>
-                <Link to="/over-ons" className="bg-white/10 backdrop-blur border border-white/20 text-white px-7 py-3 rounded-full font-bold text-sm hover:bg-white/20 transition-all">
+                <Link to={ROUTES.about} className="bg-white/10 backdrop-blur border border-white/20 text-white px-7 py-3 rounded-full font-bold text-sm hover:bg-white/20 transition-all">
                   {hero.secondaryButtonText}
                 </Link>
               </div>
@@ -297,6 +304,29 @@ const Home = () => {
                 <p className="text-gray-500 text-sm md:text-base leading-relaxed max-w-lg">
                   {is.description}
                 </p>
+                {Array.isArray(is.usps) && is.usps.length > 0 ? (
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {is.usps.map((usp, idx) => (
+                      <li key={idx} className="flex items-center gap-3">
+                        <span className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                          <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                        </span>
+                        <span className="text-sm font-semibold text-secondary">{usp}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (DEFAULTS.introSection.usps || []).length > 0 && (
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {DEFAULTS.introSection.usps.map((usp, idx) => (
+                      <li key={idx} className="flex items-center gap-3">
+                        <span className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                          <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                        </span>
+                        <span className="text-sm font-semibold text-secondary">{usp}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 <div className="flex items-center gap-4 pt-2">
                   <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
                     <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
@@ -306,7 +336,7 @@ const Home = () => {
                     <p className="text-xs text-gray-400">{is.deliverySubtitle}</p>
                   </div>
                 </div>
-                <Link to="/over-ons" className="inline-flex items-center gap-3 text-secondary font-bold text-sm group">
+                <Link to={ROUTES.about} className="inline-flex items-center gap-3 text-secondary font-bold text-sm group">
                   <span className="border-b-2 border-secondary pb-0.5 group-hover:text-primary group-hover:border-primary transition-colors">{is.linkText}</span>
                   <span className="w-8 h-8 rounded-full bg-secondary group-hover:bg-primary flex items-center justify-center text-white text-xs transition-colors">→</span>
                 </Link>
@@ -369,14 +399,14 @@ const Home = () => {
                 <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Onze specialisaties</p>
                 <h2 className="text-3xl font-black text-secondary">Producten &amp; Cases</h2>
               </div>
-              <Link to="/producten" className="text-xs font-bold text-secondary hover:text-primary transition-colors uppercase tracking-widest hidden md:flex items-center gap-1">
+              <Link to={ROUTES.shop} className="text-xs font-bold text-secondary hover:text-primary transition-colors uppercase tracking-widest hidden md:flex items-center gap-1">
                 Alle producten <span>→</span>
               </Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {specializations.map((cat, idx) => (
-                <Link to="/producten" key={idx} className="group relative overflow-hidden rounded-2xl aspect-[4/3] block bg-gray-200">
+                <Link to={ROUTES.shop} key={idx} className="group relative overflow-hidden rounded-2xl aspect-[4/3] block bg-gray-200">
                   <img src={cat.image} alt={cat.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" />
                   <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 p-6">
@@ -411,13 +441,13 @@ const Home = () => {
                 <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Nieuw in de shop</p>
                 <h2 className="text-3xl font-black text-secondary">Uitgelichte Producten</h2>
               </div>
-              <Link to="/producten" className="text-xs font-bold text-secondary hover:text-primary transition-colors uppercase tracking-widest hidden md:flex items-center gap-1">
+              <Link to={ROUTES.shop} className="text-xs font-bold text-secondary hover:text-primary transition-colors uppercase tracking-widest hidden md:flex items-center gap-1">
                 Alle producten <span>→</span>
               </Link>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {featuredProducts.map(product => (
-                <Link key={product.id} to={`/product/${product.id}`} className="group block">
+                <Link key={product.id} to={ROUTES.product(product.id)} className="group block">
                   <div className="relative aspect-square overflow-hidden rounded-xl bg-gray-100 mb-3">
                     <img
                       src={getImageSrc(product, 'https://via.placeholder.com/400')}
@@ -452,7 +482,7 @@ const Home = () => {
                 <p className="text-white/60 text-sm max-w-xl">{dealersCta.subtitle}</p>
               </div>
               <Link
-                to="/verkooppunten"
+                to={ROUTES.dealers}
                 className="inline-flex items-center justify-center bg-primary text-white px-6 py-3 rounded-full font-black text-sm hover:brightness-110 transition-all shrink-0"
               >
                 {dealersCta.buttonText}
@@ -505,7 +535,7 @@ const Home = () => {
                 <p className="text-xs font-bold text-primary uppercase tracking-widest">Onze aanpak</p>
                 <h2 className="text-3xl font-black text-secondary leading-tight">{process.title}</h2>
                 <p className="text-gray-500 text-sm leading-relaxed">{process.description}</p>
-                <Link to="/over-ons" className="inline-flex items-center gap-2 bg-secondary text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-primary transition-all">
+                <Link to={ROUTES.about} className="inline-flex items-center gap-2 bg-secondary text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-primary transition-all">
                   {process.buttonText}
                 </Link>
               </div>
@@ -604,10 +634,10 @@ const Home = () => {
                 <p className="text-white/50 text-sm">{cta.subtitle}</p>
               </div>
               <div className="relative flex flex-col sm:flex-row gap-3 shrink-0">
-                <Link to="/producten" className="bg-primary text-white px-7 py-3 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30 whitespace-nowrap">
+                <Link to={ROUTES.shop} className="bg-primary text-white px-7 py-3 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30 whitespace-nowrap">
                   {cta.primaryButton}
                 </Link>
-                <Link to="/contact" className="bg-white/10 border border-white/20 text-white px-7 py-3 rounded-full font-bold text-sm hover:bg-white/20 transition-all whitespace-nowrap">
+                <Link to={ROUTES.contact} className="bg-white/10 border border-white/20 text-white px-7 py-3 rounded-full font-bold text-sm hover:bg-white/20 transition-all whitespace-nowrap">
                   {cta.secondaryButton}
                 </Link>
               </div>

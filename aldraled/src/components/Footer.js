@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { API_URL } from '../lib/api';
+import { ROUTES, FOOTER_NAV_LINKS } from '../lib/routes';
 
 const DEFAULTS = {
   tagline: '',
@@ -64,7 +65,7 @@ const Footer = () => {
 
           {/* Brand */}
           <div className="md:col-span-1 space-y-4">
-            <Link to="/" className="block">
+            <Link to={ROUTES.home} className="block">
               {general.logoUrl ? (
                 <img src={general.logoUrl} alt="ALRA LED" className="h-10 w-auto" loading="lazy" decoding="async" />
               ) : (
@@ -94,12 +95,7 @@ const Footer = () => {
           <div>
             <h4 className="text-xs font-bold uppercase tracking-widest text-white/40 mb-4">{general.navigationTitle}</h4>
             <ul className="space-y-2.5">
-              {[
-                { to: '/', label: 'Home' },
-                { to: '/over-ons', label: 'Over ons' },
-                { to: '/producten', label: 'Webshop' },
-                { to: '/contact', label: 'Contact' },
-              ].map(({ to, label }) => (
+              {FOOTER_NAV_LINKS.map(({ to, label }) => (
                 <li key={to}>
                   <Link to={to} className="text-sm text-white/60 hover:text-white transition-colors">{label}</Link>
                 </li>
@@ -113,7 +109,7 @@ const Footer = () => {
             <ul className="space-y-2.5">
               {(Array.isArray(general.productLinks) ? general.productLinks : []).map((label, index) => (
                 <li key={`${label}-${index}`}>
-                  <Link to="/producten" className="text-sm text-white/60 hover:text-white transition-colors">{label}</Link>
+                  <Link to={ROUTES.shop} className="text-sm text-white/60 hover:text-white transition-colors">{label}</Link>
                 </li>
               ))}
             </ul>
@@ -147,9 +143,9 @@ const Footer = () => {
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-white/30">
           <span>© {new Date().getFullYear()} {general.bottomCopy}</span>
           <div className="flex gap-5 items-center">
-            <Link to="/algemene-voorwaarden" className="hover:text-white/60 transition-colors">{general.termsLabel || 'Algemene Voorwaarden'}</Link>
-            <Link to="/privacy-policy" className="hover:text-white/60 transition-colors">{general.privacyLabel || 'Privacy Policy'}</Link>
-            <Link to="/retourbeleid" className="hover:text-white/60 transition-colors">{general.retourbeleidLabel || 'Retourbeleid'}</Link>
+            <Link to={ROUTES.terms} className="hover:text-white/60 transition-colors">{general.termsLabel || 'Algemene Voorwaarden'}</Link>
+            <Link to={ROUTES.privacy} className="hover:text-white/60 transition-colors">{general.privacyLabel || 'Privacy Policy'}</Link>
+            <Link to={ROUTES.returnsPolicy} className="hover:text-white/60 transition-colors">{general.retourbeleidLabel || 'Retourbeleid'}</Link>
             {general.webkeurmerkId && (
               <a href={`https://www.webkeurmerk.nl/keurmerk/${general.webkeurmerkId}`} target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors">
                 <img src="https://www.webkeurmerk.nl/images/keurmerk.png" alt="Webkeurmerk" className="h-6 w-auto inline-block" loading="lazy" decoding="async" />

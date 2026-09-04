@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import Counter from '../components/Counter';
 import CustomBlocks from '../components/CustomBlocks';
+import { ROUTES } from '../lib/routes';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -259,10 +260,10 @@ const About = () => {
               <p className="text-white/50 text-sm max-w-lg">Neem contact op voor een vrijblijvend gesprek over uw verlichtingsbehoefte.</p>
             </div>
             <div className="relative flex flex-col sm:flex-row gap-3 shrink-0">
-              <Link to="/contact" className="bg-primary text-white px-7 py-3 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30 whitespace-nowrap">
+              <Link to={ROUTES.contact} className="bg-primary text-white px-7 py-3 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30 whitespace-nowrap">
                 Neem Contact Op
               </Link>
-              <Link to="/producten" className="bg-white/10 border border-white/20 text-white px-7 py-3 rounded-full font-bold text-sm hover:bg-white/20 transition-all whitespace-nowrap">
+              <Link to={ROUTES.shop} className="bg-white/10 border border-white/20 text-white px-7 py-3 rounded-full font-bold text-sm hover:bg-white/20 transition-all whitespace-nowrap">
                 Bekijk Producten
               </Link>
             </div>

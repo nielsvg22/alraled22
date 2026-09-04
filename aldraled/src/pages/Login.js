@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { ROUTES } from "../lib/routes";
 import { useAuth } from '../lib/AuthContext';
 import { useTranslation } from 'react-i18next';
 
@@ -70,7 +71,7 @@ const Login = () => {
 
           <div className="mt-8 text-center">
             <p className="text-gray-400 font-medium">{t('login.noAccount')}</p>
-            <Link to="/registreren" className="text-secondary font-black uppercase italic hover:text-primary transition-colors">
+            <Link to={ROUTES.register} className="text-secondary font-black uppercase italic hover:text-primary transition-colors">
               {t('login.createAccount')}
             </Link>
           </div>

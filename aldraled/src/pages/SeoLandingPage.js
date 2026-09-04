@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { ROUTES } from "../lib/routes";
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import CustomBlocks from '../components/CustomBlocks';
@@ -146,7 +147,7 @@ function SeoLandingPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <p className="text-gray-400 font-medium">Pagina niet gevonden</p>
-        <Link to="/" className="text-primary font-bold text-sm hover:underline">← Terug naar home</Link>
+        <Link to={ROUTES.home} className="text-primary font-bold text-sm hover:underline">← Terug naar home</Link>
       </div>
     );
   }
@@ -156,7 +157,7 @@ function SeoLandingPage() {
       {/* Breadcrumb */}
       <div className="border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-3 flex items-center gap-2 text-xs text-gray-400">
-          <Link to="/" className="hover:text-secondary transition-colors">Home</Link>
+          <Link to={ROUTES.home} className="hover:text-secondary transition-colors">Home</Link>
           <span>/</span>
           <span className="text-secondary font-medium truncate max-w-xs">{page.title || slug}</span>
         </div>

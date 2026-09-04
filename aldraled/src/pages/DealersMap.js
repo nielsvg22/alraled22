@@ -2,8 +2,29 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { DEFAULT_DEALERS, buildDealerAddress } from '../lib/dealers';
+import { API_URL } from '../lib/api';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Combine standaard-verkooppunten met de locaties uit de API/CRM.
+// Duplicatie wordt vermeden op naam + adres + plaats.
+function mergeDealers(apiDealers) {
+  const seen = new Set();
+  const result = [];
+  const push = (d) => {
+    if (!d) return;
+    const key = [
+      normalizeText(d.name),
+      normalizeText(d.address),
+      normalizeText(d.city),
+    ].join('|').toLowerCase();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    result.push(d);
+  };
+  DEFAULT_DEALERS.forEach(push);
+  (Array.isArray(apiDealers) ? apiDealers : []).forEach(push);
+  return result;
+}
 
 function toRad(deg) {
   return (deg * Math.PI) / 180;
@@ -49,8 +70,8 @@ export default function DealersMap() {
   useEffect(() => {
     setLoading(true);
     axios.get(`${API_URL}/api/content/dealers`)
-      .then((res) => setDealers(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setDealers([]))
+      .then((res) => setDealers(mergeDealers(res.data)))
+      .catch(() => setDealers(DEFAULT_DEALERS))
       .finally(() => setLoading(false));
   }, []);
 
@@ -140,7 +161,7 @@ export default function DealersMap() {
       marker.bindPopup(
         `<div style="min-width:220px;">
           <div style="font-weight:800;">${escapeHtml(d.name || 'Verkooppunt')}</div>
-          <div style="opacity:0.8;margin-top:4px;">${escapeHtml(d.address || '')}</div>
+          <div style="opacity:0.8;margin-top:4px;">${escapeHtml(buildDealerAddress(d) || '')}</div>
           ${distanceLine}
           ${phoneLine}
           ${websiteLine}
@@ -170,7 +191,7 @@ export default function DealersMap() {
   }, [dealersWithDistance, origin]);
 
   const openInMapsUrl = (d) => {
-    const q = encodeURIComponent(d.address || `${d.lat},${d.lon}`);
+    const q = encodeURIComponent(buildDealerAddress(d) || `${d.lat},${d.lon}`);
     return `https://www.google.com/maps/search/?api=1&query=${q}`;
   };
 
@@ -268,7 +289,8 @@ export default function DealersMap() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-black text-secondary truncate">{d.name || 'Verkooppunt'}</p>
-                          <p className="text-xs text-gray-400 mt-1">{d.address}</p>
+                          {d.city && <p className="text-[10px] font-bold text-primary uppercase tracking-wider mt-0.5">{d.city}</p>}
+                          <p className="text-xs text-gray-400 mt-1">{buildDealerAddress(d)}</p>
                         </div>
                         {typeof d.distanceKm === 'number' && (
                           <span className="shrink-0 text-xs font-black text-primary bg-primary/10 rounded-full px-2 py-1">

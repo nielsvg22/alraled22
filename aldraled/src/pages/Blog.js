@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { ROUTES } from "../lib/routes";
 import axios from 'axios';
 import { getMediaUrl, API_URL } from '../lib/api';
 
@@ -17,7 +18,7 @@ function GridPost({ block, index }) {
   const num     = String(index + 1).padStart(2, '0');
 
   return (
-    <Link to={`/blog/${id}`} className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+    <Link to={ROUTES.blogPost(id)} className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
       {/* Image */}
       {image ? (
         <div className="relative h-48 overflow-hidden shrink-0 bg-gray-100">
@@ -115,7 +116,7 @@ export default function Blog() {
             <p className="text-6xl font-black text-gray-100">∅</p>
             <h2 className="text-xl font-black text-gray-700">Binnenkort beschikbaar</h2>
             <p className="text-sm text-gray-400">Voeg blogberichten toe via CRM → Pagina Bouwer</p>
-            <Link to="/producten" className="mt-2 text-sm font-bold text-primary underline underline-offset-4">
+            <Link to={ROUTES.shop} className="mt-2 text-sm font-bold text-primary underline underline-offset-4">
               Bekijk producten →
             </Link>
           </div>
@@ -136,7 +137,7 @@ export default function Blog() {
             <p className="text-sm text-gray-500">
               Interesse in onze producten?
             </p>
-            <Link to="/producten"
+            <Link to={ROUTES.shop}
               className="text-sm font-bold text-primary underline underline-offset-4 hover:opacity-70 transition-opacity">
               Bekijk het aanbod →
             </Link>

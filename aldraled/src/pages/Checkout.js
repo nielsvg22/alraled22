@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useCart } from '../lib/CartContext';
 import { useAuth } from '../lib/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { ROUTES } from "../lib/routes";
 import api from '../lib/api';
 import analytics from '../lib/analytics';
 import { getImageSrc, formatPrice } from '../lib/productHelpers';
@@ -123,7 +124,7 @@ const Checkout = () => {
         </div>
         <h2 className="text-2xl font-bold text-gray-900">Uw winkelwagen is leeg</h2>
         <p className="text-gray-500 max-w-sm">Voeg producten toe aan uw winkelwagen om verder te gaan met afrekenen.</p>
-        <Link to="/producten" className="bg-primary text-white px-8 py-3 rounded-xl font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+        <Link to={ROUTES.shop} className="bg-primary text-white px-8 py-3 rounded-xl font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/20">
           Bekijk producten
         </Link>
       </div>
@@ -136,7 +137,7 @@ const Checkout = () => {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-4">
           <div className="flex items-center justify-between">
-            <Link to="/producten" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+            <Link to={ROUTES.shop} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
               Verder winkelen
             </Link>

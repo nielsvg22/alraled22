@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { ROUTES } from "../lib/routes";
 import axios from 'axios';
 import { getMediaUrl, API_URL } from '../lib/api';
 
@@ -34,7 +35,7 @@ export default function BlogDetail() {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center text-center px-6 gap-4">
       <span className="text-5xl">📭</span>
       <h1 className="text-2xl font-black text-gray-800">Artikel niet gevonden</h1>
-      <Link to="/blog" className="text-sm font-bold text-primary hover:underline">
+      <Link to={ROUTES.blog} className="text-sm font-bold text-primary hover:underline">
         ← Terug naar nieuws
       </Link>
     </div>
@@ -54,7 +55,7 @@ export default function BlogDetail() {
       {/* ── Top bar ──────────────────────────────── */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-30 backdrop-blur-sm">
         <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
-          <Link to="/blog"
+          <Link to={ROUTES.blog}
             className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors group">
             <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -135,7 +136,7 @@ export default function BlogDetail() {
               <p className="text-xs text-gray-400">ALRA LED Solutions</p>
             </div>
           </div>
-          <Link to="/blog"
+          <Link to={ROUTES.blog}
             className="flex items-center gap-1.5 text-sm font-bold text-primary hover:underline">
             ← Meer artikelen
           </Link>
@@ -157,7 +158,7 @@ export default function BlogDetail() {
                 const e = d.excerpt || d.body   || '';
                 const mins2 = readTime(e);
                 return (
-                  <Link key={rel.id} to={`/blog/${rel.id}`}
+                  <Link key={rel.id} to={ROUTES.blogPost(rel.id)}
                     className="group flex flex-col gap-3 rounded-xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300 bg-white">
                     {d.imageUrl && (
                       <div className="h-36 overflow-hidden">

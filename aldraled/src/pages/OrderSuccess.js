@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
+import { ROUTES } from "../lib/routes";
 import api from '../lib/api';
 import { formatPrice } from '../lib/productHelpers';
 import confetti from 'canvas-confetti';
@@ -103,10 +104,10 @@ const OrderSuccess = () => {
 
       {/* CTA buttons */}
       <div className="mt-8 flex flex-col sm:flex-row gap-3">
-        <Link to="/producten" className="bg-secondary text-white px-8 py-3 rounded-full font-bold text-sm hover:bg-primary transition-all">
+        <Link to={ROUTES.shop} className="bg-secondary text-white px-8 py-3 rounded-full font-bold text-sm hover:bg-primary transition-all">
           Verder winkelen
         </Link>
-        <Link to="/" className="bg-gray-100 text-secondary px-8 py-3 rounded-full font-bold text-sm hover:bg-gray-200 transition-all">
+        <Link to={ROUTES.home} className="bg-gray-100 text-secondary px-8 py-3 rounded-full font-bold text-sm hover:bg-gray-200 transition-all">
           Terug naar home
         </Link>
       </div>

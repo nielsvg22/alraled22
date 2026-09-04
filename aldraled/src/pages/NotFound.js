@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { ROUTES } from "../lib/routes";
 
 const NotFound = () => {
   return (
@@ -8,10 +9,10 @@ const NotFound = () => {
       <h1 className="text-3xl md:text-4xl font-black text-secondary mb-3">Pagina niet gevonden</h1>
       <p className="text-gray-400 text-sm max-w-md mb-8">De pagina die u zoekt bestaat niet of is verplaatst.</p>
       <div className="flex gap-3">
-        <Link to="/" className="bg-primary text-white px-7 py-3 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
+        <Link to={ROUTES.home} className="bg-primary text-white px-7 py-3 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
           Naar de homepagina
         </Link>
-        <Link to="/producten" className="bg-gray-100 text-secondary px-7 py-3 rounded-full font-bold text-sm hover:bg-gray-200 transition-all">
+        <Link to={ROUTES.shop} className="bg-gray-100 text-secondary px-7 py-3 rounded-full font-bold text-sm hover:bg-gray-200 transition-all">
           Bekijk producten
         </Link>
       </div>

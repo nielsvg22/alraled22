@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { ROUTES } from "../lib/routes";
 import { useAuth } from '../lib/AuthContext';
 import api from '../lib/api';
 import { formatPrice } from '../lib/productHelpers';
@@ -96,7 +97,7 @@ const Account = () => {
               <h4 className="text-2xl font-black text-secondary uppercase italic tracking-tighter">Retour</h4>
               <p className="text-gray-500 font-medium">Vraag eenvoudig een retour aan voor een bestelling.</p>
               <Link
-                to="/retouren"
+                to={ROUTES.returns}
                 className="inline-flex items-center justify-center w-full bg-secondary text-white py-4 rounded-xl font-black uppercase italic hover:bg-primary transition-all shadow-sm"
               >
                 Retour aanvragen
@@ -160,7 +161,7 @@ const Account = () => {
 
                     <div className="mt-6 flex flex-col sm:flex-row gap-3">
                       <Link
-                        to={`/retouren?orderId=${order.id}`}
+                        to={`${ROUTES.returns}?orderId=${order.id}`}
                         className="inline-flex items-center justify-center bg-gray-50 border border-gray-100 text-secondary px-6 py-3 rounded-full font-black uppercase italic hover:border-primary/30 hover:bg-primary/5 transition-all"
                       >
                         Retour aanvragen
