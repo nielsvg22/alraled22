@@ -3,7 +3,7 @@ FROM node:20-slim
 WORKDIR /workspace
 
 COPY crm-backend/package.json crm-backend/package-lock.json* ./
-RUN npm ci
+RUN npm ci --include=dev
 
 COPY crm-backend/ .
 RUN npm run build
