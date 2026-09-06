@@ -10,15 +10,16 @@ const SOURCE = {
   ssl: process.env.SOURCE_SSL === 'false' ? undefined : {},
 };
 
-// Northflank addon connection via env vars
 const TARGET = {
-  host: process.env.MYSQL_HOST || 'primary.alraled-mysql--8n7zm5bdjx8d.addon.code.run',
+  host: process.env.MYSQL_HOST,
   port: Number(process.env.MYSQL_PORT) || 3306,
-  user: process.env.MYSQL_USER || 'a596b9ca0173e9c6',
-  password: process.env.MYSQL_PASSWORD || '183972f03cd9d8460dec142ca06fbf',
-  database: process.env.MYSQL_DATABASE || '252638c8748b',
-  ssl: { rejectUnauthorized: true },
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  ssl: process.env.MYSQL_SSL === 'false' ? undefined : { rejectUnauthorized: false },
 };
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function migrate() {
   console.log('Verbinden met Railway...');
@@ -69,7 +70,12 @@ async function migrate() {
   console.log('\n✓ Migratie voltooid!');
 }
 
-migrate().catch(err => {
-  console.error('FOUT:', err.message);
-  process.exit(1);
-});
+migrate()
+  .catch(err => {
+    console.error('FOUT:', err.message);
+  })
+  .finally(async () => {
+    console.log('\nContainer blijft 5 minuten hangen zodat de logs uitgelezen kunnen worden...');
+    await sleep(5 * 60 * 1000);
+    process.exit(0);
+  });
