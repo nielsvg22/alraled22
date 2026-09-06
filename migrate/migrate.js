@@ -1,11 +1,13 @@
 const mysql = require('mysql2/promise');
 
 const SOURCE = {
-  host: 'nozomi.proxy.rlwy.net',
-  port: 23687,
-  user: 'root',
-  password: 'hlxjpiTbogxdqysIfPvMotUtdplIhHar',
-  database: 'railway',
+  host: process.env.SOURCE_HOST,
+  port: Number(process.env.SOURCE_PORT),
+  user: process.env.SOURCE_USER,
+  password: process.env.SOURCE_PASSWORD,
+  database: process.env.SOURCE_DATABASE,
+  connectTimeout: 10000,
+  ssl: process.env.SOURCE_SSL === 'false' ? undefined : {},
 };
 
 // Northflank addon connection via env vars
