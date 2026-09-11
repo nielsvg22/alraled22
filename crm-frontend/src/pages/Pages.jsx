@@ -7,7 +7,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   Upload, X, Plus, Trash2, Save, Copy, ChevronDown,
   Home, Info, Phone, Settings, Image, CheckCircle,
-  GripVertical, LayoutGrid,
+  GripVertical, LayoutGrid, ShoppingBag,
 } from 'lucide-react';
 
 // ── Primitives ───────────────────────────────────────────────────
@@ -891,6 +891,22 @@ const HOME_DEFAULTS = {
   cta: { title: '', subtitle: '', primaryButton: '', secondaryButton: '' },
 };
 
+const SHOP_DEFAULTS = {
+  hero: {
+    eyebrow: 'Onze collectie',
+    title: 'LED verlichting',
+    titleAccent: 'voor elke toepassing',
+    subtitle: 'Krachtig. Betrouwbaar. Voor professionals. Rechtstreeks van de fabrikant voor de beste prijs.',
+    imageUrl: '',
+    usps: [
+      { title: 'Snel geleverd', text: 'Uit voorraad leverbaar' },
+      { title: 'Garantie', text: 'Kwaliteit verzekerd' },
+      { title: 'Voor professionals', text: 'Scherpe prijzen' },
+      { title: 'Persoonlijk advies', text: 'Wij denken met je mee' },
+    ],
+  },
+};
+
 const BLOCK_PRESETS = {
   banner_primary: {
     label: 'Banner – Primair',
@@ -992,6 +1008,7 @@ const BLOCK_PRESETS = {
 
 const TABS = [
   { id: 'home',    label: 'Homepagina',       icon: Home     },
+  { id: 'shop',    label: 'Webshop',          icon: ShoppingBag },
   { id: 'about',   label: 'Over Ons',          icon: Info     },
   { id: 'contact', label: 'Contact',           icon: Phone    },
   { id: 'general', label: 'Instellingen',      icon: Settings },
@@ -1094,12 +1111,19 @@ export default function Pages() {
   });
   const [logos, setLogos]     = useState([]);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [shop, setShop]       = useState(SHOP_DEFAULTS);
+
+  const setShopHero = (v) => setShop((p) => ({
+    ...p,
+    hero: { ...SHOP_DEFAULTS.hero, ...((p && p.hero) || {}), ...v },
+  }));
 
   const loadTab = async (key) => {
     setLoading(true);
     try {
       const res = await api.get(`/content/${key}`, { params: { lang } });
       if (key === 'home')    setHome({ ...HOME_DEFAULTS, ...res.data });
+      if (key === 'shop')    setShop({ ...SHOP_DEFAULTS, ...res.data });
       if (key === 'about')   setAbout(res.data);
       if (key === 'contact') setContact(res.data);
       if (key === 'general') setGeneral(res.data);
@@ -2325,6 +2349,46 @@ export default function Pages() {
               </div>
             </Section>
             <SaveButton onSave={() => save('logos', logos)} saving={saving} saved={saved} />
+          </>)}
+
+          {/* ══ WEBSHOP ══ */}
+          {tab === 'shop' && (<>
+            <Section title="Webshop hero" icon={ShoppingBag} defaultOpen>
+              <p className="text-xs text-gray-400 leading-relaxed">
+                De banner bovenaan de webshop (pagina Producten). Zonder hero-afbeelding wordt automatisch een productfoto gebruikt.
+              </p>
+              <Field label="Hero afbeelding (optioneel)">
+                <ImageField value={shop.hero.imageUrl || ''} onChange={(url) => setShopHero({ imageUrl: url })} />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Badge">
+                  <input className={`${iCls} ${iBdr}`} value={shop.hero.eyebrow || ''} onChange={e => setShopHero({ eyebrow: e.target.value })} placeholder="Onze collectie" />
+                </Field>
+                <Field label="Accent-tekst (zwart/zaak)">
+                  <input className={`${iCls} ${iBdr}`} value={shop.hero.titleAccent || ''} onChange={e => setShopHero({ titleAccent: e.target.value })} placeholder="voor elke toepassing" />
+                </Field>
+              </div>
+              <Field label="Hoofdtitel">
+                <input className={`${iCls} ${iBdr}`} value={shop.hero.title || ''} onChange={e => setShopHero({ title: e.target.value })} placeholder="LED verlichting" />
+              </Field>
+              <Field label="Ondertitel">
+                <textarea className={`${taCls} ${iBdr}`} rows={3} value={shop.hero.subtitle || ''} onChange={e => setShopHero({ subtitle: e.target.value })} />
+              </Field>
+              <Field label="Waarden / USP's" hint="4 punten onder de tekst. Titel + toelichting per item.">
+                <div className="space-y-2 mt-1">
+                  {Array.isArray(shop.hero.usps) && shop.hero.usps.map((usp, i) => (
+                    <ItemCard key={i} number={i} onDelete={() => setShopHero({ usps: shop.hero.usps.filter((_, j) => j !== i) })}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input className={`${iCls} ${iBdr}`} value={usp.title || ''} onChange={e => setShopHero({ usps: shop.hero.usps.map((u, j) => j === i ? { ...u, title: e.target.value } : u) })} placeholder="Titel" />
+                        <input className={`${iCls} ${iBdr}`} value={usp.text || ''} onChange={e => setShopHero({ usps: shop.hero.usps.map((u, j) => j === i ? { ...u, text: e.target.value } : u) })} placeholder="Toelichting" />
+                      </div>
+                    </ItemCard>
+                  ))}
+                  <AddButton onClick={() => setShopHero({ usps: [...(shop.hero.usps || []), { title: '', text: '' }] })} label="Waarde toevoegen" />
+                </div>
+              </Field>
+            </Section>
+            <SaveButton onSave={() => save('shop', shop)} saving={saving} saved={saved} />
           </>)}
 
           {showNewBlock && ['home', 'about', 'contact'].includes(tab) && (

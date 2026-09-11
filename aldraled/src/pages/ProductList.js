@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
-import { API_URL } from '../lib/api';
+import { API_URL, getMediaUrl } from '../lib/api';
 import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
 import { ROUTES } from '../lib/routes';
@@ -445,6 +445,13 @@ const ProductList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const gridAnchorRef = useRef(null);
   const [compareLimitWarning, setCompareLimitWarning] = useState(false);
+  const [shopContent, setShopContent] = useState(null);
+
+  useEffect(() => {
+    axios.get(`${API_URL}/api/content/shop`)
+      .then(res => setShopContent(res.data || null))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products`)
@@ -491,7 +498,7 @@ const ProductList = () => {
         break;
       case 'nieuwste':
       default:
-        list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        list.sort((a, b) => (new Date(b.createdAt || 0) - new Date(a.createdAt || 0)) || String(a.id).localeCompare(String(b.id)));
         break;
     }
     return list;
@@ -553,26 +560,44 @@ const ProductList = () => {
     });
   }, []);
 
-  // Hero-afbeelding: mooie bestaande productfoto
+  const HERO_USP_ICONS = [IconTruck, IconShield, IconAward, IconChat];
+
+  // Hero-config uit CRM-admin (content-key 'shop'); originele teksten en USP's als fallback
+  const shopHero = useMemo(() => {
+    const hero = (shopContent && shopContent.hero) || {};
+    const fallbackUsps = [
+      { title: 'Snel geleverd', text: 'Uit voorraad leverbaar' },
+      { title: 'Garantie', text: 'Kwaliteit verzekerd' },
+      { title: 'Voor professionals', text: 'Scherpe prijzen' },
+      { title: 'Persoonlijk advies', text: 'Wij denken met je mee' },
+    ];
+    return {
+      eyebrow: hero.eyebrow || 'Onze collectie',
+      title: hero.title || 'LED verlichting',
+      titleAccent: hero.titleAccent || 'voor elke toepassing',
+      subtitle: hero.subtitle || 'Krachtig. Betrouwbaar. Voor professionals.',
+      usps: Array.isArray(hero.usps) && hero.usps.length > 0 ? hero.usps : fallbackUsps,
+    };
+  }, [shopContent]);
+
+  // Hero-afbeelding: door admin ingestelde foto, anders een mooie bestaande productfoto
   const heroImage = useMemo(() => {
+    const stored = (shopContent && shopContent.hero && shopContent.hero.imageUrl) || '';
+    if (stored) {
+      const url = getMediaUrl(stored);
+      return url && url !== PLACEHOLDER_IMAGE ? url : null;
+    }
     if (products.length === 0) return null;
     const pref = products.find(p => (p.category || '').toLowerCase().includes('bedrijfswagen')) || products[0];
     const src = getImageSrc(pref);
     return src === PLACEHOLDER_IMAGE ? null : src;
-  }, [products]);
+  }, [products, shopContent]);
 
   const SORT_OPTIONS = [
     { id: 'nieuwste', label: 'Nieuwste' },
     { id: 'price-asc', label: 'Prijs laag → hoog' },
     { id: 'price-desc', label: 'Prijs hoog → laag' },
     { id: 'name', label: 'Naam A-Z' },
-  ];
-
-  const heroUsps = [
-    { Icon: IconTruck, title: 'Snel geleverd', text: 'Uit voorraad leverbaar' },
-    { Icon: IconShield, title: 'Garantie', text: 'Kwaliteit verzekerd' },
-    { Icon: IconAward, title: 'Voor professionals', text: 'Scherpe prijzen' },
-    { Icon: IconChat, title: 'Persoonlijk advies', text: 'Wij denken met je mee' },
   ];
 
   return (
@@ -594,25 +619,28 @@ const ProductList = () => {
         <div className="absolute -bottom-32 left-1/4 w-96 h-96 rounded-full bg-white/5" />
 
         <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 min-h-[300px] md:min-h-[340px] flex flex-col justify-center">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/60 mb-2">Onze collectie</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/60 mb-2">{shopHero.eyebrow}</p>
           <h1 className="text-3xl md:text-4xl lg:text-[42px] font-black text-white leading-tight max-w-2xl">
-            LED verlichting<br />
-            <span className="text-accent">voor elke toepassing</span>
+            {shopHero.title}<br />
+            <span className="text-accent">{shopHero.titleAccent}</span>
           </h1>
-          <p className="text-white/70 text-sm md:text-base mt-2 max-w-xl">Krachtig. Betrouwbaar. Voor professionals.</p>
+          <p className="text-white/70 text-sm md:text-base mt-2 max-w-xl">{shopHero.subtitle}</p>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-7 max-w-3xl">
-            {heroUsps.map(({ Icon, title, text }) => (
-              <div key={title} className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-3.5 py-3 border border-white/10">
-                <span className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center text-white shrink-0">
-                  <Icon className="w-5 h-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-white text-sm font-bold leading-tight">{title}</p>
-                  <p className="text-white/50 text-[11px] mt-0.5 leading-tight">{text}</p>
+            {shopHero.usps.map((usp, i) => {
+              const Icon = HERO_USP_ICONS[i % HERO_USP_ICONS.length];
+              return (
+                <div key={i} className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-3.5 py-3 border border-white/10">
+                  <span className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center text-white shrink-0">
+                    <Icon className="w-5 h-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-white text-sm font-bold leading-tight">{usp.title}</p>
+                    <p className="text-white/50 text-[11px] mt-0.5 leading-tight">{usp.text}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

@@ -107,7 +107,7 @@ export async function listProducts(filters: ProductFilters = {}) {
 
   const rows = await db.select().from(products)
     .where(conditions.length > 0 ? and(...(conditions as [ReturnType<typeof or>])) : undefined)
-    .orderBy(desc(products.createdAt));
+    .orderBy(desc(products.createdAt), asc(products.id));
 
   return await attachImages(rows);
 }
