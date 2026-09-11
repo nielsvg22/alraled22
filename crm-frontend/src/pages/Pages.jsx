@@ -883,6 +883,11 @@ const HOME_DEFAULTS = {
   specializations: [],
   stats: [],
   process: { title: '', description: '', buttonText: '', steps: [] },
+  highlights: {
+    title: '',
+    subtitle: '',
+    items: [],
+  },
   cta: { title: '', subtitle: '', primaryButton: '', secondaryButton: '' },
 };
 
@@ -1003,6 +1008,7 @@ const DEFAULT_HOME_LAYOUT = [
   'featured',
   'testimonials',
   'process',
+  'highlights',
   'cta',
   'dealers_cta',
 ];
@@ -1331,6 +1337,9 @@ export default function Pages() {
   const proc = home.process || { title:'', description:'', buttonText:'', steps:[] };
                                     const setProc   = v => setHome(p => ({ ...p, process:        { ...(p.process || {}), ...v } }));
   const steps = proc.steps || [];   const setSteps  = v => setHome(p => ({ ...p, process: { ...(p.process||{}), steps: v } }));
+  const hl = home.highlights || HOME_DEFAULTS.highlights;
+                                     const setHlItems = v => setHome(p => ({ ...p, highlights: { ...(p.highlights || HOME_DEFAULTS.highlights), items: v } }));
+                                     const setHlMeta = v => setHome(p => ({ ...p, highlights: { ...(p.highlights || HOME_DEFAULTS.highlights), ...v } }));
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -1638,6 +1647,68 @@ export default function Pages() {
                                     </ItemCard>
                                   ))}
                                   <AddButton onClick={() => setSteps([...steps, { title:'', description:'' }])} label="Stap toevoegen" />
+                                </div>
+                              </Section>
+                            )}
+                          </SortableSection>
+                        );
+                      }
+
+                      if (id === 'highlights') {
+                        return (
+                          <SortableSection key={id} id={id}>
+                            {({ dragHandleProps }) => (
+                              <Section title={`Groothandel (${(hl.items||[]).length})`} defaultOpen={false} dragHandleProps={dragHandleProps}>
+                                <Field label="Sectietitel">
+                                  <input className={`${iCls} ${iBdr}`} value={hl.title||''} onChange={e => setHlMeta({ title: e.target.value })} placeholder="Voor de Groothandel" />
+                                </Field>
+                                <Field label="Ondertitel">
+                                  <textarea className={`${taCls} ${iBdr}`} rows={2} value={hl.subtitle||''} onChange={e => setHlMeta({ subtitle: e.target.value })} />
+                                </Field>
+                                <div className="space-y-3">
+                                  {(hl.items||[]).map((it, i) => (
+                                    <ItemCard key={i} number={i}
+                                      onDuplicate={() => setHlItems([...hl.items.slice(0,i+1), { ...hl.items[i] }, ...hl.items.slice(i+1)])}
+                                      onDelete={() => setHlItems(hl.items.filter((_,j) => j !== i))}>
+                                      <Field label="Titel">
+                                        <input className={`${iCls} ${iBdr}`} value={it.title||''} onChange={e => { const a=[...hl.items]; a[i]={...a[i],title:e.target.value}; setHlItems(a); }} />
+                                      </Field>
+                                      <Field label="Beschrijving">
+                                        <textarea className={`${taCls} ${iBdr}`} rows={2} value={it.description||''} onChange={e => { const a=[...hl.items]; a[i]={...a[i],description:e.target.value}; setHlItems(a); }} />
+                                      </Field>
+                                      <Field label="Afbeelding">
+                                        <ImageField value={it.image||''} onChange={v => { const a=[...hl.items]; a[i]={...a[i],image:v}; setHlItems(a); }} height={24} />
+                                      </Field>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <Field label="Link (bv. /producten)">
+                                          <input className={`${iCls} ${iBdr}`} value={it.link||''} onChange={e => { const a=[...hl.items]; a[i]={...a[i],link:e.target.value}; setHlItems(a); }} />
+                                        </Field>
+                                        <Field label="Link tekst">
+                                          <input className={`${iCls} ${iBdr}`} value={it.linkText||''} onChange={e => { const a=[...hl.items]; a[i]={...a[i],linkText:e.target.value}; setHlItems(a); }} />
+                                        </Field>
+                                      </div>
+                                      <div className="space-y-2">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">Features</p>
+                                        {(it.features||[]).map((f, fi) => (
+                                          <div key={fi} className="flex items-center gap-2">
+                                            <input className={`${iCls} ${iBdr}`} value={f||''} placeholder="bv. IP67 waterdicht"
+                                              onChange={e => { const a=[...hl.items]; const feats=[...(a[i].features||[])]; feats[fi]=e.target.value; a[i]={...a[i],features:feats}; setHlItems(a); }} />
+                                            <button type="button"
+                                              onClick={() => { const a=[...hl.items]; a[i]={...a[i],features:(a[i].features||[]).filter((_,j)=>j!==fi)}; setHlItems(a); }}
+                                              className="p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0" title="Verwijderen">
+                                              <Trash2 size={14} />
+                                            </button>
+                                          </div>
+                                        ))}
+                                        <button type="button"
+                                          onClick={() => { const a=[...hl.items]; a[i]={...a[i],features:[...(a[i].features||[]),'']}; setHlItems(a); }}
+                                          className="flex items-center gap-1.5 text-sm font-bold text-blue-500 hover:text-blue-600">
+                                          <Plus size={14} /> Feature toevoegen
+                                        </button>
+                                      </div>
+                                    </ItemCard>
+                                  ))}
+                                  <AddButton onClick={() => setHlItems([...hl.items, { title:'', description:'', image:'', link:'', linkText:'', features:[] }])} label="Product item toevoegen" />
                                 </div>
                               </Section>
                             )}
