@@ -373,6 +373,67 @@ export async function sendAdminNotification(order: {
   });
 }
 
+// ── Contact form admin notification ──────────────────────────────
+export async function sendContactAdminNotification(submission: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}) {
+  const settings = await getSettings();
+  if (!settings) return;
+
+  const transport = createTransport(settings);
+  await transport.sendMail({
+    from: `"${settings.fromName || 'ALRA LED Solutions'}" <${settings.fromEmail || settings.user}>`,
+    to: settings.adminEmail || settings.user,
+    subject: `Nieuw contactformulier — ${submission.name}`,
+    text: `Naam: ${submission.name}\nE-mail: ${submission.email}\nOnderwerp: ${submission.subject || '-'}\n\nBericht:\n${submission.message}`,
+    html: htmlWrapper(`
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
+        <p style="margin:0;font-size:13px;font-weight:700;color:#1e40af;">📩 Er is een nieuw bericht verzonden via het contactformulier!</p>
+      </div>
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;">
+            <span style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Naam</span>
+          </td>
+          <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;text-align:right;">
+            <span style="font-size:14px;font-weight:600;color:#1f2937;">${submission.name}</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;">
+            <span style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;">E-mail</span>
+          </td>
+          <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;text-align:right;">
+            <a href="mailto:${submission.email}" style="font-size:14px;font-weight:600;color:#0c2d5e;text-decoration:none;">${submission.email}</a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;">
+            <span style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Onderwerp</span>
+          </td>
+          <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;text-align:right;">
+            <span style="font-size:14px;font-weight:600;color:#1f2937;">${submission.subject || '-'}</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;">
+            <span style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Bericht</span>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2" style="padding:14px 18px;background:#f9fafb;border-radius:12px;font-size:14px;color:#374151;line-height:1.6;white-space:pre-wrap;">
+            ${submission.message}
+          </td>
+        </tr>
+      </table>
+    `),
+  });
+}
+
 export async function sendStatusUpdate(order: {
   id: string;
   status: string;

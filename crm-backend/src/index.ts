@@ -21,6 +21,7 @@ import discountCodeRoutes from './routes/discountCodeRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import importRoutes from './routes/importRoutes';
+import contactRoutes from './routes/contactRoutes';
 import shippingRoutes from './routes/shippingRoutes';
 import migrationRoutes from './routes/migrationRoutes';
 import migrateRailwayRoutes from './routes/migrateRailway';
@@ -29,6 +30,7 @@ import { db } from './lib/db';
 import { users } from './db/schema';
 import { ensureAnalyticsTables } from './db/ensureAnalyticsTables';
 import { ensureProductImageTable } from './db/ensureProductImageTable';
+import { ensureContactTable } from './db/ensureContactTable';
 import { runMigrations } from './db/migrate';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
@@ -68,6 +70,7 @@ async function bootstrap() {
   await runMigrations();
   await ensureAnalyticsTables();
   await ensureProductImageTable();
+  await ensureContactTable();
   await ensureAdmin();
 }
 
@@ -155,6 +158,7 @@ app.use('/api/discounts', discountCodeRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/import', importRoutes);
+app.use('/api/contact', contactRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the CRM API' });
