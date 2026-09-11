@@ -4,5 +4,4 @@ build
 .env
 .env.*
 Dockerfile
-nginx.conf
 *.local
