@@ -1060,6 +1060,7 @@ export default function Pages() {
     eyebrow: '',
     title: '',
     description: '',
+    heroImage: '',
     detailsTitle: '',
     addressLabel: '',
     phoneLabel: '',
@@ -1069,14 +1070,25 @@ export default function Pages() {
     companyDetails: '',
     kvkLabel: '',
     vatLabel: '',
+    ibanLabel: '',
     kvkValue: '',
     vatValue: '',
+    ibanValue: '',
+    mapTitle: '',
+    mapSubtitle: '',
+    mapEmbedUrl: '',
+    ctaTitle: '',
+    ctaText: '',
+    ctaShopButton: '',
+    ctaContactButton: '',
     phone: '',
     email: '',
     address: '',
     successTitle: '',
     successText: '',
     newMessage: '',
+    errorTitle: '',
+    errorText: '',
     form: {
       nameLabel: '',
       emailLabel: '',
@@ -2053,6 +2065,9 @@ export default function Pages() {
               <Field label="Beschrijving">
                 <textarea className={`${taCls} ${iBdr}`} rows={3} value={contact.description||''} onChange={e => setContact({ ...contact, description:e.target.value })} />
               </Field>
+              <Field label="Hero afbeelding (optioneel)">
+                <ImageField value={contact.heroImage || ''} onChange={(url) => setContact({ ...contact, heroImage: url })} />
+              </Field>
             </Section>
 
             <Section title="Contactgegevens" defaultOpen={false}>
@@ -2110,6 +2125,12 @@ export default function Pages() {
                 <Field label="BTW nummer">
                   <input className={`${iCls} ${iBdr}`} value={contact.vatValue||''} onChange={e => setContact({ ...contact, vatValue:e.target.value })} />
                 </Field>
+                <Field label="Label: IBAN">
+                  <input className={`${iCls} ${iBdr}`} value={contact.ibanLabel||''} onChange={e => setContact({ ...contact, ibanLabel:e.target.value })} />
+                </Field>
+                <Field label="IBAN (leeg = niet tonen)">
+                  <input className={`${iCls} ${iBdr}`} value={contact.ibanValue||''} onChange={e => setContact({ ...contact, ibanValue:e.target.value })} />
+                </Field>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Field label="Succes titel">
@@ -2120,6 +2141,48 @@ export default function Pages() {
                 </Field>
                 <Field label="Nieuw bericht knop">
                   <input className={`${iCls} ${iBdr}`} value={contact.newMessage||''} onChange={e => setContact({ ...contact, newMessage:e.target.value })} />
+                </Field>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="Fout titel">
+                  <input className={`${iCls} ${iBdr}`} value={contact.errorTitle||''} onChange={e => setContact({ ...contact, errorTitle:e.target.value })} />
+                </Field>
+                <Field label="Fout tekst">
+                  <input className={`${iCls} ${iBdr}`} value={contact.errorText||''} onChange={e => setContact({ ...contact, errorText:e.target.value })} />
+                </Field>
+              </div>
+            </Section>
+
+            <Section title="Locatie" defaultOpen={false}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="Eyebrow / titel">
+                  <input className={`${iCls} ${iBdr}`} value={contact.mapTitle||''} onChange={e => setContact({ ...contact, mapTitle:e.target.value })} placeholder="Onze locatie" />
+                </Field>
+                <Field label="Koptekst">
+                  <input className={`${iCls} ${iBdr}`} value={contact.mapSubtitle||''} onChange={e => setContact({ ...contact, mapSubtitle:e.target.value })} />
+                </Field>
+              </div>
+              <p className="text-xs text-gray-400 leading-relaxed">
+                De kaart toont automatisch het adres uit de Contactgegevens hierboven. Vul hieronder optioneel een eigen kaart-insluit-URL in (bv. OpenStreetMap of Google Maps embed) om de standaardkaart te vervangen.
+              </p>
+              <Field label="Kaart-insluit-URL (optioneel)">
+                <input className={`${iCls} ${iBdr}`} value={contact.mapEmbedUrl||''} onChange={e => setContact({ ...contact, mapEmbedUrl:e.target.value })} placeholder="https://www.openstreetmap.org/export/embed.html?..." />
+              </Field>
+            </Section>
+
+            <Section title="Afsluitende CTA" defaultOpen={false}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="Titel">
+                  <input className={`${iCls} ${iBdr}`} value={contact.ctaTitle||''} onChange={e => setContact({ ...contact, ctaTitle:e.target.value })} />
+                </Field>
+                <Field label="Tekst">
+                  <input className={`${iCls} ${iBdr}`} value={contact.ctaText||''} onChange={e => setContact({ ...contact, ctaText:e.target.value })} />
+                </Field>
+                <Field label="Knop: primair">
+                  <input className={`${iCls} ${iBdr}`} value={contact.ctaShopButton||''} onChange={e => setContact({ ...contact, ctaShopButton:e.target.value })} />
+                </Field>
+                <Field label="Knop: secundair">
+                  <input className={`${iCls} ${iBdr}`} value={contact.ctaContactButton||''} onChange={e => setContact({ ...contact, ctaContactButton:e.target.value })} />
                 </Field>
               </div>
             </Section>

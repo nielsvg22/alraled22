@@ -30,6 +30,7 @@ const DEFAULTS = {
   ibanValue: '',
   mapTitle: 'Onze locatie',
   mapSubtitle: 'Kom gerust langs op ons kantoor in Apeldoorn.',
+  mapEmbedUrl: '',
   ctaTitle: 'Klaar om te beginnen?',
   ctaText: 'Vertel ons waar u verlichting voor nodig hebt. Wij adviseren de juiste oplossing.',
   ctaShopButton: 'Bekijk producten',
@@ -355,11 +356,11 @@ const Contact = () => {
               </a>
             </div>
           </div>
-          <div className="rounded-2xl overflow-hidden shadow-[0_20px_50px_-20px_rgba(7,27,54,0.25)] border border-[#E4EAF1] bg-slate-100 aspect-[4/3] lg:aspect-auto lg:min-h-[420px]">
+          <div className="relative rounded-2xl overflow-hidden shadow-[0_20px_50px_-20px_rgba(7,27,54,0.25)] border border-[#E4EAF1] bg-slate-100 h-[320px] sm:h-[380px] lg:h-[480px]">
             <iframe
-              src={MAP_URL}
+              src={info.mapEmbedUrl || MAP_URL}
               title="ALRA LED Solutions locatie op kaart"
-              className="w-full h-full border-0"
+              className="absolute inset-0 w-full h-full border-0"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />
