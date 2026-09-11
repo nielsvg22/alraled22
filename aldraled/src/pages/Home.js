@@ -366,6 +366,9 @@ const Home = () => {
     }
 
     if (id === 'stats') {
+      const hasStats = Array.isArray(stats) && stats.length > 0;
+      const hasDelivery = Boolean(is?.deliveryTitle || is?.deliverySubtitle);
+      if (!hasStats && !hasDelivery) return null;
       return (
         <section className="pb-20 px-6 md:px-10">
           <div className="max-w-6xl mx-auto">
@@ -378,13 +381,15 @@ const Home = () => {
                   <p className="text-xs font-bold text-secondary uppercase tracking-wider mt-2">{stat.label}</p>
                 </div>
               ))}
-              <div className="col-span-2 bg-secondary rounded-2xl p-6 flex items-center gap-4">
-                <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white text-xl shrink-0">⚡</div>
-                <div>
-                  <p className="text-white font-bold text-sm">{is.deliveryTitle}</p>
-                  <p className="text-white/50 text-xs mt-0.5">{is.deliverySubtitle}</p>
+              {hasDelivery && (
+                <div className="col-span-2 bg-secondary rounded-2xl p-6 flex items-center gap-4">
+                  <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white text-xl shrink-0">⚡</div>
+                  <div>
+                    <p className="text-white font-bold text-sm">{is.deliveryTitle}</p>
+                    <p className="text-white/50 text-xs mt-0.5">{is.deliverySubtitle}</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </section>

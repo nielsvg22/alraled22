@@ -878,14 +878,21 @@ export default function PageBuilder() {
       api.get('/content/layout_home_sections', { params: { lang } })
         .then(r => {
           const data = r.data;
+          let order;
           if (data && data.order) {
-            setSectionOrder(data.order);
+            order = [...data.order];
             setHiddenSections(data.hidden || []);
           } else if (Array.isArray(data)) {
-            setSectionOrder(data);
+            order = [...data];
           } else {
-            setSectionOrder(FIXED_SECTIONS.map(s => s.id));
+            order = FIXED_SECTIONS.map(s => s.id);
           }
+          // Zorg dat alle vaste secties (bv. Groothandel) in de volgorde staan,
+          // anders kunnen ze in de builder niet gesleept/geordend worden.
+          FIXED_SECTIONS.forEach(s => {
+            if (!order.includes(s.id)) order.push(s.id);
+          });
+          setSectionOrder(order);
         })
         .catch(() => setSectionOrder(FIXED_SECTIONS.map(s => s.id)));
 
