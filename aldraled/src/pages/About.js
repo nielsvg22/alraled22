@@ -14,12 +14,12 @@ const B = '#0B67D8';
 const DEFAULTS = {
   eyebrow: 'Over ons',
   title: 'Kwaliteit, innovatie en ontwikkeling. ALRA werkt graag met u samen.',
-  description: 'Bij ALRA LED Solutions geloven we in verlichting die verder gaat. Voor professionals die elke dag het verschil maken.',
+  description: 'Wij zijn ALRA LED Solutions — sinds 2014 de specialist in professionele LED-verlichting voor bedrijfswagens, werkplaatsen, bouw en industrie.',
   image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=1600',
   values: [
-    { icon: '⚡', title: 'Vakmanschap', text: 'Gedreven engineers betrokken bij ontwerp, techniek, duurzaamheid en functionaliteit. Van schets tot gecertificeerd eindproduct.' },
-    { icon: '🛡️', title: 'Kwaliteit & garantie', text: 'Uitsluitend CE- en RoHS-gecertificeerde LED-producten. Volledige garantie op elk product dat wij leveren.' },
-    { icon: '💬', title: 'Persoonlijk advies', text: 'Loopt u in het werkveld tegen een probleem aan? Wij komen graag langs om samen tot de beste oplossing te komen.' },
+    { icon: '🛡️', title: 'Professionele kwaliteit', text: 'CE- en RoHS-gecertificeerde LED-producten, geselecteerd voor intensief professioneel gebruik.' },
+    { icon: '💡', title: 'Praktisch advies', text: 'Wij denken mee over de oplossing die past bij jouw toepassing.' },
+    { icon: '🚚', title: 'Snel uit voorraad', text: 'Veel producten direct leverbaar uit ons eigen magazijn.' },
   ],
 };
 
@@ -286,13 +286,14 @@ const About = () => {
             </h2>
             <div className="space-y-4 text-[15px] leading-relaxed text-slate-500">
               <p>
-                Bij ALRA draait het niet alleen om een lamp. Het gaat om verlichting die in de praktijk moet presteren.
-                Of het nu gaat om een bedrijfswagen, werkplaats, bouwplaats of industriële omgeving: onze oplossingen
-                zijn geselecteerd voor professioneel en intensief gebruik.
+                ALRA LED Solutions is in 2014 opgericht met één doel: professionals voorzien van
+                LED-verlichting die in de praktijk echt presteert. Wat begon met bedrijfswagenverlichting
+                groeide uit tot een compleet assortiment voor werkplaats, bouwplaats en industrie.
               </p>
               <p>
-                Wij combineren een breed assortiment met korte lijnen, persoonlijk advies en snelle levering.
-                Zo helpen we professionals aan verlichting waarop ze iedere werkdag kunnen vertrouwen.
+                Onze engineers zijn van begin tot eind betrokken bij ontwerp, techniek en duurzaamheid.
+                Wij leveren uitsluitend CE- en RoHS-gecertificeerde producten en combineren een breed
+                assortiment met korte lijnen, persoonlijk advies en snelle levering uit eigen voorraad.
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
