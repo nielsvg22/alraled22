@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, double, int, text, timestamp, mysqlEnum } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, double, int, text, timestamp, mysqlEnum, index } from 'drizzle-orm/mysql-core';
 import { relations, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 
@@ -371,3 +371,17 @@ export const systemLogs = mysqlTable('SystemLog', {
   orderId: varchar('orderId', { length: 36 }),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
 });
+
+export const contactSubmissions = mysqlTable('ContactSubmission', {
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => randomUUID()),
+  name: varchar('name', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  subject: varchar('subject', { length: 255 }),
+  message: text('message').notNull(),
+  ip: varchar('ip', { length: 45 }),
+  status: mysqlEnum('status', ['NEW', 'READ', 'ARCHIVED']).notNull().default('NEW'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+}, (t) => [
+  index('ContactSubmission_status_idx').on(t.status),
+  index('ContactSubmission_createdAt_idx').on(t.createdAt),
+]);
