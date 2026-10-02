@@ -11,6 +11,7 @@ export const ROUTES = {
   product: (id) => `/product/${id}`,
   contact: '/contact',
   dealers: '/verkooppunten',
+  groothandels: '/groothandels',
   blog: '/blog',
   blogPost: (id) => `/blog/${id}`,
   login: '/login',
@@ -34,6 +35,7 @@ export function shopWithCategory(cat) {
 export const NAV_LINKS = [
   { to: ROUTES.home, labelKey: 'nav.home' },
   { to: ROUTES.about, labelKey: 'nav.about' },
+  { to: ROUTES.groothandels, labelKey: 'nav.groothandels' },
   { to: ROUTES.blog, labelKey: 'nav.blog' },
   { to: ROUTES.contact, labelKey: 'nav.contact' },
 ];
@@ -41,6 +43,7 @@ export const NAV_LINKS = [
 export const FOOTER_NAV_LINKS = [
   { to: ROUTES.home, label: 'Home' },
   { to: ROUTES.about, label: 'Over ons' },
+  { to: ROUTES.groothandels, label: 'Groothandels' },
   { to: ROUTES.shop, label: 'Webshop' },
   { to: ROUTES.contact, label: 'Contact' },
 ];

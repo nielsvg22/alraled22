@@ -20,9 +20,13 @@ export default function Dealers() {
   const [showNew, setShowNew] = useState(false);
   const [newDealer, setNewDealer] = useState({
     name: '',
+    brand: '',
     website: '',
     phone: '',
-    address: '',
+    street: '',
+    houseNumber: '',
+    postalCode: '',
+    city: '',
     lat: '',
     lon: '',
   });
@@ -32,7 +36,12 @@ export default function Dealers() {
   const [searchResults, setSearchResults] = useState([]);
 
   const canAdd = useMemo(() => {
-    return normalizeText(newDealer.name) && normalizeText(newDealer.address) && normalizeText(newDealer.lat) && normalizeText(newDealer.lon);
+    return normalizeText(newDealer.name) &&
+           normalizeText(newDealer.street) &&
+           normalizeText(newDealer.postalCode) &&
+           normalizeText(newDealer.city) &&
+           normalizeText(newDealer.lat) &&
+           normalizeText(newDealer.lon);
   }, [newDealer]);
 
   useEffect(() => {
@@ -76,18 +85,27 @@ export default function Dealers() {
   };
 
   const add = () => {
+    const street = normalizeText(newDealer.street);
+    const houseNumber = normalizeText(newDealer.houseNumber);
+    const address = houseNumber ? `${street} ${houseNumber}` : street;
+
     const item = {
       id: crypto.randomUUID(),
       name: normalizeText(newDealer.name),
+      brand: normalizeText(newDealer.brand),
       website: normalizeText(newDealer.website),
       phone: normalizeText(newDealer.phone),
-      address: normalizeText(newDealer.address),
+      address,
+      street,
+      houseNumber,
+      postalCode: normalizeText(newDealer.postalCode),
+      city: normalizeText(newDealer.city),
       lat: toNumber(newDealer.lat),
       lon: toNumber(newDealer.lon),
     };
 
     setItems((prev) => [item, ...prev]);
-    setNewDealer({ name: '', website: '', phone: '', address: '', lat: '', lon: '' });
+    setNewDealer({ name: '', brand: '', website: '', phone: '', street: '', houseNumber: '', postalCode: '', city: '', lat: '', lon: '' });
     setQuery('');
     setSearchResults([]);
     setShowNew(false);
@@ -143,7 +161,13 @@ export default function Dealers() {
                 <div key={x.id} className="p-5 flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <p className="font-black text-gray-900 truncate">{x.name}</p>
-                    <p className="text-sm text-gray-500 mt-0.5">{x.address}</p>
+                    {x.brand && <p className="text-xs text-primary font-semibold mt-0.5">{x.brand}</p>}
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      {x.street || x.address}
+                      {x.houseNumber && ` ${x.houseNumber}`}
+                      {x.postalCode && `, ${x.postalCode}`}
+                      {x.city && ` ${x.city}`}
+                    </p>
                     <div className="text-xs text-gray-400 mt-1 flex flex-wrap gap-3">
                       <span>lat {x.lat}</span>
                       <span>lon {x.lon}</span>
@@ -183,7 +207,16 @@ export default function Dealers() {
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
                     value={newDealer.name}
                     onChange={(e) => setNewDealer((p) => ({ ...p, name: e.target.value }))}
-                    placeholder="bv. Dealer Apeldoorn"
+                    placeholder="bv. Mastermate Apeldoorn"
+                  />
+                </div>
+                <div>
+                  <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Merk / Groep</p>
+                  <input
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                    value={newDealer.brand}
+                    onChange={(e) => setNewDealer((p) => ({ ...p, brand: e.target.value }))}
+                    placeholder="bv. Mastermate, AIC Visser, RECO"
                   />
                 </div>
                 <div>
@@ -195,7 +228,7 @@ export default function Dealers() {
                     placeholder="bv. 085-0021 606"
                   />
                 </div>
-                <div className="sm:col-span-2">
+                <div>
                   <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Website</p>
                   <input
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
@@ -206,8 +239,47 @@ export default function Dealers() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Straat</p>
+                  <input
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                    value={newDealer.street}
+                    onChange={(e) => setNewDealer((p) => ({ ...p, street: e.target.value }))}
+                    placeholder="bv. Paramariboweg"
+                  />
+                </div>
+                <div>
+                  <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Huisnummer</p>
+                  <input
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                    value={newDealer.houseNumber}
+                    onChange={(e) => setNewDealer((p) => ({ ...p, houseNumber: e.target.value }))}
+                    placeholder="bv. 99"
+                  />
+                </div>
+                <div>
+                  <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Postcode</p>
+                  <input
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                    value={newDealer.postalCode}
+                    onChange={(e) => setNewDealer((p) => ({ ...p, postalCode: e.target.value }))}
+                    placeholder="bv. 7333 PA"
+                  />
+                </div>
+                <div>
+                  <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Plaats</p>
+                  <input
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                    value={newDealer.city}
+                    onChange={(e) => setNewDealer((p) => ({ ...p, city: e.target.value }))}
+                    placeholder="bv. Apeldoorn"
+                  />
+                </div>
+              </div>
+
               <div>
-                <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Zoek adres</p>
+                <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Zoek adres (vult straat, huisnummer, postcode, plaats, lat, lon in)</p>
                 <div className="relative">
                   <input
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
@@ -229,7 +301,16 @@ export default function Dealers() {
                         key={r.place_id}
                         type="button"
                         onClick={() => {
-                          setNewDealer((p) => ({ ...p, address: r.display_name, lat: String(r.lat), lon: String(r.lon) }));
+                          const addr = r.address || {};
+                          setNewDealer((p) => ({
+                            ...p,
+                            street: addr.road || addr.street || '',
+                            houseNumber: addr.house_number || addr.number || '',
+                            postalCode: addr.postcode || '',
+                            city: addr.city || addr.town || addr.village || '',
+                            lat: String(r.lat),
+                            lon: String(r.lon),
+                          }));
                           setQuery(r.display_name);
                           setSearchResults([]);
                         }}
@@ -285,4 +366,3 @@ export default function Dealers() {
     </div>
   );
 }
-

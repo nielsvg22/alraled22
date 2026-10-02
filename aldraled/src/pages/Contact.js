@@ -8,8 +8,9 @@ import CustomBlocks from '../components/CustomBlocks';
 
 const B = '#0B67D8';
 
-const HERO_IMG = 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600';
-const MAP_URL = 'https://www.openstreetmap.org/export/embed.html?bbox=5.932,52.206,5.942,52.216&layer=mapnik&marker=52.211,5.937';
+const HERO_IMG = '';
+// OpenStreetMap embed voor Dijkgraafweg 4a, 7336 AT Apeldoorn (ALRA kantoor)
+const MAP_URL = 'https://www.openstreetmap.org/export/embed.html?bbox=5.938,52.209,5.945,52.216&layer=mapnik&marker=52.2125,5.9415';
 
 const DEFAULTS = {
   eyebrow: 'Neem contact op',
@@ -379,13 +380,13 @@ const Contact = () => {
                 <Link to={ROUTES.shop} className="inline-flex items-center justify-center gap-2 bg-[#0B67D8] text-white font-bold text-sm px-7 py-3.5 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-[#0B67D8]/25">
                   {info.ctaShopButton} <IconArrow className="w-4 h-4" />
                 </Link>
-                <Link to={ROUTES.contact} className="inline-flex items-center justify-center gap-2 border border-slate-300 bg-white text-secondary font-bold text-sm px-7 py-3.5 rounded-[10px] hover:border-[#0B67D8]/40 hover:text-[#0B67D8] transition-all">
+                <a href="#contact-form" className="inline-flex items-center justify-center gap-2 border border-slate-300 bg-white text-secondary font-bold text-sm px-7 py-3.5 rounded-[10px] hover:border-[#0B67D8]/40 hover:text-[#0B67D8] transition-all">
                   {info.ctaContactButton}
-                </Link>
+                </a>
               </div>
             </div>
             <div className="hidden lg:flex items-center justify-center lg:w-[320px]">
-              <div className="w-56 h-56 rounded-xl overflow-hidden rotate-2">
+              <div className="w-56 h-56 rounded-xl overflow-hidden">
                 <img src={getMediaUrl(info.heroImage) || HERO_IMG} alt="ALRA LED Solutions" className="w-full h-full object-cover" loading="lazy" decoding="async" />
               </div>
             </div>

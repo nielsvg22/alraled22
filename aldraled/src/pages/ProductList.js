@@ -77,7 +77,6 @@ function QuickViewModal({ product, onClose }) {
             <img src={getImageSrc(product)} alt={product.name} className="w-full h-full object-contain" loading="lazy" decoding="async" />
           </div>
           <div className="p-7 flex flex-col gap-4">
-            {product.category && <span className="text-xs font-bold text-primary uppercase tracking-widest">{product.category}</span>}
             <h2 className="text-xl font-black text-secondary leading-tight">{product.name}</h2>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-secondary">{formatPrice(displayPrice)}</span>
@@ -230,12 +229,6 @@ function ProductCard({ product, showInclVat, inCompare, onCompare, onQuickView }
             className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-[1.03]"
             loading="lazy" decoding="async"
           />
-          {/* Category pill */}
-          {product.category && (
-            <span className="absolute top-3 left-3 max-w-[75%] truncate bg-white/95 backdrop-blur text-[11px] font-bold text-secondary px-2.5 py-1 rounded-full shadow-sm border border-[#E4EAF1]">
-              {product.category}
-            </span>
-          )}
           {/* Compare toggle */}
           <button
             onClick={(e) => { e.preventDefault(); onCompare(product); }}

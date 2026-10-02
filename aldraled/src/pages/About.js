@@ -15,7 +15,7 @@ const DEFAULTS = {
   eyebrow: 'Over ons',
   title: 'Kwaliteit, innovatie en ontwikkeling. ALRA werkt graag met u samen.',
   description: 'Wij zijn ALRA LED Solutions — sinds 2014 de specialist in professionele LED-verlichting voor bedrijfswagens, werkplaatsen, bouw en industrie.',
-  image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=1600',
+  image: '',
   values: [
     { icon: '🛡️', title: 'Professionele kwaliteit', text: 'CE- en RoHS-gecertificeerde LED-producten, geselecteerd voor intensief professioneel gebruik.' },
     { icon: '💡', title: 'Praktisch advies', text: 'Wij denken mee over de oplossing die past bij jouw toepassing.' },
@@ -24,12 +24,13 @@ const DEFAULTS = {
 };
 
 // Bestaande site-afbeeldingen als fallback wanneer een media-URL ontbreekt.
+// Gebruik lege strings zodat de productafbeeldingen uit de API worden gebruikt.
 const IMG = {
-  office: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600',
-  van: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80&w=1600',
-  hefbrug: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&q=80&w=1600',
-  werkplaats: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&q=80&w=1200',
-  constructie: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=1600',
+  office: '',
+  van: '',
+  hefbrug: '',
+  werkplaats: '',
+  constructie: '',
 };
 
 const CAT_FALLBACK = {
@@ -40,7 +41,7 @@ const CAT_FALLBACK = {
   'veiligheidsverlichting': IMG.constructie,
 };
 
-const ALL_FALLBACK = 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80&w=1600';
+const ALL_FALLBACK = '';
 
 const HeroUsps = [
   { icon: 'truck', title: 'Snel geleverd', text: 'Direct leverbaar' },
@@ -530,7 +531,7 @@ const About = () => {
               </div>
             </div>
             <div className="hidden lg:flex items-center justify-center lg:w-[320px]">
-              <div className="w-56 h-56 rounded-xl overflow-hidden rotate-2">
+              <div className="w-56 h-56 rounded-xl overflow-hidden">
                 <img src={ctaImg} alt="LED bedrijfswagenverlichting van ALRA" className="w-full h-full object-cover" loading="lazy" decoding="async" />
               </div>
             </div>

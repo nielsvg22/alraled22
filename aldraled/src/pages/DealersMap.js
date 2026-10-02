@@ -6,25 +6,29 @@ import { DEFAULT_DEALERS, buildDealerAddress } from '../lib/dealers';
 import { API_URL } from '../lib/api';
 
 // Combine standaard-verkooppunten met de locaties uit de API/CRM.
-// Duplicatie wordt vermeden op naam + adres + plaats.
-function mergeDealers(apiDealers) {
-  const seen = new Set();
-  const result = [];
-  const push = (d) => {
-    if (!d) return;
-    const key = [
-      normalizeText(d.name),
-      normalizeText(d.address),
-      normalizeText(d.city),
-    ].join('|').toLowerCase();
-    if (!key || seen.has(key)) return;
-    seen.add(key);
-    result.push(d);
-  };
-  DEFAULT_DEALERS.forEach(push);
-  (Array.isArray(apiDealers) ? apiDealers : []).forEach(push);
-  return result;
-}
+ // Duplicatie wordt vermeden op brand + naam + adres + postcode.
+ // Dit voorkomt dat afzonderlijke officiële vestigingen op hetzelfde adres
+ // (bijv. Mastermate De Goorn en Mastermate De Goorn (Ruvo)) per ongeluk
+ // worden gededupliceerd.
+ function mergeDealers(apiDealers) {
+   const seen = new Set();
+   const result = [];
+   const push = (d) => {
+     if (!d) return;
+     const key = [
+       normalizeText(d.brand),
+       normalizeText(d.name),
+       normalizeText(d.address),
+       normalizeText(d.postalCode),
+     ].join('|').toLowerCase();
+     if (!key || seen.has(key)) return;
+     seen.add(key);
+     result.push(d);
+   };
+   DEFAULT_DEALERS.forEach(push);
+   (Array.isArray(apiDealers) ? apiDealers : []).forEach(push);
+   return result;
+ }
 
 function toRad(deg) {
   return (deg * Math.PI) / 180;

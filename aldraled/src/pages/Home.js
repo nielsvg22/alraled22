@@ -7,16 +7,16 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { getMediaUrl } from '../lib/api';
-import { ROUTES } from '../lib/routes';
+import { ROUTES, shopWithCategory } from '../lib/routes';
 
 const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
 
 const DEFAULTS = {
   hero: {
-    title: "Welkom bij ALRA LED Solutions.",
+    title: "ALRA LED Solutions.",
     titlePrefix: "Verlichting voor",
-    subtitle: "ALRA Led Solutions helpt u kiezen voor een duurzame toekomst. Specialist in LED-verlichting voor bedrijfswagens, bouwplaatsen en werkplaatsen.",
-    backgroundImage: "https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=2000",
+    subtitle: "Specialist in professionele LED-verlichting voor bedrijfswagens, bouwplaatsen en werkplaatsen. Kwaliteit, certificering en snelle levering uit eigen voorraad.",
+    backgroundImage: "",
     primaryButtonText: "Bekijk producten",
     secondaryButtonText: "Over ons",
     typewriterWords: ['bedrijfswagens.', 'bouwplaatsen.', 'werkplaatsen.', 'professionals.'],
@@ -28,9 +28,9 @@ const DEFAULTS = {
   },
   introduction: { badge: "Duurzame Toekomst", marqueeText: "LED SPECIALISTS" },
   specializations: [
-    { title: "Bedrijfswagenverlichting", desc: "Optimale LED-werkverlichting voor uw bestelwagen, truck of bedrijfsvoertuig. Meer veiligheid, minder verbruik.", image: "https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80&w=1600" },
-    { title: "LED Bouwlichtslangen", desc: "Robuuste en krachtige LED-verlichting speciaal ontworpen voor gebruik op de bouwplaats.", image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=1600" },
-    { title: "LED Hefbrugverlichting", desc: "Perfecte lichtopbrengst onder het voertuig voor een veilige en efficiënte werkplaatsomgeving.", image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&q=80&w=1600" },
+    { title: "Bedrijfswagenverlichting", desc: "Optimale LED-werkverlichting voor uw bestelwagen, truck of bedrijfsvoertuig. Meer veiligheid, minder verbruik.", image: "" },
+    { title: "LED Bouwlichtslangen", desc: "Robuuste en krachtige LED-verlichting speciaal ontworpen voor gebruik op de bouwplaats.", image: "" },
+    { title: "LED Hefbrugverlichting", desc: "Perfecte lichtopbrengst onder het voertuig voor een veilige en efficiënte werkplaatsomgeving.", image: "" },
   ],
   stats: [
     { value: 10, label: "Jaar Actief", suffix: "+" },
@@ -49,7 +49,7 @@ const DEFAULTS = {
       'Betrouwbare, gecertificeerde producten',
       'Voor zakelijke en professionele toepassingen',
     ],
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600",
+    image: "",
   },
   highlights: {
     title: "Voor de Groothandel",
@@ -59,7 +59,7 @@ const DEFAULTS = {
         title: "LED Werkverlichting",
         description: "Hoogwaardige LED-werkverlichting voor bedrijfswagens, trucks en bestelwagens. Optimale lichtopbrengst en laag stroomverbruik.",
         features: ["IP67 waterdicht", "3-jaar garantie", "ECE R10 gecertificeerd"],
-        image: "https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80&w=1600",
+        image: "",
         link: ROUTES.shop,
         linkText: "Bekijk assortiment",
       },
@@ -67,7 +67,7 @@ const DEFAULTS = {
         title: "LED Bouwlichtslangen",
         description: "Robuuste LED-verlichting speciaal ontwikkeld voor zware bouwplaatsomstandigheden. Stof- en waterbestendig met IP65-certificering.",
         features: ["IP65 stofdicht", "Schokbestendig", "50.000+ branduren"],
-        image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=1600",
+        image: "",
         link: ROUTES.shop,
         linkText: "Bekijk assortiment",
       },
@@ -75,7 +75,7 @@ const DEFAULTS = {
         title: "LED Hefbrugverlichting",
         description: "Perfecte lichtopbrengst onder het voertuig voor een veilige en efficiënte werkplaatsomgeving. Eenvoudig te monteren.",
         features: ["Montage in 15 min", "Universele pasvorm", "CAN-bus compatibel"],
-        image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&q=80&w=1600",
+        image: "",
         link: ROUTES.shop,
         linkText: "Bekijk assortiment",
       },
@@ -162,6 +162,7 @@ const Home = () => {
   const [customBlocks, setCustomBlocks] = useState([]);
   const [sectionOrder, setSectionOrder] = useState(DEFAULT_SECTION_ORDER);
   const [hiddenSections, setHiddenSections] = useState([]);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     const lang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
@@ -170,6 +171,9 @@ const Home = () => {
       .catch(() => {});
     axios.get(`${API_URL}/api/products`)
       .then(res => setFeaturedProducts(res.data.slice(0, 4)))
+      .catch(() => {});
+    axios.get(`${API_URL}/api/products/categories/all`)
+      .then(res => setCategories(Array.isArray(res.data) ? res.data : []))
       .catch(() => {});
     axios.get(`${API_URL}/api/content/page_blocks_home`, { params: { lang } })
       .then(res => setCustomBlocks(Array.isArray(res.data) ? res.data : []))
@@ -208,10 +212,18 @@ const Home = () => {
 
   const renderSection = (id) => {
     if (id === 'hero') {
+      const heroBg = getMediaUrl(hero.backgroundImage);
+      const fallbackProductImg = featuredProducts.length > 0 ? getImageSrc(featuredProducts[0]) : null;
+      const heroImage = heroBg && heroBg !== PLACEHOLDER_IMAGE ? heroBg : fallbackProductImg;
+
       return (
         <section className="relative min-h-[75vh] flex flex-col justify-end overflow-hidden">
           <div className="absolute inset-0">
-            <img src={getMediaUrl(hero.backgroundImage)} alt="" className="w-full h-full object-cover" />
+            {heroImage ? (
+              <img src={heroImage} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-secondary via-secondary/80 to-secondary/60" />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/60 to-secondary/10" />
           </div>
 
@@ -346,7 +358,7 @@ const Home = () => {
                 <div className="absolute -inset-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-3xl blur-2xl" />
                 <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
                   <img
-                    src={getMediaUrl(is.image) || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600"}
+                    src={getMediaUrl(is.image)}
                     alt={is.heading}
                     className="w-full h-full object-cover"
                     loading="lazy"
@@ -396,37 +408,47 @@ const Home = () => {
       );
     }
 
-    if (id === 'cases') {
+if (id === 'cases') {
+      const categoriesWithImages = categories.filter(c => c.imageUrl).slice(0, 6);
+      const displayCategories = categoriesWithImages.length > 0 ? categoriesWithImages : specializations;
+
       return (
         <section className="py-16 px-6 md:px-10 bg-gray-50">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-end justify-between mb-8">
               <div>
                 <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Onze specialisaties</p>
-                <h2 className="text-3xl font-black text-secondary">Producten &amp; Cases</h2>
+                <h2 className="text-3xl font-black text-secondary">Producten & Cases</h2>
               </div>
               <Link to={ROUTES.shop} className="text-xs font-bold text-secondary hover:text-primary transition-colors uppercase tracking-widest hidden md:flex items-center gap-1">
                 Alle producten <span>→</span>
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {specializations.map((cat, idx) => (
-                <Link to={ROUTES.shop} key={idx} className="group relative overflow-hidden rounded-2xl aspect-[4/3] block bg-gray-200">
-                  <img src={getMediaUrl(cat.image)} alt={cat.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/30 to-transparent" />
-                  <div className="absolute bottom-0 left-0 p-6">
-                    <h3 className="text-white font-black text-lg leading-tight">{cat.title}</h3>
-                    <p className="text-white/60 text-xs mt-1 leading-relaxed">{cat.desc}</p>
-                    <span className="inline-flex items-center gap-1.5 mt-3 text-primary text-xs font-bold uppercase tracking-wider group-hover:gap-3 transition-all">
-                      Bekijk <span>→</span>
-                    </span>
-                  </div>
-                  <div className="absolute top-4 right-4 bg-white/10 backdrop-blur border border-white/20 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-                    {String(idx + 1).padStart(2, '0')}
-                  </div>
-                </Link>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {displayCategories.map((cat, idx) => {
+                const catImage = getMediaUrl(cat.imageUrl || cat.image);
+                const catTitle = cat.name || cat.title;
+                const catDesc = cat.description || cat.desc || '';
+                const catLink = cat.slug || cat.id ? shopWithCategory(cat) : ROUTES.shop;
+
+                return (
+                  <Link key={cat.id || idx} to={catLink} className="group relative overflow-hidden rounded-2xl aspect-[4/3] block bg-gray-200">
+                    <img src={catImage} alt={catTitle} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/30 to-transparent" />
+                    <div className="absolute bottom-0 left-0 p-6">
+                      <h3 className="text-white font-black text-lg leading-tight">{catTitle}</h3>
+                      {catDesc && <p className="text-white/60 text-xs mt-1 leading-relaxed">{catDesc}</p>}
+                      <span className="inline-flex items-center gap-1.5 mt-3 text-primary text-xs font-bold uppercase tracking-wider group-hover:gap-3 transition-all">
+                        Bekijk <span>→</span>
+                      </span>
+                    </div>
+                    <div className="absolute top-4 right-4 bg-white/10 backdrop-blur border border-white/20 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+                      {String(idx + 1).padStart(2, '0')}
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>

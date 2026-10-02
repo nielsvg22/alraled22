@@ -14,7 +14,6 @@ function GridPost({ block, index }) {
   const excerpt = data.excerpt || data.body  || '';
   const image   = data.imageUrl;
   const author  = data.author || 'ALRA LED';
-  const date    = data.date   || '';
   const num     = String(index + 1).padStart(2, '0');
 
   return (
@@ -36,8 +35,6 @@ function GridPost({ block, index }) {
       {/* Content */}
       <div className="flex flex-col flex-1 p-5 gap-2.5">
         <div className="flex items-center gap-2 text-[11px] text-gray-400 font-medium">
-          {date && <span>{date}</span>}
-          {date && <span>·</span>}
           <span>{readTime(excerpt)} min</span>
         </div>
 

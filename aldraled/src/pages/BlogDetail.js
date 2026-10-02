@@ -46,7 +46,6 @@ export default function BlogDetail() {
   const body    = data.content || data.body        || data.excerpt || '';
   const image   = data.imageUrl;
   const author  = data.author  || 'ALRA LED Team';
-  const date    = data.date    || '';
   const mins    = readTime(body);
 
   return (
@@ -71,11 +70,6 @@ export default function BlogDetail() {
 
         {/* Meta */}
         <header className="mb-10 space-y-5">
-          {date && (
-            <p className="text-xs font-bold text-primary uppercase tracking-widest">
-              {date}
-            </p>
-          )}
           <h1 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
             {title}
           </h1>
@@ -167,7 +161,7 @@ export default function BlogDetail() {
                       </div>
                     )}
                     <div className="p-4 space-y-1.5">
-                      <p className="text-[11px] text-gray-400 font-medium">{d.date || ''} · {mins2} min</p>
+                      <p className="text-[11px] text-gray-400 font-medium">{mins2} min</p>
                       <h4 className="font-black text-sm text-gray-800 leading-snug group-hover:text-primary transition-colors line-clamp-2">{t}</h4>
                     </div>
                   </Link>

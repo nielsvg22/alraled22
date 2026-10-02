@@ -185,12 +185,9 @@ const ProductDetail = () => {
           {/* RIGHT: Product Info */}
           <div className="lg:col-span-6 flex flex-col gap-5">
 
-            {/* Title + Rating */}
+            {/* Title */}
             <div>
-              {product.category && (
-                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{product.category}</span>
-              )}
-              <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-secondary leading-tight mt-0.5">{product.name}</h1>
+              <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-secondary leading-tight">{product.name}</h1>
             </div>
 
             {/* Price Block */}

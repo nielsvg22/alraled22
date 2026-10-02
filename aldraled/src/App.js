@@ -24,6 +24,7 @@ const OrderSuccess = lazy(() => import('./pages/OrderSuccess'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 const DealersMap = lazy(() => import('./pages/DealersMap'));
+const Groothandels = lazy(() => import('./pages/Groothandels'));
 const Returns = lazy(() => import('./pages/Returns'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 const SeoLandingPage = lazy(() => import('./pages/SeoLandingPage'));
@@ -128,6 +129,7 @@ function App() {
                       <Route path="/blog" element={<Blog />} />
                       <Route path="/blog/:id" element={<BlogDetail />} />
                       <Route path="/verkooppunten" element={<DealersMap />} />
+                      <Route path="/groothandels" element={<Groothandels />} />
                       <Route path="/retouren" element={<Returns />} />
                       <Route path="/algemene-voorwaarden" element={<LegalPage />} />
                       <Route path="/privacy-policy" element={<LegalPage />} />

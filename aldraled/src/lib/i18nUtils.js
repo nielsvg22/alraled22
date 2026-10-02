@@ -23,7 +23,6 @@ const CATEGORY_TRANSLATION_KEYS = {
   Accessoires: 'products.categories.accessories',
   Accessories: 'products.categories.accessories',
   Zubehor: 'products.categories.accessories',
-  'Zubehor': 'products.categories.accessories',
 };
 
 export function getLanguageCode(i18n) {
