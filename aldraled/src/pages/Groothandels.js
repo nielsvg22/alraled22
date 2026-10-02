@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { getMediaUrl, API_URL } from '../lib/api';
@@ -10,28 +10,28 @@ const WHOLESALE_BRANDS = [
     name: 'Mastermate',
     description: 'Nederlands groothandelsnetwerk voor elektrotechnische materialen, verlichting en installatietechniek. Ruim 48 vestigingen landelijk.',
     website: 'https://www.mastermate.nl',
-    logo: '/uploads/mastermate-logo.png',
+    categoryFilter: ['bedrijfswagen', 'bouw', 'hefbrug', 'werkverlichting', 'veiligheid'],
   },
   {
     id: 'aic-visser',
     name: 'AIC Visser',
     description: 'Specialist in verlichting, elektromateriaal en installatietechniek. Drie vestigingen in Harderwijk, Assen en Veghel.',
     website: 'https://www.aic.nl',
-    logo: '/uploads/aic-visser-logo.png',
+    categoryFilter: ['bedrijfswagen', 'bouw', 'werkverlichting'],
   },
   {
     id: 'reco',
     name: 'RECO Bouwplaatsbeveiliging',
     description: 'Expert in bouwplaatsbeveiliging en perimeterebeveiliging. Vestiging in Diemen.',
     website: '',
-    logo: '/uploads/reco-logo.png',
+    categoryFilter: ['veiligheid', 'bouw'],
   },
   {
     id: 'hoegen',
     name: 'Hoegen Elektro & Diesel Parts',
     description: 'Leverancier van elektrotechnische onderdelen en diesel componenten. Vestiging in Apeldoorn.',
     website: '',
-    logo: '/uploads/hoegen-logo.png',
+    categoryFilter: ['bedrijfswagen', 'werkverlichting'],
   },
 ];
 
@@ -44,11 +44,28 @@ const Groothandels = () => {
       .catch(() => {});
   }, []);
 
+  // Find representative product image for each brand
+  const brandImages = useMemo(() => {
+    const images = {};
+    WHOLESALE_BRANDS.forEach(brand => {
+      const matchingProducts = products.filter(p => {
+        const cat = (p.category || '').toLowerCase();
+        return brand.categoryFilter.some(filter => cat.includes(filter));
+      });
+      // Use the first product with an image
+      const withImage = matchingProducts.find(p => p.imageUrl);
+      images[brand.id] = withImage ? getMediaUrl(withImage.imageUrl) : null;
+    });
+    return images;
+  }, [products]);
+
   // Filter products that are relevant for wholesalers (professional/bulk)
-  const wholesaleProducts = products.filter(p => {
-    const cat = (p.category || '').toLowerCase();
-    return cat.includes('bedrijfswagen') || cat.includes('bouw') || cat.includes('hefbrug') || cat.includes('werkverlichting') || cat.includes('veiligheid');
-  }).slice(0, 8);
+  const wholesaleProducts = useMemo(() => {
+    return products.filter(p => {
+      const cat = (p.category || '').toLowerCase();
+      return cat.includes('bedrijfswagen') || cat.includes('bouw') || cat.includes('hefbrug') || cat.includes('werkverlichting') || cat.includes('veiligheid');
+    }).slice(0, 8);
+  }, [products]);
 
   return (
     <div className="bg-white">
@@ -94,32 +111,35 @@ const Groothandels = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {WHOLESALE_BRANDS.map((brand) => (
-              <article key={brand.id} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-primary/30 hover:-translate-y-1 transition-all duration-300">
-                <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center p-8 relative overflow-hidden">
-                  {brand.logo ? (
-                    <img src={getMediaUrl(brand.logo)} alt={brand.name} className="max-w-[80%] max-h-[80%] object-contain drop-shadow-sm" loading="lazy" />
-                  ) : (
-                    <div className="text-center">
-                      <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                        <span className="text-3xl font-black text-primary">{brand.name.charAt(0)}</span>
+            {WHOLESALE_BRANDS.map((brand) => {
+              const brandImage = brandImages[brand.id];
+              return (
+                <article key={brand.id} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-primary/30 hover:-translate-y-1 transition-all duration-300">
+                  <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center p-6 relative overflow-hidden">
+                    {brandImage ? (
+                      <img src={brandImage} alt={brand.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" decoding="async" />
+                    ) : (
+                      <div className="text-center">
+                        <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                          <span className="text-3xl font-black text-primary">{brand.name.charAt(0)}</span>
+                        </div>
+                        <p className="text-sm text-gray-400">Geen afbeelding beschikbaar</p>
                       </div>
-                      <p className="text-sm text-gray-400">Geen logo beschikbaar</p>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-secondary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                </div>
-                <div className="p-6 space-y-4">
-                  <h3 className="text-xl font-black text-secondary group-hover:text-primary transition-colors">{brand.name}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{brand.description}</p>
-                  {brand.website && (
-                    <a href={brand.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary text-sm font-bold hover:underline">
-                      Website <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                    </a>
-                  )}
-                </div>
-              </article>
-            ))}
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-secondary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  </div>
+                  <div className="p-6 space-y-4">
+                    <h3 className="text-xl font-black text-secondary group-hover:text-primary transition-colors">{brand.name}</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed">{brand.description}</p>
+                    {brand.website && (
+                      <a href={brand.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary text-sm font-bold hover:underline">
+                        Website <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                      </a>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
