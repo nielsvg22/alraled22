@@ -10,6 +10,7 @@ const WHOLESALE_BRANDS = [
     name: 'Mastermate',
     description: 'Nederlands groothandelsnetwerk voor elektrotechnische materialen, verlichting en installatietechniek. Ruim 48 vestigingen landelijk.',
     website: 'https://www.mastermate.nl',
+    logo: '/uploads/mastermate-logo.png',
     categoryFilter: ['bedrijfswagen', 'bouw', 'hefbrug', 'werkverlichting', 'veiligheid'],
   },
   {
@@ -17,6 +18,7 @@ const WHOLESALE_BRANDS = [
     name: 'AIC Visser',
     description: 'Specialist in verlichting, elektromateriaal en installatietechniek. Drie vestigingen in Harderwijk, Assen en Veghel.',
     website: 'https://www.aic.nl',
+    logo: '/uploads/aic-visser-logo.png',
     categoryFilter: ['bedrijfswagen', 'bouw', 'werkverlichting'],
   },
   {
@@ -24,6 +26,7 @@ const WHOLESALE_BRANDS = [
     name: 'RECO Bouwplaatsbeveiliging',
     description: 'Expert in bouwplaatsbeveiliging en perimeterebeveiliging. Vestiging in Diemen.',
     website: '',
+    logo: '/uploads/reco-logo.svg',
     categoryFilter: ['veiligheid', 'bouw'],
   },
   {
@@ -31,6 +34,7 @@ const WHOLESALE_BRANDS = [
     name: 'Hoegen Elektro & Diesel Parts',
     description: 'Leverancier van elektrotechnische onderdelen en diesel componenten. Vestiging in Apeldoorn.',
     website: '',
+    logo: '/uploads/hoegen-logo.svg',
     categoryFilter: ['bedrijfswagen', 'werkverlichting'],
   },
 ];
@@ -113,10 +117,13 @@ const Groothandels = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {WHOLESALE_BRANDS.map((brand) => {
               const brandImage = brandImages[brand.id];
+              const logoUrl = brand.logo ? getMediaUrl(brand.logo) : null;
               return (
                 <article key={brand.id} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-primary/30 hover:-translate-y-1 transition-all duration-300">
                   <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center p-6 relative overflow-hidden">
-                    {brandImage ? (
+                    {logoUrl ? (
+                      <img src={logoUrl} alt={brand.name} className="max-w-[80%] max-h-[80%] object-contain drop-shadow-sm group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" />
+                    ) : brandImage ? (
                       <img src={brandImage} alt={brand.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" decoding="async" />
                     ) : (
                       <div className="text-center">
