@@ -229,7 +229,7 @@ const Header = () => {
 
       {/* Main nav */}
       <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-sm border-b border-gray-100' : 'bg-white border-b border-gray-100'}`}>
-        <div className="max-w-6xl mx-auto px-4 md:px-10 h-12 flex items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto px-4 md:px-10 h-12 flex items-center justify-between gap-3 min-w-0">
 
           {/* Logo */}
           <Link to={ROUTES.home} className="flex items-center gap-2 shrink-0">
@@ -244,11 +244,11 @@ const Header = () => {
           </Link>
 
           {/* Desktop nav */}
-          <ul className="hidden md:flex items-center gap-1">
+          <ul className="hidden md:flex items-center gap-1.5">
             {navLinks.map(({ to, label }) => (
               <li key={to}>
                 <Link to={to}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${isActive(to) ? 'text-primary bg-primary/5' : 'text-gray-600 hover:text-secondary hover:bg-gray-50'}`}>
+                  className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${isActive(to) ? 'text-primary bg-primary/5' : 'text-gray-600 hover:text-secondary hover:bg-gray-50'}`}>
                   {label}
                 </Link>
               </li>
@@ -257,7 +257,7 @@ const Header = () => {
               onMouseEnter={() => { clearTimeout(closeTimeoutRef.current); setShowCategories(true); }}
               onMouseLeave={() => { closeTimeoutRef.current = setTimeout(() => { setShowCategories(false); setHoveredCategory(null); }, 150); }}>
               <Link to={ROUTES.shop}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 ${isActive('/producten') ? 'text-primary bg-primary/5' : 'text-gray-600 hover:text-secondary hover:bg-gray-50'}`}>
+                className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 whitespace-nowrap ${isActive('/producten') ? 'text-primary bg-primary/5' : 'text-gray-600 hover:text-secondary hover:bg-gray-50'}`}>
                 {t('nav.products')}
                 <svg className={`w-3 h-3 transition-transform ${showCategories ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -267,7 +267,7 @@ const Header = () => {
           </ul>
 
           {/* Live search */}
-          <div className="hidden md:block">
+          <div className="hidden md:block flex-1 max-w-xs">
             <LiveSearch />
           </div>
 
