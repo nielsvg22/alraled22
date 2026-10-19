@@ -132,6 +132,20 @@ const uploadsDir = process.env.UPLOADS_DIR
   ? path.resolve(process.env.UPLOADS_DIR)
   : path.join(process.cwd(), 'uploads');
 fs.mkdirSync(uploadsDir, { recursive: true });
+
+// Persistent volume (UPLOADS_DIR) verbergt de bestanden uit de repo/image: kopieer ontbrekende
+// meegeleverde uploads (o.a. partnerlogo's) naar het volume. Bestaande bestanden blijven staan.
+const bundledUploadsDir = path.join(process.cwd(), 'uploads');
+if (path.resolve(bundledUploadsDir) !== uploadsDir && fs.existsSync(bundledUploadsDir)) {
+  try {
+    for (const entry of fs.readdirSync(bundledUploadsDir, { withFileTypes: true })) {
+      const target = path.join(uploadsDir, entry.name);
+      if (entry.isFile() && !fs.existsSync(target)) fs.copyFileSync(path.join(bundledUploadsDir, entry.name), target);
+    }
+  } catch (err) {
+    console.warn('[server] Kon meegeleverde uploads niet kopieren:', err);
+  }
+}
 app.use('/uploads', express.static(uploadsDir));
 
 app.get('/health', (req, res) => {
