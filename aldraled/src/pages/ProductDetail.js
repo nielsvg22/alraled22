@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
-import { getMediaUrl, API_URL } from '../lib/api';
+import { getMediaUrl, API_URL, htmlToText } from '../lib/api';
 import analytics from '../lib/analytics';
 import { getProductImages, getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
@@ -117,7 +117,7 @@ const ProductDetail = () => {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    description: product.description || '',
+    description: htmlToText(product.description),
     image: getMediaUrl(images[0] || product.imageUrl) || '',
     brand: {
       '@type': 'Brand',
@@ -357,7 +357,7 @@ const ProductDetail = () => {
                 <h2 className="text-lg font-bold text-gray-900 mb-4">Productinformatie</h2>
                 {product.description ? (
                   <div className="text-[15px] md:text-sm text-gray-600 leading-[1.8] space-y-4">
-                    {product.description.split('\n').filter(Boolean).map((p, i) => {
+                    {htmlToText(product.description).split('\n').filter(Boolean).map((p, i) => {
                       if (p.startsWith('#')) {
                         return <h3 key={i} className="text-base font-bold text-gray-900 mt-6 mb-2">{p.replace(/^#+\s*/, '')}</h3>;
                       }
