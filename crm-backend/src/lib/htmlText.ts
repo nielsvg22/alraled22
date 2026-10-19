@@ -12,6 +12,8 @@ export function htmlToText(html: string): string {
     .replace(/<\s*li[^>]*>/gi, '\n• ')
     .replace(/<\s*\/\s*(p|div|h[1-6]|li|ul|ol|tr|table)\s*>/gi, '\n')
     .replace(/<[^>]+>/g, '')
+    // Restanten van half weggeknipte tags (bv. role="tabpanel" aria-labelledby="...">)
+    .replace(/(?:\s*\b(?:role|aria-[\w-]+|class|id|style|data-[\w-]+|href|target|rel|tabindex)\s*=\s*(?:"[^"]*"|'[^']*'))+\s*\/?>/gi, '')
     .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
     .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
     .replace(/&([a-z]+);/gi, (m, name: string) => HTML_ENTITIES[name.toLowerCase()] ?? m)
@@ -21,5 +23,5 @@ export function htmlToText(html: string): string {
 }
 
 export function hasHtml(value: string): boolean {
-  return /<\/?[a-z][^>]*>|&(#\d+|#x[0-9a-f]+|[a-z]+);/i.test(value);
+  return /<\/?[a-z][^>]*>|&(#\d+|#x[0-9a-f]+|[a-z]+);|\b(?:role|aria-[\w-]+)\s*=\s*["']/i.test(value);
 }
