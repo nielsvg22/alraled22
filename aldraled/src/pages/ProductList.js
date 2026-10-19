@@ -204,7 +204,7 @@ function CompareModal({ list, onClose }) {
 }
 
 /* ── PRODUCT CARD ─────────────────────────────── */
-function ProductCard({ product, showInclVat, inCompare, onCompare, onQuickView }) {
+function ProductCard({ product, showInclVat, inCompare, onCompare, onQuickView, eager = false }) {
   const { addToCart } = useCart();
   const [added, setAdded] = useState(false);
   const displayPrice = showInclVat ? Number(product.price || 0) * (1 + VAT_RATE) : Number(product.price || 0);
@@ -227,7 +227,7 @@ function ProductCard({ product, showInclVat, inCompare, onCompare, onQuickView }
             src={getImageSrc(product)}
             alt={product.name}
             className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-[1.03]"
-            loading="lazy" decoding="async"
+            loading={eager ? 'eager' : 'lazy'} decoding="async" fetchPriority={eager ? 'high' : 'auto'}
           />
           {/* Compare toggle */}
           <button
@@ -421,8 +421,9 @@ function FilterSidebar({
 
 /* ── MAIN COMPONENT ───────────────────────────── */
 const ProductList = () => {
-  const [products, setProducts]       = useState([]);
-  const [loading, setLoading]         = useState(true);
+  // Laatst bekende producten uit de cache: lijst en afbeeldingen staan direct klaar
+  const [products, setProducts]       = useState(() => readCache('products') || []);
+  const [loading, setLoading]         = useState(() => !readCache('products'));
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Alle');
   const [categories, setCategories]   = useState([]);
@@ -452,7 +453,12 @@ const ProductList = () => {
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products`)
-      .then(res => { setProducts(res.data); setLoading(false); })
+      .then(res => {
+        setProducts(res.data);
+        setLoading(false);
+        writeCache('products', res.data);
+        res.data.slice(0, 8).forEach(p => preloadImage(getImageSrc(p)));
+      })
       .catch((err) => { console.error('Failed to load products:', err); setLoading(false); });
     axios.get(`${API_URL}/api/products/categories/all`)
       .then(res => setCategories(Array.isArray(res.data) ? res.data : []))
@@ -808,9 +814,10 @@ const ProductList = () => {
             {/* Product grid */}
             {!loading && filteredProducts.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
-                {filteredProducts.map(product => (
+                {filteredProducts.map((product, idx) => (
                   <ProductCard
                     key={product.id}
+                    eager={idx < 8}
                     product={product}
                     showInclVat={showInclVat}
                     inCompare={Boolean(compareList.find(p => p.id === product.id))}
