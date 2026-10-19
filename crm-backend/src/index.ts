@@ -101,10 +101,14 @@ app.use(cors({
   credentials: true,
 }));
 
+// Achter de reverse proxy (Coolify/Traefik): gebruik het echte client-IP uit X-Forwarded-For.
+// Zonder dit zien alle bezoekers hetzelfde IP en delen ze één rate-limit-emmer.
+app.set('trust proxy', 1);
+
 // Rate limiting
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 1500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later' },
