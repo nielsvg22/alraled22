@@ -416,7 +416,15 @@ const Home = () => {
     }
 
 if (id === 'cases') {
-      const categoriesWithImages = categories.filter(c => c.imageUrl).slice(0, 6);
+      // Dubbele categorienamen (bv. twee keer 'Bedrijfswagenverlichting') overslaan, zodat
+      // op die plek een andere categorie met afbeelding komt die naar de shop linkt.
+      const seenNames = new Set();
+      const categoriesWithImages = categories.filter(c => {
+        const key = String(c.name || c.title || '').trim().toLowerCase();
+        if (!c.imageUrl || !key || seenNames.has(key)) return false;
+        seenNames.add(key);
+        return true;
+      }).slice(0, 6);
       const displayCategories = categoriesWithImages.length > 0 ? categoriesWithImages : specializations;
 
       return (
