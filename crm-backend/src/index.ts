@@ -137,9 +137,13 @@ fs.mkdirSync(uploadsDir, { recursive: true });
 // meegeleverde uploads (o.a. partnerlogo's) naar het volume. Bestaande bestanden blijven staan.
 const bundledUploadsDir = path.join(process.cwd(), 'uploads');
 if (path.resolve(bundledUploadsDir) !== uploadsDir && fs.existsSync(bundledUploadsDir)) {
-  for (const file of fs.readdirSync(bundledUploadsDir)) {
-    const target = path.join(uploadsDir, file);
-    if (!fs.existsSync(target)) fs.copyFileSync(path.join(bundledUploadsDir, file), target);
+  try {
+    for (const entry of fs.readdirSync(bundledUploadsDir, { withFileTypes: true })) {
+      const target = path.join(uploadsDir, entry.name);
+      if (entry.isFile() && !fs.existsSync(target)) fs.copyFileSync(path.join(bundledUploadsDir, entry.name), target);
+    }
+  } catch (err) {
+    console.warn('[server] Kon meegeleverde uploads niet kopieren:', err);
   }
 }
 app.use('/uploads', express.static(uploadsDir));
