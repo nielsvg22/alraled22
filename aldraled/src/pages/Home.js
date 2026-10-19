@@ -6,7 +6,7 @@ import LogoCarousel from '../components/LogoCarousel';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
-import { getMediaUrl } from '../lib/api';
+import { getMediaUrl, readCache, writeCache, preloadImage } from '../lib/api';
 import { ROUTES, shopWithCategory } from '../lib/routes';
 
 const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
@@ -157,7 +157,10 @@ function useTypewriter(words, speed = 80, pause = 2000) {
 // ── Home Page ─────────────────────────────────────────────
 const Home = () => {
   const { i18n } = useTranslation();
-  const [content, setContent] = useState(DEFAULTS);
+  const [content, setContent] = useState(() => {
+    const cached = readCache('home');
+    return cached ? { ...DEFAULTS, ...cached } : DEFAULTS;
+  });
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [customBlocks, setCustomBlocks] = useState([]);
   const [sectionOrder, setSectionOrder] = useState(DEFAULT_SECTION_ORDER);
@@ -167,7 +170,11 @@ const Home = () => {
   useEffect(() => {
     const lang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
     axios.get(`${API_URL}/api/content/home`, { params: { lang } })
-      .then(res => setContent({ ...DEFAULTS, ...res.data }))
+      .then(res => {
+        setContent({ ...DEFAULTS, ...res.data });
+        writeCache('home', res.data);
+        preloadImage(getMediaUrl(res.data && res.data.hero && res.data.hero.backgroundImage));
+      })
       .catch(() => {});
     axios.get(`${API_URL}/api/products`)
       .then(res => setFeaturedProducts(res.data.slice(0, 4)))
@@ -220,7 +227,7 @@ const Home = () => {
         <section className="relative min-h-[75vh] flex flex-col justify-end overflow-hidden">
           <div className="absolute inset-0">
             {heroImage ? (
-              <img src={heroImage} alt="" className="w-full h-full object-cover" />
+              <img src={heroImage} alt="" className="w-full h-full object-cover" loading="eager" decoding="async" fetchPriority="high" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-secondary via-secondary/80 to-secondary/60" />
             )}

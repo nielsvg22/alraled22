@@ -10,7 +10,7 @@ const B = '#0B67D8';
 
 const HERO_IMG = '';
 // OpenStreetMap embed voor Dijkgraafweg 4a, 7336 AT Apeldoorn (ALRA kantoor)
-const MAP_URL = 'https://www.openstreetmap.org/export/embed.html?bbox=5.938,52.209,5.945,52.216&layer=mapnik&marker=52.2125,5.9415';
+const MAP_URL = 'https://www.openstreetmap.org/export/embed.html?bbox=5.9355,52.1945,5.9415,52.1975&layer=mapnik&marker=52.19599,5.93854';
 
 const DEFAULTS = {
   eyebrow: 'Neem contact op',

@@ -26,6 +26,36 @@ export const getMediaUrl = (url) => {
   return url;
 };
 
+// Stale-while-revalidate cache: laatst bekende API-data staat direct klaar, zodat
+// o.a. banner-URL's bij een herhaald bezoek meteen renderen en laden.
+const CACHE_PREFIX = 'alra_cache:';
+
+export const readCache = (key) => {
+  try {
+    const raw = localStorage.getItem(CACHE_PREFIX + key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const writeCache = (key, data) => {
+  try {
+    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(data));
+  } catch {
+    // opslag vol of geblokkeerd: cache is optioneel
+  }
+};
+
+// Start het downloaden van een afbeelding zodra de URL bekend is.
+export const preloadImage = (url) => {
+  if (!url || typeof Image === 'undefined') return;
+  const img = new Image();
+  img.decoding = 'async';
+  img.fetchPriority = 'high';
+  img.src = url;
+};
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('alra_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
