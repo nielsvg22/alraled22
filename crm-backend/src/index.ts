@@ -148,7 +148,8 @@ if (path.resolve(bundledUploadsDir) !== uploadsDir && fs.existsSync(bundledUploa
   }
 }
 app.use('/uploads', optimizedUploads(uploadsDir));
-app.use('/uploads', express.static(uploadsDir));
+// Bestandsnamen zijn uniek (uuid): browser mag een week cachen zonder opnieuw te controleren
+app.use('/uploads', express.static(uploadsDir, { maxAge: '7d' }));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

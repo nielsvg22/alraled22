@@ -161,11 +161,11 @@ const Home = () => {
     const cached = readCache('home');
     return cached ? { ...DEFAULTS, ...cached } : DEFAULTS;
   });
-  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState(() => readCache('home_featured') || []);
   const [customBlocks, setCustomBlocks] = useState([]);
   const [sectionOrder, setSectionOrder] = useState(DEFAULT_SECTION_ORDER);
   const [hiddenSections, setHiddenSections] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(() => readCache('home_categories') || []);
 
   useEffect(() => {
     const lang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
@@ -177,10 +177,18 @@ const Home = () => {
       })
       .catch(() => {});
     axios.get(`${API_URL}/api/products`)
-      .then(res => setFeaturedProducts(res.data.slice(0, 4)))
+      .then(res => {
+        const featured = res.data.slice(0, 4);
+        setFeaturedProducts(featured);
+        writeCache('home_featured', featured);
+      })
       .catch(() => {});
     axios.get(`${API_URL}/api/products/categories/all`)
-      .then(res => setCategories(Array.isArray(res.data) ? res.data : []))
+      .then(res => {
+        const list = Array.isArray(res.data) ? res.data : [];
+        setCategories(list);
+        writeCache('home_categories', list);
+      })
       .catch(() => {});
     axios.get(`${API_URL}/api/content/page_blocks_home`, { params: { lang } })
       .then(res => setCustomBlocks(Array.isArray(res.data) ? res.data : []))
@@ -449,7 +457,7 @@ if (id === 'cases') {
 
                 return (
                   <Link key={cat.id || idx} to={catLink} className="group relative overflow-hidden rounded-2xl aspect-[4/3] block bg-gray-200">
-                    <img src={catImage} alt={catTitle} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" />
+                    <img src={catImage} alt={catTitle} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading={idx < 3 ? 'eager' : 'lazy'} decoding="async" />
                     <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/30 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-6">
                       <h3 className="text-white font-black text-lg leading-tight">{catTitle}</h3>
@@ -496,7 +504,7 @@ if (id === 'cases') {
                       src={getImageSrc(product, PLACEHOLDER_IMAGE)}
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
+                      loading="eager"
                       decoding="async"
                     />
                     <div className="absolute inset-0 bg-secondary/0 group-hover:bg-secondary/50 transition-all duration-300 flex items-center justify-center">
