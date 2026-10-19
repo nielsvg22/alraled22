@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
-import { API_URL, getMediaUrl, readCache, writeCache, preloadImage } from '../lib/api';
+import { API_URL, getMediaUrl, readCache, writeCache, preloadImage, htmlToText } from '../lib/api';
 import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
 import { ROUTES } from '../lib/routes';
@@ -87,7 +87,7 @@ function QuickViewModal({ product, onClose }) {
                 {showInclVat ? 'incl. BTW' : 'excl. BTW'}
               </button>
             </div>
-            {product.description && <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">{product.description}</p>}
+            {product.description && <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">{htmlToText(product.description)}</p>}
             <div className="flex items-center gap-2 mt-auto">
               <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
                 <button onClick={() => setQty(q => Math.max(1, q - 1))} className="w-8 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-base">−</button>
@@ -153,7 +153,7 @@ function CompareModal({ list, onClose }) {
   const ROWS = [
     { label: 'Prijs', key: (p) => formatPrice(p.price) },
     { label: 'Categorie', key: (p) => p.category || '—' },
-    { label: 'Beschrijving', key: (p) => p.description ? p.description.slice(0, 80) + (p.description.length > 80 ? '…' : '') : '—' },
+    { label: 'Beschrijving', key: (p) => { const d = htmlToText(p.description); return d ? d.slice(0, 80) + (d.length > 80 ? '…' : '') : '—'; } },
   ];
 
   return (

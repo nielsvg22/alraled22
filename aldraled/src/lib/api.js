@@ -26,6 +26,26 @@ export const getMediaUrl = (url) => {
   return url;
 };
 
+// Productomschrijvingen bevatten soms HTML (uit import of editor). We tonen platte
+// tekst: blokelementen worden regelafstanden, <li> een opsomming, overige tags vervallen.
+const HTML_ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', euro: '€', deg: '°', ndash: '–', mdash: '—', eacute: 'é', egrave: 'è', ouml: 'ö', uuml: 'ü', iuml: 'ï', euml: 'ë' };
+
+export const htmlToText = (html) => {
+  if (!html) return '';
+  return String(html)
+    .replace(/<\s*(script|style)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+    .replace(/<\s*br\s*\/?>/gi, '\n')
+    .replace(/<\s*li[^>]*>/gi, '\n• ')
+    .replace(/<\s*\/\s*(p|div|h[1-6]|li|ul|ol|tr|table)\s*>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&([a-z]+);/gi, (m, name) => (name.toLowerCase() in HTML_ENTITIES ? HTML_ENTITIES[name.toLowerCase()] : m))
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
 // Stale-while-revalidate cache: laatst bekende API-data staat direct klaar, zodat
 // o.a. banner-URL's bij een herhaald bezoek meteen renderen en laden.
 const CACHE_PREFIX = 'alra_cache:';
