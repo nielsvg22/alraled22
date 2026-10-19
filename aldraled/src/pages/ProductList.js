@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
-import { API_URL, getMediaUrl } from '../lib/api';
+import { API_URL, getMediaUrl, readCache, writeCache, preloadImage } from '../lib/api';
 import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
 import { ROUTES } from '../lib/routes';
@@ -438,11 +438,15 @@ const ProductList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const gridAnchorRef = useRef(null);
   const [compareLimitWarning, setCompareLimitWarning] = useState(false);
-  const [shopContent, setShopContent] = useState(null);
+  const [shopContent, setShopContent] = useState(() => readCache('shop'));
 
   useEffect(() => {
     axios.get(`${API_URL}/api/content/shop`)
-      .then(res => setShopContent(res.data || null))
+      .then(res => {
+        setShopContent(res.data || null);
+        writeCache('shop', res.data || null);
+        preloadImage(getMediaUrl(res.data && res.data.hero && res.data.hero.imageUrl));
+      })
       .catch(() => {});
   }, []);
 
@@ -604,7 +608,7 @@ const ProductList = () => {
             alt=""
             aria-hidden="true"
             className="absolute inset-y-0 right-0 w-full md:w-[55%] h-full object-cover md:opacity-35 opacity-15"
-            loading="eager" decoding="async"
+            loading="eager" decoding="async" fetchPriority="high"
           />
         )}
         {/* decoratieve cirkels */}
