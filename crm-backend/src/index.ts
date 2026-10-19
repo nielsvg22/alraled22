@@ -34,6 +34,7 @@ import { ensureContactTable } from './db/ensureContactTable';
 import { runMigrations } from './db/migrate';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
+import { optimizedUploads } from './lib/optimizedUploads';
 
 dotenv.config();
 
@@ -146,6 +147,7 @@ if (path.resolve(bundledUploadsDir) !== uploadsDir && fs.existsSync(bundledUploa
     console.warn('[server] Kon meegeleverde uploads niet kopieren:', err);
   }
 }
+app.use('/uploads', optimizedUploads(uploadsDir));
 app.use('/uploads', express.static(uploadsDir));
 
 app.get('/health', (req, res) => {
