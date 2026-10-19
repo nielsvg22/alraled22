@@ -122,13 +122,20 @@ export const updatePageView = async (req: Request, res: Response) => {
     if (scrollDepth !== undefined) updateData.scrollDepth = scrollDepth;
     if (isExit !== undefined) updateData.isExit = isExit;
 
-    // Update the latest page view for this visit
-    await db.update(pageViews)
-      .set(updateData)
-      .where(and(
-        eq(pageViews.visitId, visitId),
-        sql`id = (SELECT id FROM ${pageViews} WHERE visitId = ${visitId} ORDER BY createdAt DESC LIMIT 1)`
-      ));
+    if (typeof visitId !== 'string' || !visitId) {
+      return res.status(400).json({ error: 'visitId is required' });
+    }
+
+    // Update the latest page view for this visit. MySQL staat geen subquery op dezelfde
+    // tabel toe in een UPDATE (fout 1093), dus eerst het laatste id ophalen.
+    const [latest] = await db.select({ id: pageViews.id })
+      .from(pageViews)
+      .where(eq(pageViews.visitId, visitId))
+      .orderBy(desc(pageViews.createdAt))
+      .limit(1);
+    if (latest) {
+      await db.update(pageViews).set(updateData).where(eq(pageViews.id, latest.id));
+    }
 
     // Update visit duration and exit page if this is an exit
     if (isExit) {
