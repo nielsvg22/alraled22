@@ -511,42 +511,6 @@ const ProductDetail = () => {
         </div>
       )}
 
-      {/* ─── BOTTOM TRUST ─── */}
-      <div className="border-t border-gray-100 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div>
-              <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center mx-auto mb-3">
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-              </div>
-              <p className="text-sm font-semibold text-gray-900">Grote aantallen nodig?</p>
-              <p className="text-xs text-gray-500 mt-1">Vraag een offerte aan</p>
-            </div>
-            <div>
-              <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center mx-auto mb-3">
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-              </div>
-              <p className="text-sm font-semibold text-gray-900">Betaal achteraf</p>
-              <p className="text-xs text-gray-500 mt-1">Met Klarna of Riverty</p>
-            </div>
-            <div>
-              <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center mx-auto mb-3">
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              </div>
-              <p className="text-sm font-semibold text-gray-900">Retourneren binnen 30 dagen</p>
-              <p className="text-xs text-gray-500 mt-1">Niet goed? Geld terug</p>
-            </div>
-            <div>
-              <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center mx-auto mb-3">
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              </div>
-              <p className="text-sm font-semibold text-gray-900">Tot 7 jaar garantie</p>
-              <p className="text-xs text-gray-500 mt-1">Fabrieksgarantie</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* ─── STICKY BAR ─── */}
       <div className={`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-lg transition-transform duration-300 ${stickyVisible ? 'translate-y-0' : 'translate-y-full'}`}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center gap-4">
