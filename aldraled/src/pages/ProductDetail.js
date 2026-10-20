@@ -294,7 +294,7 @@ const ProductDetail = () => {
       </div>
 
       {/* ─── TABS ─── */}
-      <div className="border-t border-gray-100">
+      <div className="border-t border-[#E4EAF1] bg-[#F7F9FC]">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex gap-0 -mb-px overflow-x-auto scrollbar-none border-b border-gray-100">
             {TABS.map(tab => {
@@ -310,7 +310,7 @@ const ProductDetail = () => {
                   role="tab"
                   aria-selected={activeTab === tab}
                   className={`px-4 md:px-5 py-3.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap transition-all ${
-                    activeTab === tab ? 'text-gray-900 border-b-2 border-gray-900' : 'text-gray-400 hover:text-gray-600'
+                    activeTab === tab ? 'text-primary border-b-2 border-primary' : 'text-gray-400 hover:text-secondary'
                   }`}>
                   {tab}
                 </button>
@@ -353,27 +353,48 @@ const ProductDetail = () => {
 
             {/* Productinformatie tab */}
             {activeTab === 'Productinformatie' && (
-              <div className="max-w-3xl">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Productinformatie</h2>
-                {product.description ? (
-                  <div className="text-[15px] md:text-sm text-gray-600 leading-[1.8] space-y-4">
-                    {htmlToText(product.description).split('\n').filter(Boolean).map((p, i) => {
-                      if (p.startsWith('#')) {
-                        return <h3 key={i} className="text-base font-bold text-gray-900 mt-6 mb-2">{p.replace(/^#+\s*/, '')}</h3>;
-                      }
-                      return <p key={i}>{p}</p>;
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-400">Geen omschrijving beschikbaar.</p>
-                )}
-                {product.pdfUrl && (
-                  <a href={product.pdfUrl} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 mt-6 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-all">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    Handleiding en documenten
-                  </a>
-                )}
+              <div>
+                <h2 className="text-3xl font-black text-secondary tracking-tight mb-6">Productinformatie</h2>
+                <div className={`grid gap-5 ${specs.length > 0 ? 'lg:grid-cols-2' : ''}`}>
+                  <section className="bg-white rounded-2xl border border-[#E4EAF1] shadow-sm p-6 md:p-7">
+                    <h3 className="text-lg font-black text-secondary mb-4">Beschrijving</h3>
+                    {product.description ? (
+                      <div className="text-[15px] text-gray-500 leading-[1.75] space-y-4">
+                        {htmlToText(product.description).split('\n').filter(Boolean).map((p, i) => {
+                          if (p.startsWith('#')) {
+                            return <h4 key={i} className="text-base font-bold text-secondary mt-6 mb-2">{p.replace(/^#+\s*/, '')}</h4>;
+                          }
+                          return <p key={i}>{p}</p>;
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400">Geen omschrijving beschikbaar.</p>
+                    )}
+                    {product.pdfUrl && (
+                      <a href={product.pdfUrl} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 mt-6 px-4 py-2.5 rounded-xl border border-[#E4EAF1] text-sm font-bold text-secondary hover:border-primary/40 hover:text-primary transition-all">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Handleiding en documenten
+                      </a>
+                    )}
+                  </section>
+
+                  {specs.length > 0 && (
+                    <section className="bg-white rounded-2xl border border-[#E4EAF1] shadow-sm p-6 md:p-7">
+                      <h3 className="text-lg font-black text-secondary mb-4">Specificaties</h3>
+                      <table className="w-full text-sm">
+                        <tbody>
+                          {specs.map((spec, i) => (
+                            <tr key={i} className={`border-b border-[#EEF2F7] last:border-0 ${i % 2 === 0 ? 'bg-[#F7F9FC]' : 'bg-white'}`}>
+                              <td className="px-3.5 py-2.5 text-gray-500 w-2/5 align-top">{spec.label}</td>
+                              <td className="px-3.5 py-2.5 text-secondary font-semibold align-top">{spec.value}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </section>
+                  )}
+                </div>
               </div>
             )}
 
