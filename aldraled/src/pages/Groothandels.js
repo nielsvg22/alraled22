@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { getMediaUrl, API_URL } from '../lib/api';
 import { ROUTES } from '../lib/routes';
+import { DEFAULT_DEALERS, buildDealerAddress } from '../lib/dealers';
 
 const WHOLESALE_BRANDS = [
   {
@@ -39,8 +40,24 @@ const WHOLESALE_BRANDS = [
   },
 ];
 
+const DEALERS_PREVIEW = 12;
+
 const Groothandels = () => {
   const [products, setProducts] = useState([]);
+  const [dealerBrand, setDealerBrand] = useState('Alle');
+  const [dealerQuery, setDealerQuery] = useState('');
+  const [showAllDealers, setShowAllDealers] = useState(false);
+
+  const dealerBrands = useMemo(() => ['Alle', ...Array.from(new Set(DEFAULT_DEALERS.map(d => d.brand).filter(Boolean)))], []);
+  const filteredDealers = useMemo(() => {
+    const q = dealerQuery.trim().toLowerCase();
+    return DEFAULT_DEALERS.filter(d => {
+      if (dealerBrand !== 'Alle' && d.brand !== dealerBrand) return false;
+      if (!q) return true;
+      return [d.name, d.city, d.postalCode, d.address].some(v => String(v || '').toLowerCase().includes(q));
+    });
+  }, [dealerBrand, dealerQuery]);
+  const visibleDealers = showAllDealers || dealerQuery.trim() ? filteredDealers : filteredDealers.slice(0, DEALERS_PREVIEW);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products`)
@@ -147,6 +164,69 @@ const Groothandels = () => {
                 </article>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Verkooppunten */}
+      <section className="py-16 lg:py-20 px-6 md:px-10 bg-[#F7F9FC] border-t border-[#E4EAF1]">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2">Verkooppunten</p>
+            <h2 className="text-3xl md:text-4xl font-black text-secondary">Vind een vestiging bij jou in de buurt</h2>
+            <p className="text-gray-500 text-base mt-4 max-w-2xl mx-auto">
+              {DEFAULT_DEALERS.length} vestigingen van onze groothandelspartners in Nederland.
+            </p>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div className="flex flex-wrap gap-2">
+              {dealerBrands.map(b => (
+                <button key={b} type="button" onClick={() => { setDealerBrand(b); setShowAllDealers(false); }}
+                  className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-colors ${dealerBrand === b ? 'bg-primary text-white border-primary' : 'bg-white text-secondary border-[#E4EAF1] hover:border-primary/40 hover:text-primary'}`}>
+                  {b}
+                </button>
+              ))}
+            </div>
+            <input type="search" value={dealerQuery} onChange={e => setDealerQuery(e.target.value)} placeholder="Zoek op plaats of postcode"
+              className="w-full md:w-72 px-4 py-2.5 rounded-full border border-[#E4EAF1] bg-white text-sm text-secondary placeholder-gray-400 focus:outline-none focus:border-primary" />
+          </div>
+
+          {visibleDealers.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {visibleDealers.map(d => {
+                const address = buildDealerAddress(d);
+                return (
+                  <article key={d.id} className="bg-white rounded-2xl border border-[#E4EAF1] p-5 flex flex-col hover:shadow-lg hover:border-primary/30 transition-all duration-200">
+                    <span className="self-start text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-full">{d.brand}</span>
+                    <h3 className="font-black text-secondary text-base leading-snug mt-3">{d.name}</h3>
+                    <p className="text-gray-500 text-sm mt-2 leading-relaxed">
+                      {d.address}<br />{[d.postalCode, d.city].filter(Boolean).join(' ')}
+                    </p>
+                    <div className="mt-auto pt-4 flex items-center gap-4 text-sm font-bold">
+                      <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Route</a>
+                      {d.phone && <a href={`tel:${d.phone.replace(/[^+\d]/g, '')}`} className="text-secondary hover:text-primary">Bel</a>}
+                      {d.website && <a href={d.website} target="_blank" rel="noopener noreferrer" className="text-secondary hover:text-primary">Website</a>}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500 py-10">Geen verkooppunten gevonden voor deze zoekopdracht.</p>
+          )}
+
+          {!dealerQuery.trim() && filteredDealers.length > DEALERS_PREVIEW && (
+            <div className="text-center mt-8">
+              <button type="button" onClick={() => setShowAllDealers(v => !v)}
+                className="px-6 py-3 rounded-full border border-[#E4EAF1] bg-white text-secondary text-sm font-bold hover:border-primary/40 hover:text-primary transition-colors">
+                {showAllDealers ? 'Minder tonen' : `Toon alle ${filteredDealers.length} verkooppunten`}
+              </button>
+            </div>
+          )}
+
+          <div className="text-center mt-6">
+            <Link to={ROUTES.dealers} className="text-sm font-bold text-primary hover:underline">Bekijk alle verkooppunten op de kaart →</Link>
           </div>
         </div>
       </section>
