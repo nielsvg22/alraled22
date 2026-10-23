@@ -33,7 +33,7 @@ const DEFAULTS = {
     { title: "LED Hefbrugverlichting", desc: "Perfecte lichtopbrengst onder het voertuig voor een veilige en efficiënte werkplaatsomgeving.", image: "" },
   ],
   stats: [
-    { value: 10, label: "Jaar Actief", suffix: "+" },
+    { value: 12.5, label: "Jaar actief", suffix: "" },
     { value: 225, label: "Aangesloten Partners", suffix: "+" },
   ],
   introSection: {
@@ -103,7 +103,7 @@ const DEFAULTS = {
 const TRUST_ITEMS = [
   { icon: "🚚", label: "Gratis verzending", sub: "boven €250,-" },
   { icon: "🛡️", label: "1 jaar garantie", sub: "op alle producten" },
-  { icon: "✅", label: "CE & RoHS", sub: "gecertificeerd" },
+  { icon: "✅", label: "CE, RoHS en/of TÜV", sub: "gecertificeerd" },
   { icon: "⚡", label: "Snel geleverd", sub: "direct uit voorraad" },
   { icon: "💬", label: "Expert advies", sub: "085-0021 606" },
 ];
@@ -382,7 +382,7 @@ const Home = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-secondary/20 to-transparent" />
                 </div>
                 <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg px-5 py-3 border border-gray-100 hidden md:block">
-                  <p className="text-2xl font-black text-primary">10+</p>
+                  <p className="text-2xl font-black text-primary">12,5</p>
                   <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Jaar ervaring</p>
                 </div>
               </div>

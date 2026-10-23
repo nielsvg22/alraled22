@@ -59,8 +59,8 @@ const RECO_DEALERS = [
     address: 'Stammerkamp 19',
     city: 'Diemen',
     postalCode: '1112 VE',
-    lat: 0, // TODO: geocode via CRM admin
-    lon: 0,
+    lat: 52.330261,
+    lon: 4.986486,
     phone: '',
     website: '',
   },
@@ -75,8 +75,8 @@ const HOEGEN_DEALERS = [
     address: 'Sleutelbloemstraat 5A',
     city: 'Apeldoorn',
     postalCode: '7322 AJ',
-    lat: 0, // TODO: geocode via CRM admin
-    lon: 0,
+    lat: 52.223859,
+    lon: 5.975015,
     phone: '',
     website: '',
   },

@@ -106,7 +106,8 @@ export default function DealersMap() {
       ...d,
       lat: Number(d.lat),
       lon: Number(d.lon),
-    })).filter((d) => Number.isFinite(d.lat) && Number.isFinite(d.lon));
+    // Locaties zonder (geldige) coördinaten zouden op 0,0 (Afrika) belanden: overslaan
+    })).filter((d) => Number.isFinite(d.lat) && Number.isFinite(d.lon) && (Math.abs(d.lat) > 1 || Math.abs(d.lon) > 1));
 
     if (!origin) return normalized.map((d) => ({ ...d, distanceKm: null }));
 

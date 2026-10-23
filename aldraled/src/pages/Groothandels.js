@@ -275,7 +275,7 @@ const Groothandels = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               { icon: '📦', title: 'Ruime voorraad', items: ['Direct leverbaar uit eigen magazijn', 'Geen lange levertijden', 'Ook grotere aantallen mogelijk'] },
-              { icon: '📋', title: 'Professioneel gemerkt', items: ['Alle producten CE & RoHS gecertificeerd', 'Technische fiches beschikbaar', 'Meertalige documentatie'] },
+              { icon: '📋', title: 'Professioneel gemerkt', items: ['Alle producten CE, RoHS en/of TÜV gecertificeerd', 'Technische fiches beschikbaar', 'Meertalige documentatie'] },
               { icon: '🤝', title: 'Samenwerken op maat', items: ['Scherpe inkoopcondities', 'Marketingondersteuning', 'Technische training mogelijk'] },
             ].map((benefit, i) => (
               <div key={i} className="bg-gray-50 rounded-2xl p-8 border border-gray-100">

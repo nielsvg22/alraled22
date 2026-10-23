@@ -448,8 +448,8 @@ export default function Products() {
                       {aiLoading ? <><Loader2 size={11} className="animate-spin" /> Genereren…</> : <><Sparkles size={11} /> AI schrijft</>}
                     </button>
                   </div>
-                  <textarea className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3} placeholder="Productomschrijving of gebruik AI…"
+                  <textarea className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm leading-relaxed resize-y min-h-[14rem] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={10} placeholder="Productomschrijving of gebruik AI…"
                     value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
                 </div>
 

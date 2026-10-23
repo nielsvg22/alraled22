@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import CustomBlocks from '../components/CustomBlocks';
 import { getMediaUrl } from '../lib/api';
-import { ROUTES, shopWithCategory } from '../lib/routes';
+import { ROUTES } from '../lib/routes';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -17,7 +17,7 @@ const DEFAULTS = {
   description: 'Wij zijn ALRA LED Solutions — sinds 2014 de specialist in professionele LED-verlichting voor bedrijfswagens, werkplaatsen, bouw en industrie.',
   image: '',
   values: [
-    { icon: '🛡️', title: 'Professionele kwaliteit', text: 'CE- en RoHS-gecertificeerde LED-producten, geselecteerd voor intensief professioneel gebruik.' },
+    { icon: '🛡️', title: 'Professionele kwaliteit', text: 'CE-, RoHS- en/of TÜV-gecertificeerde LED-producten, geselecteerd voor intensief professioneel gebruik.' },
     { icon: '💡', title: 'Praktisch advies', text: 'Wij denken mee over de oplossing die past bij jouw toepassing.' },
     { icon: '🚚', title: 'Snel uit voorraad', text: 'Veel producten direct leverbaar uit ons eigen magazijn.' },
   ],
@@ -33,46 +33,22 @@ const IMG = {
   constructie: '',
 };
 
-const CAT_FALLBACK = {
-  'bedrijfswagenverlichting': IMG.van,
-  'bouwlichtslangen-en-toebehoren': IMG.constructie,
-  'led-hefbrugverlichting': IMG.hefbrug,
-  'led-draagbare-werkverlichting': IMG.werkplaats,
-  'veiligheidsverlichting': IMG.constructie,
-};
-
-const ALL_FALLBACK = '';
-
 const HeroUsps = [
   { icon: 'truck', title: 'Snel geleverd', text: 'Direct leverbaar' },
   { icon: 'shield', title: 'Professionele kwaliteit', text: 'Geselecteerd voor de praktijk' },
   { icon: 'chat', title: 'Persoonlijk advies', text: 'Direct contact, korte lijnen' },
 ];
 
-const TrustBar = [
-  { icon: 'package', title: 'Professionele LED-oplossingen', text: 'Voor zakelijke klanten' },
-  { icon: 'grid', title: 'Breed assortiment', text: 'Voor verschillende toepassingen' },
-  { icon: 'truck', title: 'Snelle levering', text: 'Uit eigen voorraad' },
-  { icon: 'chat', title: 'Persoonlijk advies', text: 'Direct contact' },
-];
-
-const WhyCards = [
-  { num: '01', icon: 'gem', title: 'Kwaliteit', text: 'Betrouwbare verlichting die ontwikkeld is voor intensief professioneel gebruik.' },
-  { num: '02', icon: 'bolt', title: 'Snelheid', text: 'Veel producten direct uit voorraad leverbaar, zodat je snel verder kunt.' },
-  { num: '03', icon: 'book', title: 'Kennis', text: 'Geen algemene verkooppraatjes, maar praktisch advies passend bij de toepassing.' },
-  { num: '04', icon: 'headphones', title: 'Service', text: 'Korte lijnen, duidelijke communicatie en persoonlijk contact.' },
-];
-
 const ApproachSteps = [
-  { num: '01', title: 'Vertel ons wat je nodig hebt', text: 'U geeft uw wensen of toepassing door.' },
-  { num: '02', title: 'Wij adviseren de juiste oplossing', text: 'Op basis van onze kennis en ervaring.' },
-  { num: '03', title: 'Snel geleverd en klaar voor gebruik', text: 'Zodat u direct verder kunt.' },
+  { num: '01', title: 'Idee', text: 'We brengen ideeën tot leven. Dat is zowel ons doel als onze visie, en daarom doen we er alles aan om van uw idee werkelijkheid te maken.' },
+  { num: '02', title: 'Ontwerp', text: 'Het ontwerpproces bestaat uit verschillende fasen, van de eerste schets tot 2D- en 3D-modellen, en van sample tot eindproduct.' },
+  { num: '03', title: 'Kwaliteit', text: 'Hoogwaardige kwaliteit is waar ALRA voor staat. Wij verkopen uitsluitend LED-producten met certificeringen.' },
+  { num: '04', title: 'Tevredenheid', text: 'Uw mening en tevredenheid zijn gedurende het hele proces van belang: van het eerste contact tot het afgeleverde product.' },
 ];
 
-const GroothandelTrust = [
-  { icon: 'stock', title: 'Ruime voorraad', text: 'Direct leverbaar' },
-  { icon: 'percent', title: 'Zakelijke condities', text: 'Scherpe afspraken' },
-  { icon: 'chat', title: 'Persoonlijk contact', text: 'Wij denken met je mee' },
+const AboutStats = [
+  { value: '12,5', label: 'Jaar ervaring', sub: 'Gestart in 2014' },
+  { value: '225+', label: 'Aangesloten groothandels', sub: 'Technische groothandels en partners' },
 ];
 
 /* ── Inline SVG-iconen (zelfde stijl als rest van de site) ─────────── */
@@ -127,7 +103,6 @@ const About = () => {
   const { i18n } = useTranslation();
   const [data, setData] = useState(DEFAULTS);
   const [blocks, setBlocks] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
@@ -138,43 +113,21 @@ const About = () => {
     axios.get(`${API_URL}/api/content/page_blocks_about`, { params: { lang } })
       .then(res => setBlocks(Array.isArray(res.data) ? res.data : []))
       .catch(() => setBlocks([]));
-    axios.get(`${API_URL}/api/products/categories/all`)
-      .then(res => setCategories(Array.isArray(res.data) ? res.data : []))
-      .catch(() => {});
     axios.get(`${API_URL}/api/products`)
       .then(res => setProducts(Array.isArray(res.data) ? res.data : []))
       .catch(() => {});
   }, [i18n.resolvedLanguage, i18n.language]);
-
-  const values = Array.isArray(data.values) && data.values.length > 0 ? data.values : DEFAULTS.values;
 
   const firstProductImage = (p) => {
     const img = (p && p.images && p.images[0] && p.images[0].url) || (p && p.imageUrl) || '';
     return img || '';
   };
 
-  // Realistische afbeeldingen per categorie o.b.v. echte productfoto's
-  const catImages = useMemo(() => {
-    const map = {};
-    categories.forEach(cat => {
-      const match = products.find(p => p.categoryId === cat.id && firstProductImage(p));
-      map[cat.id] = match ? firstProductImage(match) : null;
-    });
-    return map;
-  }, [categories, products]);
-
   const pickProduct = (frag) => products.find(p => String(p.category || '').toLowerCase().includes(frag) && firstProductImage(p));
   const filmImg = firstProductImage(pickProduct('bedrijfswagen')) || IMG.van;
-  const lampImg = firstProductImage(pickProduct('draagbare')) || IMG.werkplaats;
-  const bouwImg = firstProductImage(pickProduct('bouw')) || IMG.constructie;
-  const vanImg = firstProductImage(pickProduct('bedrijfswagen')) || IMG.van;
 
   const heroImg = getMediaUrl(data.image) || IMG.office;
   const introImg = heroImg;
-  const warehouseImg = bouwImg || IMG.constructie;
-  const storyBig = heroImg;
-  const storyA = lampImg;
-  const storyB = vanImg || IMG.van;
   const quoteBg = filmImg;
   const ctaImg = firstProductImage(pickProduct('bedrijfswagen')) || IMG.van;
 
@@ -240,28 +193,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* ══ TRUST BAR ══ */}
-      <section className="bg-[#F5F8FC] border-y border-[#E4EAF1]">
-        <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-10">
-          <div className="grid grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-[#E4EAF1]">
-            {TrustBar.map((t, i) => {
-              const Icon = ICONMAP[t.icon];
-              return (
-                <div key={t.title} className={`flex items-center gap-3 py-6 px-3 sm:px-6 ${i >= 2 ? 'border-t lg:border-t-0 border-[#E4EAF1]' : ''}`}>
-                  <span className="w-10 h-10 rounded-xl flex items-center justify-center bg-white border border-[#E4EAF1] text-slate-500 shrink-0">
-                    <Icon className="w-5 h-5" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-bold text-secondary leading-tight">{t.title}</p>
-                    <p className="text-[11px] text-slate-400 leading-tight mt-0.5">{t.text}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* ══ WIE WIJ ZIJN ══ */}
       <section className="py-16 lg:py-24 px-5 sm:px-8 lg:px-10 bg-white">
         <div className="max-w-[1240px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
@@ -269,202 +200,33 @@ const About = () => {
             <div className="aspect-[4/3] rounded-[18px] overflow-hidden shadow-[0_20px_50px_-20px_rgba(7,27,54,0.25)] border border-[#E4EAF1]">
               <img src={introImg} alt="Medewerkers van ALRA LED Solutions aan het werk" className="w-full h-full object-cover" loading="lazy" decoding="async" />
             </div>
-            <div className="absolute -bottom-5 right-5 bg-[#07192D] rounded-2xl px-6 py-4 shadow-xl hidden md:flex items-center gap-3">
-              <span className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0" style={{ background: B }}>
-                <IconShield className="w-5 h-5" />
-              </span>
-              <div>
-                <p className="text-white font-extrabold text-sm leading-none">Professionele kwaliteit</p>
-                <p className="text-white/50 text-[11px] mt-1">Geselecteerd voor de praktijk</p>
-              </div>
-            </div>
           </div>
 
           <div className="space-y-6">
             <Eyebrow>Wie wij zijn</Eyebrow>
             <h2 className="mt-4 text-[clamp(1.9rem,3.4vw,2.9rem)] font-extrabold leading-[1.06] tracking-tight text-secondary">
-              Meer dan alleen<br />LED-verlichting
+              Alleen de allerbeste<br />kwaliteitsproducten
             </h2>
             <div className="space-y-4 text-[15px] leading-relaxed text-slate-500">
               <p>
-                ALRA LED Solutions is in 2014 opgericht met één doel: professionals voorzien van
-                LED-verlichting die in de praktijk echt presteert. Wat begon met bedrijfswagenverlichting
-                groeide uit tot een compleet assortiment voor werkplaats, bouwplaats en industrie.
+                Wij werken uitsluitend met de beste kwaliteitsproducten en geven daar ook garantie op.
+                Alle producten van ALRA zijn voorzien van de vereiste keurmerken. Wij zijn gespecialiseerd
+                in LED bedrijfswagenverlichting, LED bouwlichtslangen en LED hefbrugverlichting.
               </p>
               <p>
-                Onze engineers zijn van begin tot eind betrokken bij ontwerp, techniek en duurzaamheid.
-                Wij leveren uitsluitend CE- en RoHS-gecertificeerde producten en combineren een breed
-                assortiment met korte lijnen, persoonlijk advies en snelle levering uit eigen voorraad.
+                De producten van ALRA zijn online verkrijgbaar in onze webshop of via een van de aangesloten
+                (bouw)groothandels en automotive partners. Onze engineers denken mee over ontwerp, techniek,
+                duurzaamheid en werkzaamheid.
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-              {values.map((v, i) => (
-                <div key={v.title || i} className="rounded-2xl border border-[#E4EAF1] bg-white p-4 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
-                  <span className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-base shrink-0" style={{ background: B }}>
-                    <span>{v.icon || ['⚡', '🛡️', '💬'][i]}</span>
-                  </span>
-                  <p className="text-[13px] font-bold text-secondary mt-3 leading-tight">{v.title}</p>
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              {AboutStats.map(st => (
+                <div key={st.label} className="rounded-2xl border border-[#E4EAF1] bg-[#F5F8FC] p-5">
+                  <p className="text-3xl font-black text-primary leading-none">{st.value}</p>
+                  <p className="text-[13px] font-bold text-secondary mt-2 leading-tight">{st.label}</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">{st.sub}</p>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══ WAAROM PROFESSIONALS ══ */}
-      <section className="py-16 lg:py-24 px-5 sm:px-8 lg:px-10 bg-[#F5F8FC]">
-        <div className="max-w-[1240px] mx-auto">
-          <div className="text-center max-w-2xl mx-auto">
-            <div className="inline-flex items-center justify-center"><Eyebrow>Onze kracht</Eyebrow></div>
-            <SectionTitle>Waarom professionals voor ALRA kiezen</SectionTitle>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-12">
-            {WhyCards.map(c => {
-              const Icon = ICONMAP[c.icon];
-              return (
-                <div key={c.num} className="group relative bg-white rounded-2xl border border-[#E4EAF1] p-7 transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_18px_40px_-18px_rgba(7,27,54,0.25)]">
-                  <span className="absolute top-6 right-6 text-[13px] font-black text-[#0B67D8]/30 group-hover:text-[#0B67D8]/60 transition-colors">{c.num}</span>
-                  <span className="w-12 h-12 rounded-xl flex items-center justify-center text-[#0B67D8] bg-[#0B67D8]/10 group-hover:bg-[#0B67D8] group-hover:text-white transition-colors duration-200">
-                    <Icon className="w-5 h-5" />
-                  </span>
-                  <h3 className="text-lg font-extrabold text-secondary mt-5">{c.title}</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed mt-2">{c.text}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ══ TOEPASSINGEN — donker ══ */}
-      <section className="py-16 lg:py-24 px-5 sm:px-8 lg:px-10 bg-[#07192D] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.07]">
-          <img src={quoteBg} alt="" aria-hidden="true" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-        </div>
-        <div className="relative max-w-[1280px] mx-auto">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-            <div className="max-w-2xl">
-              <Eyebrow light>Toepassingen</Eyebrow>
-              <SectionTitle light>Verlichting voor elke professionele toepassing</SectionTitle>
-              <p className="text-white/55 text-[15px] leading-relaxed mt-4 max-w-xl">
-                Ontdek ons assortiment voor uw branche. Betrouwbare LED-oplossingen, geselecteerd voor de praktijk.
-              </p>
-            </div>
-            <Link to={ROUTES.shop} className="inline-flex items-center gap-2 text-white/80 hover:text-white text-sm font-bold shrink-0 group">
-              Bekijk alle producten <IconArrow className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-12">
-            {categories.length === 0 && (
-              ['Bedrijfswagenverlichting', 'Bouwlichtslangen en toebehoren', 'LED Hefbrugverlichting', 'LED draagbare werkverlichting', 'Veiligheidsverlichting'].map(name => (
-                <div key={name} className="aspect-[3/4] rounded-2xl bg-white/5 border border-white/10 animate-pulse" />
-              ))
-            )}
-            {categories.map(cat => {
-              const img = getMediaUrl(catImages[cat.id]) || CAT_FALLBACK[cat.slug] || ALL_FALLBACK;
-              return (
-                <Link
-                  key={cat.id}
-                  to={shopWithCategory(cat)}
-                  className="group bg-white rounded-2xl overflow-hidden border border-white/10 hover:-translate-y-1 transition-all duration-200"
-                >
-                  <div className="aspect-[16/11] overflow-hidden bg-slate-100">
-                    <img src={img} alt={cat.name} className="w-full h-full object-cover group-hover:scale-[1.015] transition-transform duration-300" loading="lazy" decoding="async" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-[14px] font-extrabold text-secondary leading-snug">{cat.name}</h3>
-                    <p className="text-[11px] text-slate-400 mt-1 leading-snug line-clamp-2">
-                      {cat.description || 'Functioneel, veilig en duurzaam'}
-                    </p>
-                    <span className="inline-flex items-center gap-1 text-[12px] font-bold text-[#0B67D8] mt-3">
-                      Bekijk <IconArrow className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <CustomBlocks blocks={blocks.filter(b => (b.mount || 'bottom') === 'top')} />
-
-      {/* ══ GROOTHANDEL — 50/50 ══ */}
-      <section className="py-16 lg:py-24 px-5 sm:px-8 lg:px-10 bg-white">
-        <div className="max-w-[1240px] mx-auto">
-          <div className="rounded-[24px] overflow-hidden grid grid-cols-1 lg:grid-cols-2 shadow-[0_30px_70px_-30px_rgba(7,27,54,0.35)]">
-            <div className="relative bg-[#07192D] px-8 md:px-12 py-12 md:py-16 flex flex-col justify-center overflow-hidden">
-              <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-[#0B67D8]/20 blur-3xl" />
-              <div className="relative space-y-6">
-                <Eyebrow light>Groothandel LED-verlichting</Eyebrow>
-                <h2 className="text-[clamp(1.8rem,3vw,2.6rem)] font-extrabold leading-[1.06] tracking-tight text-white">
-                  Zakelijke LED-verlichting<br />zonder gedoe
-                </h2>
-                <div className="space-y-3 text-white/60 text-[14px] leading-relaxed">
-                  <p>
-                    ALRA levert LED-verlichting aan bedrijven en professionals die kwaliteit, betrouwbaarheid
-                    en scherpe zakelijke condities zoeken.
-                  </p>
-                  <p>
-                    Van enkele armaturen tot grotere aantallen: wij denken mee over de juiste oplossing voor jouw toepassing.
-                    Heb je grotere aantallen nodig of een specifieke vraag? Neem contact met ons op voor persoonlijk advies
-                    of een passende zakelijke offerte.
-                  </p>
-                </div>
-                <Link
-                  to={ROUTES.contact}
-                  className="inline-flex items-center justify-center gap-2 bg-[#0B67D8] text-white font-bold text-sm px-7 py-3.5 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-[#0B67D8]/30"
-                >
-                  Neem contact op <IconArrow className="w-4 h-4" />
-                </Link>
-              </div>
-            </div>
-
-            <div className="relative min-h-[300px] lg:min-h-[480px]">
-              <img src={warehouseImg} alt="Magazijn en voorraad van ALRA LED" className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent lg:bg-gradient-to-r lg:from-black/30 lg:to-transparent" />
-            </div>
-          </div>
-
-          {/* Floating trust card */}
-          <div className="relative z-10 -mt-8 lg:-mt-10 mx-auto lg:max-w-3xl px-2">
-            <div className="bg-white rounded-2xl border border-[#E4EAF1] shadow-[0_20px_50px_-20px_rgba(7,27,54,0.3)] p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#E4EAF1]">
-              {GroothandelTrust.map(t => {
-                const Icon = ICONMAP[t.icon];
-                return (
-                  <div key={t.title} className="flex items-center gap-3 px-4 py-3">
-                    <span className="w-9 h-9 rounded-lg flex items-center justify-center text-[#0B67D8] bg-[#0B67D8]/10 shrink-0">
-                      <Icon className="w-[18px] h-[18px]" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-bold text-secondary leading-tight">{t.title}</p>
-                      <p className="text-[11px] text-slate-400 leading-tight mt-0.5">{t.text}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══ FOTOCOLLAGE — merkbeleving ══ */}
-      <section className="py-16 lg:py-24 px-5 sm:px-8 lg:px-10 bg-[#F5F8FC] border-y border-[#E4EAF1]">
-        <div className="max-w-[1240px] mx-auto grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4">
-          <div className="relative rounded-[18px] overflow-hidden min-h-[320px] lg:min-h-[520px]">
-            <img src={storyBig} alt="ALRA LED in de praktijk voor vakmensen" className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 p-6">
-              <p className="text-white font-extrabold text-xl leading-tight">Praktische oplossingen<br />voor echte vakmensen</p>
-            </div>
-          </div>
-          <div className="grid grid-rows-2 gap-4">
-            <div className="relative rounded-[18px] overflow-hidden min-h-[200px]">
-              <img src={storyA} alt="ALRA LED werklamp" className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" style={{ objectPosition: 'center' }} />
-            </div>
-            <div className="relative rounded-[18px] overflow-hidden min-h-[200px]">
-              <img src={storyB} alt="ALRA LED bedrijfswagenverlichting" className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
             </div>
           </div>
         </div>
@@ -474,13 +236,13 @@ const About = () => {
       <section className="py-16 lg:py-24 px-5 sm:px-8 lg:px-10 bg-white">
         <div className="max-w-[1240px] mx-auto">
           <div className="text-center max-w-2xl mx-auto">
-            <div className="inline-flex items-center justify-center"><Eyebrow>Onze aanpak</Eyebrow></div>
-            <SectionTitle>Van vraag naar de juiste verlichting</SectionTitle>
+            <div className="inline-flex items-center justify-center"><Eyebrow>Zo werken wij</Eyebrow></div>
+            <SectionTitle>De ontwikkeling van ALRA LED Solutions</SectionTitle>
           </div>
 
           <div className="relative mt-16">
-            <div className="hidden lg:block absolute top-[26px] left-[18%] right-[18%] h-px bg-[#E4EAF1]" />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div className="hidden lg:block absolute top-[26px] left-[12%] right-[12%] h-px bg-[#E4EAF1]" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
               {ApproachSteps.map(s => (
                 <div key={s.num} className="relative text-center lg:px-2">
                   <span className="relative z-10 inline-flex items-center justify-center w-[52px] h-[52px] rounded-2xl text-white font-extrabold text-base" style={{ background: B, boxShadow: '0 10px 24px rgba(11,103,216,0.35)' }}>
@@ -506,7 +268,6 @@ const About = () => {
           <blockquote className="text-[clamp(1.5rem,3vw,2.4rem)] font-extrabold leading-[1.15] text-white tracking-tight">
             “Goede verlichting merk je pas echt wanneer je zonder nadenken door kunt werken.”
           </blockquote>
-          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/50 mt-8">Alra Led Solutions</p>
         </div>
       </section>
 
