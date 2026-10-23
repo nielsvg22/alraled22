@@ -31,7 +31,7 @@ const Btn = ({ onClick, active, disabled, title, children }) => (
 
 const Sep = () => <span className="w-px h-5 bg-gray-200 mx-1" />;
 
-export default function RichTextEditor({ value, onChange }) {
+export default function RichTextEditor({ value, onChange, minHeight = '14rem' }) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -42,7 +42,8 @@ export default function RichTextEditor({ value, onChange }) {
     content: toEditorHtml(value),
     editorProps: {
       attributes: {
-        class: 'rich-editor-content min-h-[14rem] px-4 py-3 text-sm leading-relaxed text-gray-800 focus:outline-none',
+        class: 'rich-editor-content px-4 py-3 text-sm leading-relaxed text-gray-800 focus:outline-none',
+        style: `min-height: ${minHeight}`,
       },
     },
     onUpdate: ({ editor: ed }) => onChange(ed.isEmpty ? '' : ed.getHTML()),

@@ -98,7 +98,7 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row" style={{ backgroundColor: 'var(--crm-bg)', color: 'var(--crm-text)' }}>
+    <div className="min-h-screen md:h-screen md:overflow-hidden flex flex-col md:flex-row" style={{ backgroundColor: 'var(--crm-bg)', color: 'var(--crm-text)' }}>
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-72 shadow-2xl transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
@@ -167,7 +167,7 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
         {/* Header */}
         <header className="shadow-sm flex items-center justify-between px-6 py-4" style={{ backgroundColor: 'var(--crm-surface)', borderBottom: '1px solid var(--crm-border)' }}>
           <div className="flex items-center space-x-2 md:hidden">
@@ -226,7 +226,7 @@ export default function DashboardLayout() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6 md:p-12">
+        <div className="flex-1 min-h-0 overflow-y-auto p-6 md:p-12">
           <Outlet />
         </div>
       </main>

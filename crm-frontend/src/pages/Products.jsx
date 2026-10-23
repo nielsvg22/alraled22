@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api, { getMediaUrl } from '../lib/api';
 import { Plus, Edit, Trash2, Search, Upload, X, Copy, Sparkles, Loader2, Package, TrendingUp, AlertTriangle, CheckCircle, Wand2, FileText, Video, List } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { errorText } from '../lib/errorText';
-import ImageUploader from '../components/ImageUploader';
-import RichTextEditor from '../components/RichTextEditor';
 
 const euro = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
-const emptyForm = { name: '', description: '', specs: '', price: '', stock: '', category: '', categoryId: '', imageUrl: '', imageUrls: [], pdfUrl: '', videoUrl: '' };
+
+// Omschrijving is opgemaakte HTML (editor): voor lijst en zoeken als platte tekst
+const plainText = (html) => String(html || '').replace(/<\/(p|li|h[1-6])>/gi, ' ').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
 
 const getProductImages = (product) => {
   const urls = Array.isArray(product?.images) ? product.images.map((image) => image.url || image).filter(Boolean) : [];
@@ -39,23 +40,14 @@ export default function Products() {
   const [loading, setLoading]       = useState(true);
   const [search, setSearch]         = useState('');
   const [catFilter, setCatFilter]   = useState('ALL');
-  const [modalOpen, setModalOpen]   = useState(false);
-  const [editing, setEditing]       = useState(null);
-  const [saving, setSaving]         = useState(false);
   const [error, setError]           = useState('');
-  const [formData, setFormData]     = useState(emptyForm);
   const [deleteId, setDeleteId]     = useState(null);
-  const [relations, setRelations]   = useState([]);
-  const [relLoading, setRelLoading] = useState(false);
-  const [relSearch, setRelSearch]   = useState('');
   const importRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [categories, setCategories] = useState([]);
-  const [specsList, setSpecsList]   = useState([]);
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     api.get('/products/categories/all').then(r => setCategories(r.data)).catch(() => {});
@@ -72,7 +64,7 @@ export default function Products() {
 
   const filtered = useMemo(() => products.filter(p => {
     const q = search.toLowerCase();
-    return ([p.name, p.category, p.description].filter(Boolean).some(v => v.toLowerCase().includes(q)))
+    return ([p.name, p.category, plainText(p.description)].filter(Boolean).some(v => v.toLowerCase().includes(q)))
       && (catFilter === 'ALL' || p.categoryId === catFilter || p.category === catFilter);
   }), [products, search, catFilter]);
 
@@ -94,68 +86,6 @@ export default function Products() {
         return { label: key.trim(), value: vals.join(':').trim() };
       });
     }
-  };
-
-  const openModal = async (product = null) => {
-    setEditing(product);
-    const imageUrls = product ? getProductImages(product) : [];
-    const specs = product?.specs || '';
-    setSpecsList(parseSpecs(specs));
-    setFormData(product ? {
-      name: product.name, description: product.description||'', specs,
-      price: String(product.price), stock: String(product.stock),
-      category: product.category||'', categoryId: product.categoryId||'',
-      imageUrl: imageUrls[0] || '', imageUrls,
-      pdfUrl: product.pdfUrl||'', videoUrl: product.videoUrl||'',
-    } : emptyForm);
-    setError('');
-    setModalOpen(true);
-    
-    if (product) {
-      setRelLoading(true);
-      try {
-        const res = await api.get(`/products/${product.id}/relations`);
-        setRelations(res.data.explicit || []);
-      } catch (err) {
-        console.error('Failed to fetch relations', err);
-      } finally {
-        setRelLoading(false);
-      }
-    } else {
-      setRelations([]);
-    }
-  };
-
-  const closeModal = () => { setModalOpen(false); setError(''); };
-
-  const handleAI = async () => {
-    if (!formData.name) return;
-    setAiLoading(true);
-    try {
-      const r = await api.post('/ai/product-description', { name: formData.name, category: formData.category });
-      setFormData(f => ({ ...f, description: r.data.result }));
-    } catch (e) { alert(e.response?.data?.error || 'AI generatie mislukt'); }
-    finally { setAiLoading(false); }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    const imageUrls = Array.isArray(formData.imageUrls) ? formData.imageUrls : [];
-    const specsStr = specsList.length > 0 ? JSON.stringify(specsList.filter(s => s.label || s.value)) : (formData.specs || '');
-    const data = {
-      ...formData, specs: specsStr,
-      imageUrl: imageUrls[0] || formData.imageUrl || '', imageUrls,
-      price: parseFloat(formData.price), stock: parseInt(formData.stock, 10),
-      categoryId: formData.categoryId || null,
-      pdfUrl: formData.pdfUrl || null, videoUrl: formData.videoUrl || null,
-    };
-    try {
-      editing ? await api.put(`/products/${editing.id}`, data) : await api.post('/products', data);
-      await fetchProducts();
-      closeModal();
-    } catch (e) { setError(errorText(e, 'Opslaan mislukt')); }
-    finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
@@ -197,26 +127,6 @@ export default function Products() {
     }
   };
 
-  const handleAddRelation = async (relatedId) => {
-    try {
-      await api.post(`/products/${editing.id}/relations`, { relatedProductId: relatedId });
-      const res = await api.get(`/products/${editing.id}/relations`);
-      setRelations(res.data.explicit || []);
-    } catch (err) {
-      alert('Relatie toevoegen mislukt');
-    }
-  };
-
-  const handleDeleteRelation = async (relId) => {
-     try {
-       await api.delete(`/products/${editing.id}/relations/${relId}`);
-       const res = await api.get(`/products/${editing.id}/relations`);
-       setRelations(res.data.explicit || []);
-     } catch (err) {
-       alert('Relatie verwijderen mislukt');
-     }
-   };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -233,7 +143,7 @@ export default function Products() {
               {importing ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
               {importing ? 'Importeren…' : 'Importeer .docx'}
             </button>
-            <button onClick={() => openModal()}
+            <button onClick={() => navigate('/products/nieuw')}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black text-white transition-all active:scale-95"
               style={{ background: 'linear-gradient(135deg,#1e40af,#3b82f6)', boxShadow: '0 4px 16px rgba(59,130,246,0.4)' }}>
               <Plus size={16} /> Nieuw product
@@ -242,7 +152,7 @@ export default function Products() {
         )}
       </div>
 
-      {error && !modalOpen && <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-600 text-sm font-medium">{String(error)}</div>}
+      {error && <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-600 text-sm font-medium">{String(error)}</div>}
 
       {importResult && (
         <div className="rounded-2xl border border-green-100 bg-green-50 px-5 py-4 text-sm">
@@ -337,7 +247,7 @@ export default function Products() {
                       className="p-2.5 bg-white/90 rounded-xl text-gray-700 hover:bg-white transition-colors shadow-lg" style={{ backdropFilter: 'blur(4px)' }}>
                       <Copy size={14} />
                     </button>
-                    <button onClick={() => openModal(product)} title="Bewerken"
+                    <button onClick={() => navigate(`/products/${product.id}`)} title="Bewerken"
                       className="p-2.5 bg-blue-500 rounded-xl text-white hover:bg-blue-600 transition-colors shadow-lg">
                       <Edit size={14} />
                     </button>
@@ -353,7 +263,7 @@ export default function Products() {
               <div className="p-4 flex flex-col flex-1">
                 <p className="font-black text-gray-900 text-sm leading-tight line-clamp-2 mb-1">{product.name}</p>
                 {product.description && (
-                  <p className="text-xs text-gray-400 leading-relaxed line-clamp-2 mb-1 flex-1">{product.description}</p>
+                  <p className="text-xs text-gray-400 leading-relaxed line-clamp-2 mb-1 flex-1">{plainText(product.description)}</p>
                 )}
                 {product.specs && (() => {
                   const s = parseSpecs(product.specs);
@@ -395,225 +305,6 @@ export default function Products() {
                 Verwijderen
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Product modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-0 sm:px-4"
-          onClick={closeModal}>
-          <div className="bg-white w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden"
-            style={{ boxShadow: '0 40px 100px rgba(0,0,0,0.25)' }}
-            onClick={e => e.stopPropagation()}>
-
-            {/* Modal header */}
-            <div className="px-6 py-5 flex items-center justify-between" style={{ background: 'linear-gradient(135deg,#0f172a,#1e293b)' }}>
-              <div>
-                <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-0.5">
-                  {editing ? 'Bewerken' : 'Nieuw product'}
-                </p>
-                <h2 className="text-lg font-black text-white">{editing?.name || 'Product toevoegen'}</h2>
-              </div>
-              <button onClick={closeModal} className="text-white/40 hover:text-white/80 transition-colors p-1">
-                <X size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="overflow-y-auto flex-1">
-              <div className="p-6 space-y-5">
-                {error && <div className="rounded-xl bg-red-50 border border-red-100 text-red-600 px-4 py-3 text-sm font-medium">{String(error)}</div>}
-
-                {/* Image upload */}
-                <ImageUploader
-                  value={formData.imageUrls}
-                  onChange={(val) => setFormData(f => ({ ...f, imageUrls: val, imageUrl: val[0] || '' }))}
-                  label="Productfoto's"
-                  multiple
-                />
-
-                {/* Name */}
-                <div>
-                  <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">Naam *</label>
-                  <input required className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Productnaam…" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                </div>
-
-                {/* Description + AI */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Omschrijving</label>
-                    <button type="button" onClick={handleAI} disabled={!formData.name || aiLoading}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-white transition-all disabled:opacity-40 active:scale-95"
-                      style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', boxShadow: '0 4px 12px rgba(124,58,237,0.35)' }}>
-                      {aiLoading ? <><Loader2 size={11} className="animate-spin" /> Genereren…</> : <><Sparkles size={11} /> AI schrijft</>}
-                    </button>
-                  </div>
-                  <RichTextEditor value={formData.description} onChange={(html) => setFormData(prev => ({ ...prev, description: html }))} />
-                </div>
-
-                {/* Price + Stock */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">Prijs (€) *</label>
-                    <input type="number" step="0.01" required className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0.00" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">Voorraad *</label>
-                    <input type="number" required className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0" value={formData.stock} onChange={e => setFormData({ ...formData, stock: e.target.value })} />
-                  </div>
-                </div>
-
-                {/* Category dropdown */}
-                <div>
-                  <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">Categorie</label>
-                  <select className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                    value={formData.categoryId || ''}
-                    onChange={e => {
-                      const catId = e.target.value;
-                      const cat = categories.find(c => c.id === catId);
-                      setFormData({ ...formData, categoryId: catId, category: cat?.name || '' });
-                    }}>
-                    <option value="">Geen categorie</option>
-                    {categories.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Specs editor */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Specificaties</label>
-                    <button type="button" onClick={() => setSpecsList([...specsList, { label: '', value: '' }])}
-                      className="text-xs font-bold text-blue-600 hover:text-blue-800 px-2 py-1">
-                      + Rij toevoegen
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    {specsList.map((spec, i) => (
-                      <div key={i} className="flex gap-2 items-center">
-                        <input className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Label (bv. Lichtopbrengst)" value={spec.label}
-                          onChange={e => {
-                            const updated = [...specsList];
-                            updated[i] = { ...updated[i], label: e.target.value };
-                            setSpecsList(updated);
-                          }} />
-                        <input className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Waarde (bv. 12.000 Lumen)" value={spec.value}
-                          onChange={e => {
-                            const updated = [...specsList];
-                            updated[i] = { ...updated[i], value: e.target.value };
-                            setSpecsList(updated);
-                          }} />
-                        <button type="button" onClick={() => setSpecsList(specsList.filter((_, j) => j !== i))}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* PDF + Video URLs */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">
-                      <FileText size={12} className="inline mr-1" /> PDF URL
-                    </label>
-                    <input className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="/uploads/product.pdf" value={formData.pdfUrl || ''}
-                      onChange={e => setFormData({ ...formData, pdfUrl: e.target.value })} />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">
-                      <Video size={12} className="inline mr-1" /> YouTube URL
-                    </label>
-                    <input className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="https://youtube.com/watch?v=..." value={formData.videoUrl || ''}
-                      onChange={e => setFormData({ ...formData, videoUrl: e.target.value })} />
-                  </div>
-                </div>
-
-                {/* Relations (Upsells) */}
-                {editing && (
-                  <div className="pt-6 border-t border-gray-100 space-y-4">
-                    <div>
-                      <h3 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-1">Maak je set compleet (Upsells)</h3>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Koppel bijbehorende producten</p>
-                    </div>
-
-                    {/* Relation list */}
-                    <div className="space-y-2">
-                      {relations.map(rel => (
-                        <div key={rel.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 group">
-                          <div className="flex items-center gap-3">
-                            {getPrimaryImage(rel.relatedProduct) && (
-                              <img src={getMediaUrl(getPrimaryImage(rel.relatedProduct))} className="w-8 h-8 rounded-lg object-cover" />
-                            )}
-                            <div>
-                              <p className="text-xs font-black text-gray-900 line-clamp-1">{rel.relatedProduct.name}</p>
-                              <p className="text-[10px] text-gray-400 font-bold">{euro.format(rel.relatedProduct.price)}</p>
-                            </div>
-                          </div>
-                          <button type="button" onClick={() => handleDeleteRelation(rel.id)} 
-                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Add relation */}
-                    <div className="relative">
-                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input 
-                        className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Zoek product om te koppelen…"
-                        value={relSearch}
-                        onChange={e => setRelSearch(e.target.value)}
-                      />
-                      {relSearch.length >= 2 && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl z-10 max-h-48 overflow-y-auto">
-                          {products
-                            .filter(p => p.id !== editing.id && p.name.toLowerCase().includes(relSearch.toLowerCase()))
-                            .map(p => (
-                              <button 
-                                key={p.id}
-                                type="button"
-                                onClick={() => { handleAddRelation(p.id); setRelSearch(''); }}
-                                className="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center gap-3 border-b border-gray-50 last:border-0"
-                              >
-                                {getPrimaryImage(p) && <img src={getMediaUrl(getPrimaryImage(p))} className="w-6 h-6 rounded-lg object-cover" />}
-                                <div className="flex-1">
-                                  <p className="text-xs font-black text-gray-900">{p.name}</p>
-                                  <p className="text-[10px] text-gray-400 font-bold">{euro.format(p.price)}</p>
-                                </div>
-                                <Plus size={14} className="text-blue-500" />
-                              </button>
-                            ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Modal footer */}
-              <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex gap-3">
-                <button type="button" onClick={closeModal} className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors">
-                  Annuleren
-                </button>
-                <button type="submit" disabled={saving || uploading}
-                  className="flex-1 py-3 rounded-xl text-sm font-black text-white transition-all active:scale-95 disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg,#1e40af,#3b82f6)', boxShadow: '0 4px 16px rgba(59,130,246,0.4)' }}>
-                  {saving ? 'Opslaan…' : editing ? 'Wijzigingen opslaan' : 'Product aanmaken'}
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
