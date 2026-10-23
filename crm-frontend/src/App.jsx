@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
+import ProductEditor from './pages/ProductEditor';
 import Orders from './pages/Orders';
 import Rmas from './pages/Rmas';
 import Users from './pages/Users';
@@ -65,6 +66,7 @@ function AppRoutes() {
       >
         <Route index element={<Dashboard />} />
         <Route path="products" element={<Products />} />
+        <Route path="products/:id" element={<ProductEditor />} />
         <Route path="categories" element={<AdminRoute><Categories /></AdminRoute>} />
         <Route path="orders" element={<Orders />} />
         <Route path="rmas" element={<AdminRoute><Rmas /></AdminRoute>} />
