@@ -17,6 +17,9 @@ export default function QuoteModal({ product, isOpen, onClose }) {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [company, setCompany] = useState('');
+  const [address, setAddress] = useState('');
+  const [postcode, setPostcode] = useState('');
+  const [city, setCity] = useState('');
   const [message, setMessage] = useState('');
   const [includeCart, setIncludeCart] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -79,7 +82,7 @@ export default function QuoteModal({ product, isOpen, onClose }) {
     setError('');
     try {
       const payload = {
-        customer: { name, email, phone, company },
+        customer: { name, email, phone, company, address, postcode, city },
         items: allItems.map(i => ({ productId: i.id, quantity: i.qty })),
         message,
       };
@@ -274,6 +277,23 @@ export default function QuoteModal({ product, isOpen, onClose }) {
                     </div>
                   </div>
                   <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-secondary uppercase tracking-wider">Adres</label>
+                    <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Straat en huisnummer" autoComplete="street-address"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:outline-none transition-colors" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr] gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-secondary uppercase tracking-wider">Postcode</label>
+                      <input type="text" value={postcode} onChange={e => setPostcode(e.target.value)} placeholder="1234 AB" autoComplete="postal-code"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:outline-none transition-colors" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-secondary uppercase tracking-wider">Plaats</label>
+                      <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="Plaats" autoComplete="address-level2"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:outline-none transition-colors" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-secondary uppercase tracking-wider">Opmerkingen</label>
                     <textarea rows={4} value={message} onChange={e => setMessage(e.target.value)} placeholder="Specifieke wensen, levertijd, etc."
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:outline-none transition-colors resize-none" />
@@ -304,6 +324,7 @@ export default function QuoteModal({ product, isOpen, onClose }) {
                       <div><span className="text-gray-400">Bedrijf:</span> <span className="font-medium text-gray-700">{company || '—'}</span></div>
                       <div><span className="text-gray-400">E-mail:</span> <span className="font-medium text-gray-700">{email}</span></div>
                       <div><span className="text-gray-400">Telefoon:</span> <span className="font-medium text-gray-700">{phone || '—'}</span></div>
+                      <div className="col-span-2"><span className="text-gray-400">Adres:</span> <span className="font-medium text-gray-700">{[address, [postcode, city].filter(Boolean).join(' ')].filter(Boolean).join(', ') || '—'}</span></div>
                     </div>
                     {message && <p className="mt-3 text-sm text-gray-500 italic">{message}</p>}
                   </div>

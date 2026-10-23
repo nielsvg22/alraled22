@@ -4,6 +4,7 @@ const Counter = ({ end, duration = 2000, suffix = "" }) => {
   const [count, setCount] = useState(0);
   const countRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
+  const decimals = !Number.isInteger(end);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -34,20 +35,22 @@ const Counter = ({ end, duration = 2000, suffix = "" }) => {
       if (start >= end) {
         setCount(end);
       } else {
-        setCount(Math.floor(start));
+        setCount(decimals ? Math.floor(start * 10) / 10 : Math.floor(start));
         rafId = requestAnimationFrame(animate);
       }
     };
 
     rafId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafId);
-  }, [isVisible, end, duration]);
+  }, [isVisible, end, duration, decimals]);
 
-  if (end <= 0) return <span ref={countRef}>{end}{suffix}</span>;
+  const format = (n) => (decimals ? n.toFixed(1).replace('.', ',') : n);
+
+  if (end <= 0) return <span ref={countRef}>{format(end)}{suffix}</span>;
 
   return (
     <span ref={countRef}>
-      {count}{suffix}
+      {format(count)}{suffix}
     </span>
   );
 };

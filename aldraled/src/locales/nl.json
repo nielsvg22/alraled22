@@ -79,7 +79,7 @@
         "subtitle": "op alle producten"
       },
       {
-        "title": "CE & RoHS",
+        "title": "CE, RoHS en/of TÜV",
         "subtitle": "gecertificeerd"
       },
       {
@@ -105,7 +105,7 @@
     },
     "stats": [
       {
-        "value": "10+",
+        "value": "12,5",
         "label": "Jaar actief"
       },
       {
@@ -215,7 +215,7 @@
       },
       {
         "title": "Kwaliteit & Garantie",
-        "text": "Uitsluitend CE- en RoHS-gecertificeerde LED-producten. Volledige garantie op elk product dat wij leveren."
+        "text": "Uitsluitend CE-, RoHS- en/of TÜV-gecertificeerde LED-producten. Volledige garantie op elk product dat wij leveren."
       },
       {
         "title": "Persoonlijk advies",
@@ -365,7 +365,7 @@
         "subtitle": "Boven EUR 250"
       },
       {
-        "title": "CE & RoHS",
+        "title": "CE, RoHS en/of TÜV",
         "subtitle": "Gecertificeerd"
       },
       {

@@ -31,7 +31,7 @@ function formatEuro(value: number): string {
   return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(value);
 }
 
-const DEFAULT_DESIGN = {
+export const DEFAULT_DESIGN = {
   colors: {
     ink: '#1A2233',
     paper: '#FFFFFF',
@@ -114,7 +114,7 @@ export const previewDesign = async (req: AuthRequest, res: Response) => {
   }
 };
 
-async function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
+export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DESIGN, data: {
   refNr: string;
   date: string;
   validUntil: string;
@@ -429,8 +429,12 @@ export const createQuotePdf = async (req: AuthRequest, res: Response) => {
       date: new Date().toLocaleDateString('nl-NL'),
       validUntil: new Date(Date.now() + 30 * 86400000).toLocaleDateString('nl-NL'),
       customer: {
-        name: payload.customer.name,
+        // Met bedrijfsnaam: bedrijf bovenaan en de contactpersoon als t.a.v.
+        name: payload.customer.company || payload.customer.name,
+        attention: payload.customer.company ? payload.customer.name : undefined,
         address: payload.customer.address,
+        postcode: payload.customer.postcode,
+        city: payload.customer.city,
         email: payload.customer.email,
       },
       lines,
