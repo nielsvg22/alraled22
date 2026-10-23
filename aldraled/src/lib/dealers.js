@@ -50,11 +50,23 @@ const AIC_VISSER_DEALERS = [
   },
 ];
 
-// RECO Bouwplaatsbeveiliging - Diemen
+// RECO Bouwplaatsbeveiliging - 3 vestigingen (bron: reco.eu/nl/contact)
 const RECO_DEALERS = [
   {
+    id: 'reco-koudekerk',
+    name: 'RECO Koudekerk aan den Rijn (hoofdkantoor)',
+    brand: 'RECO',
+    address: 'Hoogewaard 187',
+    city: 'Koudekerk aan den Rijn',
+    postalCode: '2396 AP',
+    lat: 52.132768,
+    lon: 4.619438,
+    phone: '',
+    website: 'https://reco.eu',
+  },
+  {
     id: 'reco-diemen',
-    name: 'RECO Bouwplaatsbeveiliging',
+    name: 'RECO Diemen',
     brand: 'RECO',
     address: 'Stammerkamp 19',
     city: 'Diemen',
@@ -62,7 +74,19 @@ const RECO_DEALERS = [
     lat: 52.330261,
     lon: 4.986486,
     phone: '',
-    website: '',
+    website: 'https://reco.eu',
+  },
+  {
+    id: 'reco-andelst',
+    name: 'RECO Andelst',
+    brand: 'RECO',
+    address: 'Geurdeland 8',
+    city: 'Andelst',
+    postalCode: '6673 DR',
+    lat: 51.914915,
+    lon: 5.709688,
+    phone: '',
+    website: 'https://reco.eu',
   },
 ];
 
@@ -78,7 +102,7 @@ const HOEGEN_DEALERS = [
     lat: 52.223859,
     lon: 5.975015,
     phone: '',
-    website: '',
+    website: 'https://hoegenelektro.nl',
   },
 ];
 

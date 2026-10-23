@@ -25,7 +25,7 @@ const WHOLESALE_BRANDS = [
   {
     id: 'reco',
     name: 'RECO Bouwplaatsbeveiliging',
-    description: 'Expert in bouwplaatsbeveiliging en perimeterebeveiliging. Vestiging in Diemen.',
+    description: 'Expert in bouwplaatsbeveiliging en perimeterbeveiliging. Drie vestigingen: Koudekerk aan den Rijn, Diemen en Andelst.',
     website: 'https://reco.eu',
     logo: '/uploads/reco-logo-official.svg',
     categoryFilter: ['veiligheid', 'bouw'],
