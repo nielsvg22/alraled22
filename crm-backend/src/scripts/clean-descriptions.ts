@@ -1,7 +1,7 @@
 import { db, pool } from '../lib/db';
 import { products } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { htmlToText, hasHtml } from '../lib/htmlText';
+import { sanitizeDescription, hasHtml } from '../lib/htmlText';
 
 // Gebruik: npm run db:clean-descriptions          (alleen tonen wat er verandert)
 //          npm run db:clean-descriptions -- --apply  (wijzigingen opslaan)
@@ -12,7 +12,7 @@ async function cleanDescriptions() {
   let changed = 0;
   for (const row of rows) {
     if (!row.description || !hasHtml(row.description)) continue;
-    const cleaned = htmlToText(row.description);
+    const cleaned = sanitizeDescription(row.description);
     if (cleaned === row.description) continue;
     changed++;
     console.log(`${apply ? 'Fixed' : 'Would fix'}: ${row.name}`);
