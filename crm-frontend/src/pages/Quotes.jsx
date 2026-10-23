@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { ChevronDown, ChevronUp, MapPin, Phone, Mail, Building2, FileText, Euro } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, Phone, Mail, Building2, FileText, Euro, Download, Loader2 } from 'lucide-react';
 
 const STATUS_COLORS = {
   NEW: 'bg-blue-100 text-blue-700',
@@ -25,6 +25,7 @@ export default function Quotes() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
   const [expanded, setExpanded] = useState(null);
+  const [downloading, setDownloading] = useState(null);
 
   const fetchQuotes = () => {
     api.get('/quotes').then(r => { setQuotesList(r.data); setLoading(false); }).catch(() => setLoading(false));
@@ -35,6 +36,25 @@ export default function Quotes() {
   const updateStatus = async (id, status) => {
     await api.patch(`/quotes/${id}/status`, { status });
     setQuotesList(prev => prev.map(q => q.id === id ? { ...q, status } : q));
+  };
+
+  const downloadPdf = async (q) => {
+    setDownloading(q.id);
+    try {
+      const res = await api.get(`/quotes/${q.id}/pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `offerte-${q.quoteNumber || q.id.slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      alert('Downloaden van de offerte is mislukt. Probeer het opnieuw.');
+    } finally {
+      setDownloading(null);
+    }
   };
 
   const filtered = filter === 'ALL' ? quotesList : quotesList.filter(q => q.status === filter);
@@ -184,7 +204,13 @@ export default function Quotes() {
                   )}
 
                   {/* Status actions */}
-                  <div className="flex gap-2 pt-2 border-t border-gray-100">
+                  <div className="flex gap-2 pt-2 border-t border-gray-100 flex-wrap items-center">
+                    <button onClick={() => downloadPdf(q)} disabled={downloading === q.id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition-all">
+                      {downloading === q.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                      Download offerte (pdf)
+                    </button>
+                    <span className="w-px h-5 bg-gray-200 mx-1" />
                     {Object.entries(STATUS_LABELS).filter(([k]) => k !== q.status).map(([key, label]) => (
                       <button key={key} onClick={() => updateStatus(q.id, key)}
                         className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">
