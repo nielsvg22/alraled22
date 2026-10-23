@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
-import { getMediaUrl, API_URL, htmlToText, plainText } from '../lib/api';
+import { getMediaUrl, API_URL, htmlToText, plainText, isRichHtml, sanitizeRich } from '../lib/api';
 import FormattedText from '../components/FormattedText';
 import analytics from '../lib/analytics';
 import { getProductImages, getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
@@ -359,7 +359,9 @@ const ProductDetail = () => {
                 <div className={`grid gap-5 ${specs.length > 0 ? 'lg:grid-cols-2' : ''}`}>
                   <section className="bg-white rounded-2xl border border-[#E4EAF1] shadow-sm p-6 md:p-7">
                     <h3 className="text-lg font-black text-secondary mb-4">Beschrijving</h3>
-                    {product.description ? (
+                    {product.description && isRichHtml(product.description) ? (
+                      <div className="rich-description text-[15px] text-gray-500 leading-[1.75]" dangerouslySetInnerHTML={{ __html: sanitizeRich(product.description) }} />
+                    ) : product.description ? (
                       <div className="text-[15px] text-gray-500 leading-[1.75] space-y-4">
                         {htmlToText(product.description).split('\n').filter(Boolean).map((p, i) => {
                           if (p.startsWith('#')) {

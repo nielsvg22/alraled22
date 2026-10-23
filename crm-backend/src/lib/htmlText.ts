@@ -1,3 +1,5 @@
+import sanitizeHtml from 'sanitize-html';
+
 // Productomschrijvingen bevatten soms HTML (uit import of editor). We slaan platte
 // tekst op: blokelementen worden regelafstanden, <li> een opsomming, overige tags vervallen.
 const HTML_ENTITIES: Record<string, string> = {
@@ -25,4 +27,29 @@ export function htmlToText(html: string): string {
 
 export function hasHtml(value: string): boolean {
   return /<\/?[a-z][^>]*>|&(#\d+|#x[0-9a-f]+|[a-z]+);|\b(?:role|aria-[\w-]+)\s*=\s*["']/i.test(value);
+}
+
+// ── Opgemaakte omschrijving (editor in het CRM) ─────────────────────────────
+// De omschrijving wordt als beperkte, veilige HTML bewaard: alinea's, vet, schuin,
+// onderstreept, koppen, lijsten en links. Al het andere (scripts, stijlen, attributen) vervalt.
+const LEFTOVER_ATTRS = /(?:\s*\b(?:role|aria-[\w-]+|class|id|style|data-[\w-]+|tabindex)\s*=\s*(?:"[^"]*"|'[^']*'))+\s*\/?>/gi;
+
+export function sanitizeDescription(value: string): string {
+  // Restanten van half weggeknipte tags (bv. role="tabpanel" aria-labelledby="...">) eerst weghalen
+  const cleaned = value.replace(LEFTOVER_ATTRS, '');
+  const hasTags = /<\/?[a-z][^>]*>/i.test(cleaned);
+  // Platte tekst (geen HTML) blijft ongewijzigd, zodat bestaande omschrijvingen niet veranderen
+  if (!hasTags) return cleaned.trim();
+  return sanitizeHtml(cleaned, {
+    allowedTags: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'ul', 'ol', 'li', 'a'],
+    allowedAttributes: { a: ['href', 'target', 'rel'] },
+    allowedSchemes: ['http', 'https', 'mailto', 'tel'],
+    transformTags: {
+      b: 'strong',
+      i: 'em',
+      h1: 'h2',
+      h4: 'h3', h5: 'h3', h6: 'h3',
+      a: (tagName, attribs) => ({ tagName, attribs: { ...attribs, target: '_blank', rel: 'noopener noreferrer' } }),
+    },
+  }).trim();
 }

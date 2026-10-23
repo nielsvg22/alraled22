@@ -4,6 +4,7 @@ import { Plus, Edit, Trash2, Search, Upload, X, Copy, Sparkles, Loader2, Package
 import { useAuth } from '../context/AuthContext';
 import { errorText } from '../lib/errorText';
 import ImageUploader from '../components/ImageUploader';
+import RichTextEditor from '../components/RichTextEditor';
 
 const euro = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
 const emptyForm = { name: '', description: '', specs: '', price: '', stock: '', category: '', categoryId: '', imageUrl: '', imageUrls: [], pdfUrl: '', videoUrl: '' };
@@ -48,7 +49,6 @@ export default function Products() {
   const [relLoading, setRelLoading] = useState(false);
   const [relSearch, setRelSearch]   = useState('');
   const importRef = useRef(null);
-  const descRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -127,32 +127,6 @@ export default function Products() {
   };
 
   const closeModal = () => { setModalOpen(false); setError(''); };
-
-  // Selectie in de omschrijving dikgedrukt maken: **tekst** (nogmaals klikken haalt het weg)
-  const toggleBold = () => {
-    const el = descRef.current;
-    const text = formData.description || '';
-    if (!el) return;
-    const start = el.selectionStart ?? text.length;
-    const end = el.selectionEnd ?? text.length;
-    const selected = text.slice(start, end);
-    const wrapped = selected.startsWith('**') && selected.endsWith('**') && selected.length >= 4;
-    const around = text.slice(start - 2, start) === '**' && text.slice(end, end + 2) === '**';
-    let next, selStart, selEnd;
-    if (wrapped) {
-      next = text.slice(0, start) + selected.slice(2, -2) + text.slice(end);
-      selStart = start; selEnd = end - 4;
-    } else if (around) {
-      next = text.slice(0, start - 2) + selected + text.slice(end + 2);
-      selStart = start - 2; selEnd = end - 2;
-    } else {
-      const inner = selected || 'dikgedrukt';
-      next = text.slice(0, start) + '**' + inner + '**' + text.slice(end);
-      selStart = start + 2; selEnd = start + 2 + inner.length;
-    }
-    setFormData({ ...formData, description: next });
-    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(selStart, selEnd); });
-  };
 
   const handleAI = async () => {
     if (!formData.name) return;
@@ -475,15 +449,7 @@ export default function Products() {
                       {aiLoading ? <><Loader2 size={11} className="animate-spin" /> Genereren…</> : <><Sparkles size={11} /> AI schrijft</>}
                     </button>
                   </div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <button type="button" onClick={toggleBold} title="Dikgedrukt (Ctrl+B)"
-                      className="w-8 h-8 rounded-lg border border-gray-200 bg-white text-sm font-black text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all">B</button>
-                    <span className="text-xs text-gray-400">Selecteer tekst en klik op B (of Ctrl+B). Wordt opgeslagen als **tekst**.</span>
-                  </div>
-                  <textarea ref={descRef} onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') { e.preventDefault(); toggleBold(); } }}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm leading-relaxed resize-y min-h-[14rem] focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={10} placeholder="Productomschrijving of gebruik AI…"
-                    value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                  <RichTextEditor value={formData.description} onChange={(html) => setFormData(prev => ({ ...prev, description: html }))} />
                 </div>
 
                 {/* Price + Stock */}

@@ -10,7 +10,7 @@ import path from 'path';
 import { randomUUID } from 'node:crypto';
 import OpenAI, { toFile } from 'openai';
 import { getContent } from '../db/contentRepo';
-import { htmlToText } from '../lib/htmlText';
+import { sanitizeDescription } from '../lib/htmlText';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { InferenceClient } from '@huggingface/inference';
 
@@ -99,7 +99,7 @@ export const createProduct = async (req: Request, res: Response) => {
     const imageUrls = normalizeImageUrls(validatedData.imageUrls, imageUrl);
     const product = await productsRepo.createProduct({
       name: validatedData.name,
-      description: normalizeOptionalString(validatedData.description && htmlToText(validatedData.description)),
+      description: normalizeOptionalString(validatedData.description && sanitizeDescription(validatedData.description)),
       specs: normalizeOptionalString(validatedData.specs),
       price: validatedData.price,
       stock: validatedData.stock,
@@ -132,7 +132,7 @@ export const updateProduct = async (req: Request, res: Response) => {
     const product = await productsRepo.updateProduct(id, {
       ...(validatedData.name !== undefined ? { name: validatedData.name } : {}),
       ...(validatedData.description !== undefined
-        ? { description: normalizeOptionalString(validatedData.description && htmlToText(validatedData.description)) }
+        ? { description: normalizeOptionalString(validatedData.description && sanitizeDescription(validatedData.description)) }
         : {}),
       ...(validatedData.specs !== undefined
         ? { specs: normalizeOptionalString(validatedData.specs) }
