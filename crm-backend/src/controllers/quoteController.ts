@@ -3,7 +3,7 @@ import PDFDocument from 'pdfkit';
 import { z } from 'zod';
 import { products } from '../db/schema';
 import { db } from '../lib/db';
-import { inArray, sql } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { quotes, notifications } from '../db/schema';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { getEffectiveUnitPrice, getPricingContextForUser } from '../lib/pricing';
@@ -391,6 +391,42 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
 
   doc.end();
 }
+
+// Offerte uit het CRM opnieuw als pdf downloaden (op basis van de opgeslagen gegevens)
+export const downloadQuotePdf = async (req: AuthRequest, res: Response) => {
+  try {
+    const [quote] = await db.select().from(quotes).where(eq(quotes.id, String(req.params.id))).limit(1);
+    if (!quote) return res.status(404).json({ error: 'Offerte niet gevonden' });
+
+    let items: { name: string; qty: number; unit?: string; unitPrice?: number; vatRate?: number; total?: number }[] = [];
+    try { items = JSON.parse(quote.items || '[]'); } catch { /* lege offerte */ }
+    const lines = items.map(i => {
+      const qty = Number(i.qty) || 1;
+      const unitPrice = Number(i.unitPrice) || 0;
+      return { name: i.name, qty, unit: typeof i.unit === 'string' ? i.unit : 'Stuk', unitPrice, vatRate: Number(i.vatRate) || 21, total: Number(i.total) || qty * unitPrice };
+    });
+
+    const created = quote.createdAt ? new Date(quote.createdAt) : new Date();
+    const design = await getQuoteDesign();
+    await generateQuotePdf(res, design, {
+      refNr: quote.quoteNumber || quote.id.slice(0, 8).toUpperCase(),
+      date: created.toLocaleDateString('nl-NL'),
+      validUntil: new Date(created.getTime() + 30 * 86400000).toLocaleDateString('nl-NL'),
+      customer: {
+        name: quote.company || quote.name,
+        attention: quote.company ? quote.name : undefined,
+        address: quote.address || undefined,
+        postcode: quote.postcode || undefined,
+        city: quote.city || undefined,
+        email: quote.email || undefined,
+      },
+      lines,
+    });
+  } catch (error) {
+    console.error('Download quote pdf error:', error);
+    if (!res.headersSent) res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 export const createQuotePdf = async (req: AuthRequest, res: Response) => {
   try {
