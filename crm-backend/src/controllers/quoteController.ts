@@ -49,6 +49,10 @@ export const DEFAULT_DESIGN = {
     phone: '085-0021 606',
     email: 'info@alra-led.nl',
     website: 'www.alra-led.com',
+    kvk: '',
+    vatNumber: '',
+    bank: '',
+    bic: '',
     logo: 'https://alra-led.com/wp-content/uploads/2024/06/Alra-led-logo-diap.png',
   },
   texts: {
@@ -66,6 +70,9 @@ export const DEFAULT_DESIGN = {
     validUntil: '30 dagen',
     signatureLine: 'Handtekening voor akkoord',
     footerDisclaimer: '',
+    footerCompanyLabel: 'Ondernemingsgegevens',
+    footerContactLabel: 'Contact informatie',
+    footerPaymentLabel: 'Betalingsgegevens',
   },
   notes: '',
 };
@@ -101,7 +108,14 @@ export const saveDesign = async (req: AuthRequest, res: Response) => {
 
 export const previewDesign = async (req: AuthRequest, res: Response) => {
   try {
-    const design = { ...DEFAULT_DESIGN, ...req.body };
+    const body = req.body || {};
+    const design = {
+      ...DEFAULT_DESIGN,
+      ...body,
+      colors: { ...DEFAULT_DESIGN.colors, ...body.colors },
+      company: { ...DEFAULT_DESIGN.company, ...body.company },
+      texts: { ...DEFAULT_DESIGN.texts, ...body.texts },
+    };
     await generateQuotePdf(res, design, {
       refNr: '0000',
       date: new Date().toLocaleDateString('nl-NL'),
@@ -329,7 +343,7 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   // Col 1: Ondernemingsgegevens
   let fy = footerY + 14;
   doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blue);
-  doc.text('Ondernemingsgegevens', mx, fy, { width: footColW });
+  doc.text(t.footerCompanyLabel, mx, fy, { width: footColW });
   fy += 16;
   doc.fontSize(9).font('Helvetica-Bold').fillColor(c.ink);
   doc.text(company.name, mx, fy, { width: footColW });
@@ -338,12 +352,16 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   doc.text(company.address, mx, fy, { width: footColW });
   fy += 12;
   doc.text(company.postcode, mx, fy, { width: footColW });
+  if (company.kvk) {
+    fy += 12;
+    doc.text(`KvK: ${company.kvk}`, mx, fy, { width: footColW });
+  }
 
   // Col 2: Contact informatie
   fy = footerY + 14;
   const col2X = mx + footColW + 20;
   doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blue);
-  doc.text('Contact informatie', col2X, fy, { width: footColW });
+  doc.text(t.footerContactLabel, col2X, fy, { width: footColW });
   fy += 16;
   doc.fontSize(8).font('Helvetica').fillColor(c.muted);
   doc.text(`Telefoon: ${company.phone}`, col2X, fy, { width: footColW });
@@ -352,18 +370,24 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   fy += 12;
   doc.text(company.website, col2X, fy, { width: footColW });
 
-  // Col 3: Betalingsgegevens
-  fy = footerY + 14;
-  const col3X = mx + (footColW + 20) * 2;
-  doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blue);
-  doc.text('Betalingsgegevens', col3X, fy, { width: footColW });
-  fy += 16;
-  doc.fontSize(8).font('Helvetica').fillColor(c.muted);
-  doc.text('Bank: NL00 BANK 0000 0000 00', col3X, fy, { width: footColW });
-  fy += 12;
-  doc.text('BIC: BANKNL2A', col3X, fy, { width: footColW });
-  fy += 12;
-  doc.text('BTW: NL000000000B01', col3X, fy, { width: footColW });
+  // Col 3: Betalingsgegevens (aanpasbaar via admin; leeg = regel/blok verborgen)
+  const paymentLines = [
+    company.bank ? `Bank: ${company.bank}` : '',
+    company.bic ? `BIC: ${company.bic}` : '',
+    company.vatNumber ? `BTW: ${company.vatNumber}` : '',
+  ].filter(Boolean);
+  if (paymentLines.length > 0) {
+    fy = footerY + 14;
+    const col3X = mx + (footColW + 20) * 2;
+    doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blue);
+    doc.text(t.footerPaymentLabel, col3X, fy, { width: footColW });
+    fy += 16;
+    doc.fontSize(8).font('Helvetica').fillColor(c.muted);
+    for (const line of paymentLines) {
+      doc.text(line, col3X, fy, { width: footColW });
+      fy += 12;
+    }
+  }
 
   doc.end();
 }

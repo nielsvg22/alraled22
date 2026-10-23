@@ -27,6 +27,10 @@ const COMPANY_FIELDS = [
   { key: 'phone', label: 'Telefoon' },
   { key: 'email', label: 'E-mail' },
   { key: 'website', label: 'Website' },
+  { key: 'kvk', label: 'KvK-nummer' },
+  { key: 'bank', label: 'Bankrekening (IBAN)' },
+  { key: 'bic', label: 'BIC' },
+  { key: 'vatNumber', label: 'BTW-nummer' },
 ];
 
 const TEXT_FIELDS = [
@@ -43,6 +47,9 @@ const TEXT_FIELDS = [
   { key: 'notesLabel', label: 'Opmerkingen label' },
   { key: 'validUntil', label: 'Geldigheid' },
   { key: 'footerDisclaimer', label: 'Footer disclaimer' },
+  { key: 'footerCompanyLabel', label: 'Footer: kop ondernemingsgegevens' },
+  { key: 'footerContactLabel', label: 'Footer: kop contact' },
+  { key: 'footerPaymentLabel', label: 'Footer: kop betalingsgegevens' },
 ];
 
 export default function QuoteDesign() {
