@@ -8,6 +8,7 @@ const HTML_ENTITIES: Record<string, string> = {
 export function htmlToText(html: string): string {
   return html
     .replace(/<\s*(script|style)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+    .replace(/<\s*(b|strong)\b[^>]*>([\s\S]*?)<\s*\/\s*\1\s*>/gi, '**$2**')
     .replace(/<\s*br\s*\/?>/gi, '\n')
     .replace(/<\s*li[^>]*>/gi, '\n• ')
     .replace(/<\s*\/\s*(p|div|h[1-6]|li|ul|ol|tr|table)\s*>/gi, '\n')
