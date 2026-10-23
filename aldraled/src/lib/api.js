@@ -34,6 +34,7 @@ export const htmlToText = (html) => {
   if (!html) return '';
   return String(html)
     .replace(/<\s*(script|style)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+    .replace(/<\s*(b|strong)\b[^>]*>([\s\S]*?)<\s*\/\s*\1\s*>/gi, '**$2**')
     .replace(/<\s*br\s*\/?>/gi, '\n')
     .replace(/<\s*li[^>]*>/gi, '\n• ')
     .replace(/<\s*\/\s*(p|div|h[1-6]|li|ul|ol|tr|table)\s*>/gi, '\n')
@@ -47,6 +48,9 @@ export const htmlToText = (html) => {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 };
+
+// Zonder **dikgedrukt**-markeringen: voor kaarten, vergelijking en zoekmachine-data.
+export const plainText = (html) => htmlToText(html).replace(/\*\*(.+?)\*\*/g, '$1');
 
 // Stale-while-revalidate cache: laatst bekende API-data staat direct klaar, zodat
 // o.a. banner-URL's bij een herhaald bezoek meteen renderen en laden.

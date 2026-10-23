@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
-import { getMediaUrl, API_URL, htmlToText } from '../lib/api';
+import { getMediaUrl, API_URL, htmlToText, plainText } from '../lib/api';
+import FormattedText from '../components/FormattedText';
 import analytics from '../lib/analytics';
 import { getProductImages, getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
@@ -117,7 +118,7 @@ const ProductDetail = () => {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    description: htmlToText(product.description),
+    description: plainText(product.description),
     image: getMediaUrl(images[0] || product.imageUrl) || '',
     brand: {
       '@type': 'Brand',
@@ -362,9 +363,9 @@ const ProductDetail = () => {
                       <div className="text-[15px] text-gray-500 leading-[1.75] space-y-4">
                         {htmlToText(product.description).split('\n').filter(Boolean).map((p, i) => {
                           if (p.startsWith('#')) {
-                            return <h4 key={i} className="text-base font-bold text-secondary mt-6 mb-2">{p.replace(/^#+\s*/, '')}</h4>;
+                            return <h4 key={i} className="text-base font-bold text-secondary mt-6 mb-2"><FormattedText text={p.replace(/^#+\s*/, '')} /></h4>;
                           }
-                          return <p key={i}>{p}</p>;
+                          return <p key={i}><FormattedText text={p} /></p>;
                         })}
                       </div>
                     ) : (
