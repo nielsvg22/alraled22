@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api, { getMediaUrl } from '../lib/api';
 import ImageUploader from '../components/ImageUploader';
+import { errorText } from '../lib/errorText';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -1051,6 +1052,7 @@ const DEFAULT_HOME_LAYOUT = [
 export default function Pages() {
   const [tab, setTab]       = useState('home');
   const [lang, setLang]     = useState('nl');
+  const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved]   = useState(false);
   const [loading, setLoading] = useState(false);
@@ -1167,24 +1169,26 @@ export default function Pages() {
 
   const save = async (key, value) => {
     setSaving(true);
+    setSaveError('');
     try {
       await api.put(`/content/${key}`, value, { params: { lang } });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-    } catch {}
+    } catch (e) { setSaveError(`Opslaan mislukt: ${errorText(e, 'onbekende fout')}. Je wijzigingen zijn niet opgeslagen; log opnieuw in en probeer het nog eens.`); }
     finally { setSaving(false); }
   };
 
   const saveHomeAll = async () => {
     if (Object.keys(blockErrors).length > 0) return;
     setHomeAllSaving(true);
+    setSaveError('');
     try {
       await api.put('/content/home', home, { params: { lang } });
       await api.put('/content/page_blocks_home', pageBlocks, { params: { lang } });
       await api.put('/content/layout_home_sections', homeSectionOrder, { params: { lang } });
       setHomeAllSaved(true);
       setTimeout(() => setHomeAllSaved(false), 2500);
-    } catch {}
+    } catch (e) { setSaveError(`Opslaan mislukt: ${errorText(e, 'onbekende fout')}. Je wijzigingen zijn niet opgeslagen; log opnieuw in en probeer het nog eens.`); }
     finally { setHomeAllSaving(false); }
   };
 
@@ -1231,11 +1235,12 @@ export default function Pages() {
           : null;
     if (!pageKey) return;
     setBlocksSaving(true);
+    setSaveError('');
     try {
       await api.put(`/content/${pageKey}`, pageBlocks, { params: { lang } });
       setBlocksSaved(true);
       setTimeout(() => setBlocksSaved(false), 2500);
-    } catch {}
+    } catch (e) { setSaveError(`Opslaan mislukt: ${errorText(e, 'onbekende fout')}. Je wijzigingen zijn niet opgeslagen; log opnieuw in en probeer het nog eens.`); }
     finally { setBlocksSaving(false); }
   };
 
@@ -1375,7 +1380,7 @@ export default function Pages() {
   const saveHomeLayout = async (order) => {
     try {
       await api.put('/content/layout_home_sections', order, { params: { lang } });
-    } catch {}
+    } catch (e) { setSaveError(`Opslaan van de volgorde mislukt: ${errorText(e, 'onbekende fout')}.`); }
   };
 
   // shortcuts
@@ -1423,6 +1428,13 @@ export default function Pages() {
           </select>
         </div>
       </div>
+
+      {saveError && (
+        <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-semibold flex items-start justify-between gap-3">
+          <span>{saveError}</span>
+          <button type="button" onClick={() => setSaveError('')} className="text-red-400 hover:text-red-600 shrink-0"><X size={16} /></button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 p-1 rounded-2xl" style={{ background: '#f1f5f9' }}>
