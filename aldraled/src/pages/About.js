@@ -46,6 +46,16 @@ const ApproachSteps = [
   { num: '04', title: 'Tevredenheid', text: 'Uw mening en tevredenheid zijn gedurende het hele proces van belang: van het eerste contact tot het afgeleverde product.' },
 ];
 
+const DEFAULT_TEXT = {
+  introHeading: 'Alleen de allerbeste\nkwaliteitsproducten',
+  introText1: 'Wij werken uitsluitend met de beste kwaliteitsproducten en geven daar ook garantie op. Alle producten van ALRA zijn voorzien van de vereiste keurmerken. Wij zijn gespecialiseerd in LED bedrijfswagenverlichting, LED bouwlichtslangen en LED hefbrugverlichting.',
+  introText2: 'De producten van ALRA zijn online verkrijgbaar in onze webshop of via een van de aangesloten (bouw)groothandels en automotive partners. Onze engineers denken mee over ontwerp, techniek, duurzaamheid en werkzaamheid.',
+  stepsTitle: 'De ontwikkeling van ALRA LED Solutions',
+  quoteText: 'Goede verlichting merk je pas echt wanneer je zonder nadenken door kunt werken.',
+  ctaHeading: 'De juiste verlichting\nvoor jouw toepassing?',
+  ctaText: 'Vertel ons waar je verlichting voor nodig hebt. We denken graag mee over de beste oplossing.',
+};
+
 const AboutStats = [
   { value: '12,5', label: 'Jaar ervaring', sub: 'Gestart in 2014' },
   { value: '225+', label: 'Aangesloten groothandels', sub: 'Technische groothandels en partners' },
@@ -126,10 +136,22 @@ const About = () => {
   const pickProduct = (frag) => products.find(p => String(p.category || '').toLowerCase().includes(frag) && firstProductImage(p));
   const filmImg = firstProductImage(pickProduct('bedrijfswagen')) || IMG.van;
 
+  // Alle afbeeldingen en teksten komen uit het CRM (Pagina's > Over Ons); zonder invoer geldt de standaard
   const heroImg = getMediaUrl(data.image) || IMG.office;
-  const introImg = heroImg;
-  const quoteBg = filmImg;
-  const ctaImg = firstProductImage(pickProduct('bedrijfswagen')) || IMG.van;
+  const introImg = getMediaUrl(data.introImage) || heroImg;
+  const quoteBg = getMediaUrl(data.quoteImage) || filmImg;
+  const ctaImg = getMediaUrl(data.ctaImage) || firstProductImage(pickProduct('bedrijfswagen')) || IMG.van;
+
+  const listOr = (value, fallback) => (Array.isArray(value) && value.length > 0 && value.every(v => v && typeof v === 'object') ? value : fallback);
+  const introHeading = data.introHeading || DEFAULT_TEXT.introHeading;
+  const introText1 = data.introText1 || DEFAULT_TEXT.introText1;
+  const introText2 = data.introText2 || DEFAULT_TEXT.introText2;
+  const facts = listOr(data.facts, AboutStats);
+  const stepsTitle = data.stepsTitle || DEFAULT_TEXT.stepsTitle;
+  const steps = listOr(data.steps, ApproachSteps);
+  const quoteText = data.quoteText || DEFAULT_TEXT.quoteText;
+  const ctaHeading = data.ctaHeading || DEFAULT_TEXT.ctaHeading;
+  const ctaText = data.ctaText || DEFAULT_TEXT.ctaText;
 
   const heroIntro = String(data.description || '').toLowerCase().includes(String(data.title || '').slice(0, 30).toLowerCase())
     ? 'Bij ALRA LED Solutions geloven we in verlichting die verder gaat. Voor professionals die elke dag het verschil maken.'
@@ -204,24 +226,16 @@ const About = () => {
 
           <div className="space-y-6">
             <Eyebrow>Wie wij zijn</Eyebrow>
-            <h2 className="mt-4 text-[clamp(1.9rem,3.4vw,2.9rem)] font-extrabold leading-[1.06] tracking-tight text-secondary">
-              Alleen de allerbeste<br />kwaliteitsproducten
+            <h2 className="mt-4 text-[clamp(1.9rem,3.4vw,2.9rem)] font-extrabold leading-[1.06] tracking-tight text-secondary whitespace-pre-line">
+              {introHeading}
             </h2>
             <div className="space-y-4 text-[15px] leading-relaxed text-slate-500">
-              <p>
-                Wij werken uitsluitend met de beste kwaliteitsproducten en geven daar ook garantie op.
-                Alle producten van ALRA zijn voorzien van de vereiste keurmerken. Wij zijn gespecialiseerd
-                in LED bedrijfswagenverlichting, LED bouwlichtslangen en LED hefbrugverlichting.
-              </p>
-              <p>
-                De producten van ALRA zijn online verkrijgbaar in onze webshop of via een van de aangesloten
-                (bouw)groothandels en automotive partners. Onze engineers denken mee over ontwerp, techniek,
-                duurzaamheid en werkzaamheid.
-              </p>
+              <p>{introText1}</p>
+              <p>{introText2}</p>
             </div>
             <div className="grid grid-cols-2 gap-4 pt-2">
-              {AboutStats.map(st => (
-                <div key={st.label} className="rounded-2xl border border-[#E4EAF1] bg-[#F5F8FC] p-5">
+              {facts.map((st, i) => (
+                <div key={`${st.label}-${i}`} className="rounded-2xl border border-[#E4EAF1] bg-[#F5F8FC] p-5">
                   <p className="text-3xl font-black text-primary leading-none">{st.value}</p>
                   <p className="text-[13px] font-bold text-secondary mt-2 leading-tight">{st.label}</p>
                   <p className="text-[11px] text-slate-400 mt-0.5">{st.sub}</p>
@@ -237,16 +251,16 @@ const About = () => {
         <div className="max-w-[1240px] mx-auto">
           <div className="text-center max-w-2xl mx-auto">
             <div className="inline-flex items-center justify-center"><Eyebrow>Zo werken wij</Eyebrow></div>
-            <SectionTitle>De ontwikkeling van ALRA LED Solutions</SectionTitle>
+            <SectionTitle>{stepsTitle}</SectionTitle>
           </div>
 
           <div className="relative mt-16">
             <div className="hidden lg:block absolute top-[26px] left-[12%] right-[12%] h-px bg-[#E4EAF1]" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-              {ApproachSteps.map(s => (
-                <div key={s.num} className="relative text-center lg:px-2">
+              {steps.map((s, i) => (
+                <div key={`${s.title}-${i}`} className="relative text-center lg:px-2">
                   <span className="relative z-10 inline-flex items-center justify-center w-[52px] h-[52px] rounded-2xl text-white font-extrabold text-base" style={{ background: B, boxShadow: '0 10px 24px rgba(11,103,216,0.35)' }}>
-                    {s.num}
+                    {String(i + 1).padStart(2, '0')}
                   </span>
                   <h3 className="text-lg font-extrabold text-secondary mt-5 leading-snug">{s.title}</h3>
                   <p className="text-sm text-slate-500 leading-relaxed mt-2 max-w-xs mx-auto">{s.text}</p>
@@ -266,7 +280,7 @@ const About = () => {
             <IconQuote className="w-6 h-6" />
           </span>
           <blockquote className="text-[clamp(1.5rem,3vw,2.4rem)] font-extrabold leading-[1.15] text-white tracking-tight">
-            “Goede verlichting merk je pas echt wanneer je zonder nadenken door kunt werken.”
+            “{quoteText}”
           </blockquote>
         </div>
       </section>
@@ -276,11 +290,11 @@ const About = () => {
         <div className="max-w-[1240px] mx-auto">
           <div className="rounded-[18px] overflow-hidden border border-[#E4EAF1] bg-[#F5F8FC] grid grid-cols-1 lg:grid-cols-[1fr_auto]">
             <div className="px-8 md:px-12 py-10 md:py-12">
-              <h2 className="text-[clamp(1.7rem,3vw,2.5rem)] font-extrabold leading-[1.06] tracking-tight text-secondary">
-                De juiste verlichting<br />voor jouw toepassing?
+              <h2 className="text-[clamp(1.7rem,3vw,2.5rem)] font-extrabold leading-[1.06] tracking-tight text-secondary whitespace-pre-line">
+                {ctaHeading}
               </h2>
               <p className="text-slate-500 text-[15px] leading-relaxed mt-3 max-w-lg">
-                Vertel ons waar je verlichting voor nodig hebt. We denken graag mee over de beste oplossing.
+                {ctaText}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 mt-7">
                 <Link to={ROUTES.shop} className="inline-flex items-center justify-center gap-2 bg-[#0B67D8] text-white font-bold text-sm px-7 py-3.5 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-[#0B67D8]/25">

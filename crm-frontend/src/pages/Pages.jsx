@@ -7,7 +7,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   Upload, X, Plus, Trash2, Save, Copy, ChevronDown,
   Home, Info, Phone, Settings, Image, CheckCircle,
-  GripVertical, LayoutGrid, ShoppingBag,
+  GripVertical, LayoutGrid, ShoppingBag, Truck,
 } from 'lucide-react';
 
 // ── Primitives ───────────────────────────────────────────────────
@@ -1012,8 +1012,25 @@ const TABS = [
   { id: 'about',   label: 'Over Ons',          icon: Info     },
   { id: 'contact', label: 'Contact',           icon: Phone    },
   { id: 'general', label: 'Instellingen',      icon: Settings },
+  { id: 'groothandels', label: 'Groothandels',  icon: Truck    },
   { id: 'logos',   label: "Partner Logo's",    icon: Image    },
 ];
+
+// Standaardwaarden van de Groothandels-pagina (zelfde als op de website, zodat ze hier direct bewerkbaar zijn)
+const GROOTHANDELS_DEFAULTS = {
+  heroEyebrow: 'Voor Groothandels',
+  heroTitle: 'Partners in\nprofessionele verlichting',
+  heroText: 'ALRA LED levert gecertificeerde LED-verlichting aan groothandels en distributeurs in Nederland en België. Scherpe condities, directe leverbaarheid uit eigen voorraad en persoonlijk advies.',
+  partnersEyebrow: 'Onze Groothandelspartners',
+  partnersTitle: 'Landelijke dekking via sterke partners',
+  partnersText: 'Onze producten zijn verkrijgbaar via een geselecteerd netwerk van professionele groothandels. Elke partner heeft een eigen specialisatie en regio waar ze marktleider zijn.',
+  partners: [
+    { id: 'mastermate', name: 'Mastermate', description: 'Nederlands groothandelsnetwerk voor elektrotechnische materialen, verlichting en installatietechniek. Ruim 48 vestigingen landelijk.', website: 'https://www.mastermate.nl', logo: '/uploads/mastermate-logo.png' },
+    { id: 'aic-visser', name: 'AIC Visser', description: 'Specialist in verlichting, elektromateriaal en installatietechniek. Drie vestigingen in Harderwijk, Assen en Veghel.', website: 'https://www.aic.nl', logo: '/uploads/aic-visser-logo.png' },
+    { id: 'reco', name: 'RECO Bouwplaatsbeveiliging', description: 'Expert in bouwplaatsbeveiliging en perimeterbeveiliging. Drie vestigingen: Koudekerk aan den Rijn, Diemen en Andelst.', website: 'https://reco.eu', logo: '/uploads/reco-logo-official.svg' },
+    { id: 'hoegen', name: 'Hoegen Elektro & Diesel Parts', description: 'Leverancier van elektrotechnische onderdelen en diesel componenten. Vestiging in Apeldoorn.', website: 'https://hoegenelektro.nl', logo: '/uploads/hoegen-logo-official.svg' },
+  ],
+};
 
 const DEFAULT_HOME_LAYOUT = [
   'hero',
@@ -1121,6 +1138,7 @@ export default function Pages() {
     logoUrl: '',
     webkeurmerkId: '',
   });
+  const [groothandels, setGroothandels] = useState(GROOTHANDELS_DEFAULTS);
   const [logos, setLogos]     = useState([]);
   const [logoUploading, setLogoUploading] = useState(false);
   const [shop, setShop]       = useState(SHOP_DEFAULTS);
@@ -1139,6 +1157,7 @@ export default function Pages() {
       if (key === 'about')   setAbout(res.data);
       if (key === 'contact') setContact(res.data);
       if (key === 'general') setGeneral(res.data);
+      if (key === 'groothandels') setGroothandels({ ...GROOTHANDELS_DEFAULTS, ...res.data });
       if (key === 'logos')   setLogos(Array.isArray(res.data) ? res.data : []);
     } catch {}
     finally { setLoading(false); }
@@ -1918,70 +1937,76 @@ export default function Pages() {
               </Field>
             </Section>
 
-            <Section title={`Statistieken (${(about.stats||[]).length})`} defaultOpen={false}>
-              <div className="space-y-2">
-                {(about.stats||[]).map((s, i) => (
-                  <ItemCard key={i} number={i}
-                    onDuplicate={() => { const a=about.stats||[]; setAbout({ ...about, stats:[...a.slice(0,i+1),{...a[i]},...a.slice(i+1)] }); }}
-                    onDelete={() => setAbout({ ...about, stats:(about.stats||[]).filter((_,j)=>j!==i) })}>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="Label">
-                        <input className={`${iCls} ${iBdr}`} placeholder="bv. Opgericht" value={s.label||''} onChange={e => { const a=[...(about.stats||[])]; a[i]={...a[i],label:e.target.value}; setAbout({...about,stats:a}); }} />
-                      </Field>
-                      <Field label="Waarde">
-                        <input className={`${iCls} ${iBdr}`} placeholder="bv. 2014" value={s.value||''} onChange={e => { const a=[...(about.stats||[])]; a[i]={...a[i],value:e.target.value}; setAbout({...about,stats:a}); }} />
-                      </Field>
-                    </div>
-                  </ItemCard>
-                ))}
-                <AddButton onClick={() => setAbout({ ...about, stats:[...(about.stats||[]),{label:'',value:''}] })} label="Statistiek toevoegen" />
-              </div>
+            <Section title="Wie wij zijn (tekst, foto en cijfers)" icon={Info}>
+              <Field label="Kop" hint="Een nieuwe regel in het veld wordt ook op de pagina een nieuwe regel.">
+                <textarea className={`${taCls} ${iBdr}`} rows={2} value={about.introHeading||''} placeholder={'Alleen de allerbeste\nkwaliteitsproducten'} onChange={e => setAbout({ ...about, introHeading:e.target.value })} />
+              </Field>
+              <Field label="Tekst, alinea 1">
+                <textarea className={`${taCls} ${iBdr}`} rows={4} value={about.introText1||''} onChange={e => setAbout({ ...about, introText1:e.target.value })} />
+              </Field>
+              <Field label="Tekst, alinea 2">
+                <textarea className={`${taCls} ${iBdr}`} rows={4} value={about.introText2||''} onChange={e => setAbout({ ...about, introText2:e.target.value })} />
+              </Field>
+              <Field label="Foto" hint="Leeg = zelfde foto als bovenaan de pagina.">
+                <ImageField value={about.introImage||''} onChange={v => setAbout({ ...about, introImage:v })} height={28} />
+              </Field>
+              <Field label="Cijfers" hint="Bijvoorbeeld 12,5 / Jaar ervaring / Gestart in 2014. Leeg laten = standaardcijfers.">
+                <div className="space-y-2">
+                  {(about.facts||[]).map((f, i) => (
+                    <ItemCard key={i} number={i}
+                      onDuplicate={() => { const a=about.facts||[]; setAbout({ ...about, facts:[...a.slice(0,i+1),{...a[i]},...a.slice(i+1)] }); }}
+                      onDelete={() => setAbout({ ...about, facts:(about.facts||[]).filter((_,j)=>j!==i) })}>
+                      <div className="grid grid-cols-3 gap-3">
+                        <input className={`${iCls} ${iBdr}`} placeholder="Getal (12,5)" value={f.value||''} onChange={e => { const a=[...(about.facts||[])]; a[i]={...a[i],value:e.target.value}; setAbout({ ...about, facts:a }); }} />
+                        <input className={`${iCls} ${iBdr}`} placeholder="Titel (Jaar ervaring)" value={f.label||''} onChange={e => { const a=[...(about.facts||[])]; a[i]={...a[i],label:e.target.value}; setAbout({ ...about, facts:a }); }} />
+                        <input className={`${iCls} ${iBdr}`} placeholder="Ondertitel (Gestart in 2014)" value={f.sub||''} onChange={e => { const a=[...(about.facts||[])]; a[i]={...a[i],sub:e.target.value}; setAbout({ ...about, facts:a }); }} />
+                      </div>
+                    </ItemCard>
+                  ))}
+                  <AddButton onClick={() => setAbout({ ...about, facts:[...(about.facts||[]),{value:'',label:'',sub:''}] })} label="Cijfer toevoegen" />
+                </div>
+              </Field>
             </Section>
 
-            <Section title={`Kernwaarden (${(about.values||[]).length})`} defaultOpen={false}>
-              <div className="space-y-2">
-                {(about.values||[]).map((v, i) => (
-                  <ItemCard key={i} number={i}
-                    onDuplicate={() => { const a=about.values||[]; setAbout({ ...about, values:[...a.slice(0,i+1),{...a[i]},...a.slice(i+1)] }); }}
-                    onDelete={() => setAbout({ ...about, values:(about.values||[]).filter((_,j)=>j!==i) })}>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="Icoon (emoji)">
-                        <input className={`${iCls} ${iBdr}`} placeholder="bv. ⚡" value={v.icon||''} onChange={e => { const a=[...(about.values||[])]; a[i]={...a[i],icon:e.target.value}; setAbout({...about,values:a}); }} />
-                      </Field>
-                      <Field label="Titel">
-                        <input className={`${iCls} ${iBdr}`} value={v.title||''} onChange={e => { const a=[...(about.values||[])]; a[i]={...a[i],title:e.target.value}; setAbout({...about,values:a}); }} />
-                      </Field>
-                    </div>
-                    <Field label="Tekst">
-                      <textarea className={`${taCls} ${iBdr}`} rows={3} value={v.text||''} onChange={e => { const a=[...(about.values||[])]; a[i]={...a[i],text:e.target.value}; setAbout({...about,values:a}); }} />
-                    </Field>
-                  </ItemCard>
-                ))}
-                <AddButton onClick={() => setAbout({ ...about, values:[...(about.values||[]),{icon:'',title:'',text:''}] })} label="Waarde toevoegen" />
-              </div>
-            </Section>
-
-            <Section title="Tijdlijn" defaultOpen={false}>
-              <Field label="Titel">
-                <input className={`${iCls} ${iBdr}`} value={about.timelineTitle||''} onChange={e => setAbout({ ...about, timelineTitle:e.target.value })} />
+            <Section title="Stappen (Zo werken wij)" defaultOpen={false}>
+              <Field label="Titel van het blok">
+                <input className={`${iCls} ${iBdr}`} value={about.stepsTitle||''} placeholder="De ontwikkeling van ALRA LED Solutions" onChange={e => setAbout({ ...about, stepsTitle:e.target.value })} />
               </Field>
               <div className="space-y-2">
-                {(about.timeline||[]).map((t, i) => (
+                {(about.steps||[]).map((st, i) => (
                   <ItemCard key={i} number={i}
-                    onDuplicate={() => { const a=about.timeline||[]; setAbout({ ...about, timeline:[...a.slice(0,i+1),{...a[i]},...a.slice(i+1)] }); }}
-                    onDelete={() => setAbout({ ...about, timeline:(about.timeline||[]).filter((_,j)=>j!==i) })}>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="Jaar">
-                        <input className={`${iCls} ${iBdr}`} placeholder="bv. 2014" value={t.year||''} onChange={e => { const a=[...(about.timeline||[])]; a[i]={...a[i],year:e.target.value}; setAbout({...about,timeline:a}); }} />
-                      </Field>
-                      <Field label="Label">
-                        <input className={`${iCls} ${iBdr}`} value={t.label||''} onChange={e => { const a=[...(about.timeline||[])]; a[i]={...a[i],label:e.target.value}; setAbout({...about,timeline:a}); }} />
-                      </Field>
+                    onDuplicate={() => { const a=about.steps||[]; setAbout({ ...about, steps:[...a.slice(0,i+1),{...a[i]},...a.slice(i+1)] }); }}
+                    onDelete={() => setAbout({ ...about, steps:(about.steps||[]).filter((_,j)=>j!==i) })}>
+                    <div className="space-y-2">
+                      <input className={`${iCls} ${iBdr}`} placeholder="Stap (Idee, Ontwerp, …)" value={st.title||''} onChange={e => { const a=[...(about.steps||[])]; a[i]={...a[i],title:e.target.value}; setAbout({ ...about, steps:a }); }} />
+                      <textarea className={`${taCls} ${iBdr}`} rows={3} placeholder="Uitleg" value={st.text||''} onChange={e => { const a=[...(about.steps||[])]; a[i]={...a[i],text:e.target.value}; setAbout({ ...about, steps:a }); }} />
                     </div>
                   </ItemCard>
                 ))}
-                <AddButton onClick={() => setAbout({ ...about, timeline:[...(about.timeline||[]),{year:'',label:''}] })} label="Tijdlijn item toevoegen" />
+                <AddButton onClick={() => setAbout({ ...about, steps:[...(about.steps||[]),{title:'',text:''}] })} label="Stap toevoegen" />
+                <p className="text-xs text-gray-400">Zonder stappen toont de pagina de standaardstappen (Idee, Ontwerp, Kwaliteit, Tevredenheid).</p>
               </div>
+            </Section>
+
+            <Section title="Statement (donkere balk)" defaultOpen={false}>
+              <Field label="Tekst">
+                <textarea className={`${taCls} ${iBdr}`} rows={3} value={about.quoteText||''} placeholder="Goede verlichting merk je pas echt wanneer je zonder nadenken door kunt werken." onChange={e => setAbout({ ...about, quoteText:e.target.value })} />
+              </Field>
+              <Field label="Achtergrondfoto" hint="Wordt donker en transparant getoond.">
+                <ImageField value={about.quoteImage||''} onChange={v => setAbout({ ...about, quoteImage:v })} height={28} />
+              </Field>
+            </Section>
+
+            <Section title="Afsluiting (knoppenblok)" defaultOpen={false}>
+              <Field label="Kop">
+                <textarea className={`${taCls} ${iBdr}`} rows={2} value={about.ctaHeading||''} placeholder={'De juiste verlichting\nvoor jouw toepassing?'} onChange={e => setAbout({ ...about, ctaHeading:e.target.value })} />
+              </Field>
+              <Field label="Tekst">
+                <textarea className={`${taCls} ${iBdr}`} rows={3} value={about.ctaText||''} onChange={e => setAbout({ ...about, ctaText:e.target.value })} />
+              </Field>
+              <Field label="Foto">
+                <ImageField value={about.ctaImage||''} onChange={v => setAbout({ ...about, ctaImage:v })} height={28} />
+              </Field>
             </Section>
 
             <Section title={`Pagina opbouw (${pageBlocks.length})`} icon={LayoutGrid} defaultOpen={false}>
@@ -2049,6 +2074,64 @@ export default function Pages() {
             </Section>
 
             <SaveButton onSave={() => save('about', about)} saving={saving} saved={saved} />
+          </>)}
+
+          {/* ══ GROOTHANDELS ══ */}
+          {tab === 'groothandels' && (<>
+            <Section title="Kop van de pagina" icon={Truck}>
+              <Field label="Label boven de titel">
+                <input className={`${iCls} ${iBdr}`} value={groothandels.heroEyebrow||''} onChange={e => setGroothandels({ ...groothandels, heroEyebrow:e.target.value })} />
+              </Field>
+              <Field label="Titel" hint="Een nieuwe regel in het veld wordt ook op de pagina een nieuwe regel.">
+                <textarea className={`${taCls} ${iBdr}`} rows={2} value={groothandels.heroTitle||''} onChange={e => setGroothandels({ ...groothandels, heroTitle:e.target.value })} />
+              </Field>
+              <Field label="Tekst">
+                <textarea className={`${taCls} ${iBdr}`} rows={4} value={groothandels.heroText||''} onChange={e => setGroothandels({ ...groothandels, heroText:e.target.value })} />
+              </Field>
+            </Section>
+
+            <Section title={`Partners (${(groothandels.partners||[]).length})`}>
+              <Field label="Label boven de titel">
+                <input className={`${iCls} ${iBdr}`} value={groothandels.partnersEyebrow||''} onChange={e => setGroothandels({ ...groothandels, partnersEyebrow:e.target.value })} />
+              </Field>
+              <Field label="Titel">
+                <input className={`${iCls} ${iBdr}`} value={groothandels.partnersTitle||''} onChange={e => setGroothandels({ ...groothandels, partnersTitle:e.target.value })} />
+              </Field>
+              <Field label="Tekst">
+                <textarea className={`${taCls} ${iBdr}`} rows={3} value={groothandels.partnersText||''} onChange={e => setGroothandels({ ...groothandels, partnersText:e.target.value })} />
+              </Field>
+              <div className="space-y-2">
+                {(groothandels.partners||[]).map((p, i) => {
+                  const setP = (patch) => { const a=[...(groothandels.partners||[])]; a[i]={...a[i],...patch}; setGroothandels({ ...groothandels, partners:a }); };
+                  return (
+                    <ItemCard key={p.id || i} number={i}
+                      onDuplicate={() => { const a=groothandels.partners||[]; setGroothandels({ ...groothandels, partners:[...a.slice(0,i+1),{...a[i],id:''},...a.slice(i+1)] }); }}
+                      onDelete={() => setGroothandels({ ...groothandels, partners:(groothandels.partners||[]).filter((_,j)=>j!==i) })}>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <Field label="Naam">
+                            <input className={`${iCls} ${iBdr}`} value={p.name||''} onChange={e => setP({ name:e.target.value })} />
+                          </Field>
+                          <Field label="Website">
+                            <input className={`${iCls} ${iBdr}`} placeholder="https://" value={p.website||''} onChange={e => setP({ website:e.target.value })} />
+                          </Field>
+                        </div>
+                        <Field label="Omschrijving">
+                          <textarea className={`${taCls} ${iBdr}`} rows={3} value={p.description||''} onChange={e => setP({ description:e.target.value })} />
+                        </Field>
+                        <Field label="Logo">
+                          <ImageField value={p.logo||''} onChange={v => setP({ logo:v })} height={20} />
+                        </Field>
+                      </div>
+                    </ItemCard>
+                  );
+                })}
+                <AddButton onClick={() => setGroothandels({ ...groothandels, partners:[...(groothandels.partners||[]),{ id:'', name:'', description:'', website:'', logo:'' }] })} label="Partner toevoegen" />
+              </div>
+              <p className="text-xs text-gray-400 mt-3">De vestigingen (verkooppunten) beheer je onder Verkooppunten in het menu.</p>
+            </Section>
+
+            <SaveButton onSave={() => save('groothandels', groothandels)} saving={saving} saved={saved} />
           </>)}
 
           {/* ══ CONTACT ══ */}
