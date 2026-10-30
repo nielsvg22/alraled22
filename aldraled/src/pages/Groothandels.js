@@ -40,10 +40,22 @@ const WHOLESALE_BRANDS = [
   },
 ];
 
+// Teksten, partners en logo's komen uit het CRM (Pagina's > Groothandels); dit zijn de standaardwaarden
+const DEFAULT_PAGE = {
+  heroEyebrow: 'Voor Groothandels',
+  heroTitle: 'Partners in\nprofessionele verlichting',
+  heroText: 'ALRA LED levert gecertificeerde LED-verlichting aan groothandels en distributeurs in Nederland en België. Scherpe condities, directe leverbaarheid uit eigen voorraad en persoonlijk advies.',
+  partnersEyebrow: 'Onze Groothandelspartners',
+  partnersTitle: 'Landelijke dekking via sterke partners',
+  partnersText: 'Onze producten zijn verkrijgbaar via een geselecteerd netwerk van professionele groothandels. Elke partner heeft een eigen specialisatie en regio waar ze marktleider zijn.',
+};
+
 const DEALERS_PREVIEW = 12;
 
 const Groothandels = () => {
   const [products, setProducts] = useState([]);
+  const [page, setPage] = useState(DEFAULT_PAGE);
+  const [cmsPartners, setCmsPartners] = useState(null);
   const [dealerBrand, setDealerBrand] = useState('Alle');
   const [dealerQuery, setDealerQuery] = useState('');
   const [showAllDealers, setShowAllDealers] = useState(false);
@@ -60,15 +72,29 @@ const Groothandels = () => {
   const visibleDealers = showAllDealers || dealerQuery.trim() ? filteredDealers : filteredDealers.slice(0, DEALERS_PREVIEW);
 
   useEffect(() => {
+    axios.get(`${API_URL}/api/content/groothandels`)
+      .then(res => {
+        const d = res.data || {};
+        setPage({ ...DEFAULT_PAGE, ...Object.fromEntries(Object.entries(d).filter(([k, v]) => k in DEFAULT_PAGE && typeof v === 'string' && v.trim())) });
+        if (Array.isArray(d.partners) && d.partners.length > 0) setCmsPartners(d.partners);
+      })
+      .catch(() => {});
     axios.get(`${API_URL}/api/products`)
       .then(res => setProducts(res.data))
       .catch(() => {});
   }, []);
 
+  // Partners uit het CRM; productfilter per merk blijft uit de standaardlijst komen
+  const brands = useMemo(() => (cmsPartners || WHOLESALE_BRANDS).map((b, i) => ({
+    ...b,
+    id: b.id || `partner-${i}`,
+    categoryFilter: b.categoryFilter || (WHOLESALE_BRANDS.find(w => w.id === b.id) || {}).categoryFilter || [],
+  })), [cmsPartners]);
+
   // Find representative product image for each brand
   const brandImages = useMemo(() => {
     const images = {};
-    WHOLESALE_BRANDS.forEach(brand => {
+    brands.forEach(brand => {
       const matchingProducts = products.filter(p => {
         const cat = (p.category || '').toLowerCase();
         return brand.categoryFilter.some(filter => cat.includes(filter));
@@ -78,7 +104,7 @@ const Groothandels = () => {
       images[brand.id] = withImage ? getMediaUrl(withImage.imageUrl) : null;
     });
     return images;
-  }, [products]);
+  }, [products, brands]);
 
   // Filter products that are relevant for wholesalers (professional/bulk)
   const wholesaleProducts = useMemo(() => {
@@ -97,15 +123,13 @@ const Groothandels = () => {
           <div className="max-w-3xl space-y-6">
             <span className="inline-flex items-center gap-2 bg-primary/20 border border-primary/30 text-primary text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest">
               <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-              Voor Groothandels
+              {page.heroEyebrow}
             </span>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">
-              Partners in<br />
-              <span className="text-primary">professionele verlichting</span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight whitespace-pre-line">
+              {page.heroTitle}
             </h1>
             <p className="text-white/70 text-lg max-w-xl leading-relaxed font-light">
-              ALRA LED levert gecertificeerde LED-verlichting aan groothandels en distributeurs in Nederland en België.
-              Scherpe condities, directe leverbaarheid uit eigen voorraad en persoonlijk advies.
+              {page.heroText}
             </p>
             <div className="flex flex-wrap gap-4 pt-4">
               <Link to={ROUTES.contact} className="bg-primary text-white px-8 py-4 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
@@ -123,16 +147,15 @@ const Groothandels = () => {
       <section className="py-16 lg:py-24 px-6 md:px-10 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2">Onze Groothandelspartners</p>
-            <h2 className="text-3xl md:text-4xl font-black text-secondary">Landelijke dekking via sterke partners</h2>
+            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2">{page.partnersEyebrow}</p>
+            <h2 className="text-3xl md:text-4xl font-black text-secondary">{page.partnersTitle}</h2>
             <p className="text-gray-500 text-base mt-4 max-w-2xl mx-auto">
-              Onze producten zijn verkrijgbaar via een geselecteerd netwerk van professionele groothandels.
-              Elke partner heeft een eigen specialisatie en regio waar ze marktleider zijn.
+              {page.partnersText}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {WHOLESALE_BRANDS.map((brand) => {
+            {brands.map((brand) => {
               const brandImage = brandImages[brand.id];
               const logoUrl = brand.logo ? getMediaUrl(brand.logo) : null;
               return (
