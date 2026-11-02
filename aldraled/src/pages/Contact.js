@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { API_URL, getMediaUrl } from '../lib/api';
 import { ROUTES } from '../lib/routes';
 import CustomBlocks from '../components/CustomBlocks';
+import RichText from '../components/RichText';
 
 const B = 'rgb(var(--color-primary))';
 
@@ -195,7 +196,7 @@ const Contact = () => {
           <div className="max-w-xl space-y-6">
             <Eyebrow>{info.eyebrow}</Eyebrow>
             <h1 className="text-[clamp(2.1rem,4.8vw,4.4rem)] font-extrabold leading-[1.04] tracking-tight text-secondary">{info.title}</h1>
-            <p className="text-[17px] leading-relaxed text-slate-500 max-w-lg">{info.description}</p>
+            <RichText value={info.description} className="text-[17px] leading-relaxed text-slate-500 max-w-lg" />
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <a href="#contact-form" className="inline-flex items-center justify-center gap-2 bg-primary text-white font-bold text-sm px-7 py-3.5 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-primary/25">
                 Stuur een bericht <IconArrow className="w-4 h-4" />
@@ -263,7 +264,10 @@ const Contact = () => {
             ) : (
               <form ref={formRef} onSubmit={handleSubmit} noValidate className="bg-[#F5F8FC] border border-[#E4EAF1] rounded-2xl p-8 sm:p-10 space-y-6">
                 {serverError && (
-                  <div role="alert" className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-red-600 text-sm font-medium">{serverError}</div>
+                  <div role="alert" className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-red-600 text-sm font-medium">
+                    {info.errorTitle && <p className="font-black">{info.errorTitle}</p>}
+                    <p>{serverError}</p>
+                  </div>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <InputField id="contact-name" label={info.form?.nameLabel} placeholder={info.form?.namePlaceholder} value={name} onChange={e => setName(e.target.value)} error={fieldErrors.name} required />

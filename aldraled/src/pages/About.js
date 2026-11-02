@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import CustomBlocks from '../components/CustomBlocks';
 import { getMediaUrl } from '../lib/api';
 import { ROUTES } from '../lib/routes';
+import RichText from '../components/RichText';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -47,6 +48,9 @@ const ApproachSteps = [
 ];
 
 const DEFAULT_TEXT = {
+  heroEyebrow: 'Over ons',
+  introEyebrow: 'Wie wij zijn',
+  stepsEyebrow: 'Zo werken wij',
   introHeading: 'Alleen de allerbeste\nkwaliteitsproducten',
   introText1: 'Wij werken uitsluitend met de beste kwaliteitsproducten en geven daar ook garantie op. Alle producten van ALRA zijn voorzien van de vereiste keurmerken. Wij zijn gespecialiseerd in LED bedrijfswagenverlichting, LED bouwlichtslangen en LED hefbrugverlichting.',
   introText2: 'De producten van ALRA zijn online verkrijgbaar in onze webshop of via een van de aangesloten (bouw)groothandels en automotive partners. Onze engineers denken mee over ontwerp, techniek, duurzaamheid en werkzaamheid.',
@@ -169,11 +173,11 @@ const About = () => {
 
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-10 py-16 lg:py-20 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:min-h-[640px] items-center">
           <div className="max-w-xl space-y-6">
-            <Eyebrow>Over Alra</Eyebrow>
+            <Eyebrow>{data.eyebrow || DEFAULT_TEXT.heroEyebrow}</Eyebrow>
             <h1 className="text-[clamp(2.1rem,4.8vw,4.4rem)] font-extrabold leading-[1.04] tracking-tight text-secondary">
               {renderHighlight(data.title)}
             </h1>
-            <p className="text-[17px] leading-relaxed text-slate-500 max-w-lg">{heroIntro}</p>
+            <RichText value={heroIntro} className="text-[17px] leading-relaxed text-slate-500 max-w-lg" />
             <div className="flex flex-col sm:flex-row gap-3 pt-1">
               <Link
                 to={ROUTES.shop}
@@ -225,13 +229,13 @@ const About = () => {
           </div>
 
           <div className="space-y-6">
-            <Eyebrow>Wie wij zijn</Eyebrow>
+            <Eyebrow>{data.introEyebrow || DEFAULT_TEXT.introEyebrow}</Eyebrow>
             <h2 className="mt-4 text-[clamp(1.9rem,3.4vw,2.9rem)] font-extrabold leading-[1.06] tracking-tight text-secondary whitespace-pre-line">
               {introHeading}
             </h2>
             <div className="space-y-4 text-[15px] leading-relaxed text-slate-500">
-              <p>{introText1}</p>
-              <p>{introText2}</p>
+              <RichText value={introText1} />
+              <RichText value={introText2} />
             </div>
             <div className="grid grid-cols-2 gap-4 pt-2">
               {facts.map((st, i) => (
@@ -250,7 +254,7 @@ const About = () => {
       <section className="py-16 lg:py-24 px-5 sm:px-8 lg:px-10 bg-white">
         <div className="max-w-[1240px] mx-auto">
           <div className="text-center max-w-2xl mx-auto">
-            <div className="inline-flex items-center justify-center"><Eyebrow>Zo werken wij</Eyebrow></div>
+            <div className="inline-flex items-center justify-center"><Eyebrow>{data.stepsEyebrow || DEFAULT_TEXT.stepsEyebrow}</Eyebrow></div>
             <SectionTitle>{stepsTitle}</SectionTitle>
           </div>
 
@@ -293,9 +297,7 @@ const About = () => {
               <h2 className="text-[clamp(1.7rem,3vw,2.5rem)] font-extrabold leading-[1.06] tracking-tight text-secondary whitespace-pre-line">
                 {ctaHeading}
               </h2>
-              <p className="text-slate-500 text-[15px] leading-relaxed mt-3 max-w-lg">
-                {ctaText}
-              </p>
+              <RichText value={ctaText} className="text-slate-500 text-[15px] leading-relaxed mt-3 max-w-lg" />
               <div className="flex flex-col sm:flex-row gap-3 mt-7">
                 <Link to={ROUTES.shop} className="inline-flex items-center justify-center gap-2 bg-primary text-white font-bold text-sm px-7 py-3.5 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-primary/25">
                   Bekijk producten <IconArrow className="w-4 h-4" />

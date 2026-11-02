@@ -5,6 +5,7 @@ import { getMediaUrl, API_URL } from '../lib/api';
 import { ROUTES } from '../lib/routes';
 import { buildDealerAddress, mergeDealers, DEFAULT_DEALERS } from '../lib/dealers';
 import CustomBlocks from '../components/CustomBlocks';
+import RichText from '../components/RichText';
 
 const WHOLESALE_BRANDS = [
   {
@@ -137,9 +138,7 @@ const Groothandels = () => {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight whitespace-pre-line">
               {page.heroTitle}
             </h1>
-            <p className="text-white/70 text-lg max-w-xl leading-relaxed font-light">
-              {page.heroText}
-            </p>
+            <RichText value={page.heroText} className="text-white/70 text-lg max-w-xl leading-relaxed font-light" />
             <div className="flex flex-wrap gap-4 pt-4">
               <Link to={ROUTES.contact} className="bg-primary text-white px-8 py-4 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
                 Word partner
@@ -158,9 +157,7 @@ const Groothandels = () => {
           <div className="text-center mb-16">
             <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2">{page.partnersEyebrow}</p>
             <h2 className="text-3xl md:text-4xl font-black text-secondary">{page.partnersTitle}</h2>
-            <p className="text-gray-500 text-base mt-4 max-w-2xl mx-auto">
-              {page.partnersText}
-            </p>
+            <RichText value={page.partnersText} className="text-gray-500 text-base mt-4 max-w-2xl mx-auto" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -186,7 +183,7 @@ const Groothandels = () => {
                   </div>
                   <div className="p-6 space-y-4">
                     <h3 className="text-xl font-black text-secondary group-hover:text-primary transition-colors">{brand.name}</h3>
-                    <p className="text-gray-500 text-sm leading-relaxed">{brand.description}</p>
+                    <RichText value={brand.description} className="text-gray-500 text-sm leading-relaxed" />
                     {brand.website && (
                       <a href={brand.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary text-sm font-bold hover:underline">
                         Website <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
