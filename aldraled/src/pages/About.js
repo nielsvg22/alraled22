@@ -151,6 +151,7 @@ const About = () => {
   const introText1 = data.introText1 || DEFAULT_TEXT.introText1;
   const introText2 = data.introText2 || DEFAULT_TEXT.introText2;
   const facts = listOr(data.facts, AboutStats);
+  const heroUsps = listOr(data.heroUsps, HeroUsps).slice(0, 6);
   const stepsTitle = data.stepsTitle || DEFAULT_TEXT.stepsTitle;
   const steps = listOr(data.steps, ApproachSteps);
   const quoteText = data.quoteText || DEFAULT_TEXT.quoteText;
@@ -193,10 +194,11 @@ const About = () => {
               </Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 pt-4 lg:pt-6">
-              {HeroUsps.map(u => {
-                const Icon = ICONMAP[u.icon];
+              {heroUsps.map((u, idx) => {
+                // Icoon staat vast op volgorde (vrachtwagen, schild, chat); extra kenmerken krijgen het chat-icoon
+                const Icon = ICONMAP[u.icon] || ICONMAP[['truck', 'shield', 'chat'][idx]] || ICONMAP.chat;
                 return (
-                  <div key={u.title} className="flex items-center gap-2.5">
+                  <div key={`${u.title}-${idx}`} className="flex items-center gap-2.5">
                     <span className="w-9 h-9 rounded-lg flex items-center justify-center text-white shrink-0" style={{ background: B }}>
                       <Icon className="w-[18px] h-[18px]" />
                     </span>
