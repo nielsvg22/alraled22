@@ -5,10 +5,9 @@ import { useCart } from '../lib/CartContext';
 import axios from 'axios';
 import { useTranslation, Trans } from 'react-i18next';
 import { getMediaUrl, API_URL } from '../lib/api';
-import { formatPrice } from '../lib/productHelpers';
-import { ROUTES, shopWithCategory, categoryLink, categoryLabel, sortMenuCategories, NAV_LINKS } from '../lib/routes';
-import { getImageSrc } from '../lib/productHelpers';
+import { formatPrice, getImageSrc } from '../lib/productHelpers';
 import RichText from './RichText';
+import { ROUTES, shopWithCategory, categoryLink, categoryLabel, sortMenuCategories, NAV_LINKS } from '../lib/routes';
 
 const DEFAULT_GENERAL = {
   tagline: '',
@@ -130,10 +129,13 @@ const Header = () => {
   const [general, setGeneral] = useState(DEFAULT_GENERAL);
   const [categories, setCategories] = useState([]);
   const [showCategories, setShowCategories] = useState(false);
+  const menuCategories = React.useMemo(() => sortMenuCategories(categories), [categories]);
+  const [showMega, setShowMega] = useState(false);
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [menuProducts, setMenuProducts] = useState([]);
-  const menuCategories = React.useMemo(() => sortMenuCategories(categories), [categories]);
   const closeTimeoutRef = useRef(null);
+  const megaTimeoutRef = useRef(null);
+  const megaRef = useRef(null);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -146,18 +148,42 @@ const Header = () => {
   useEffect(() => {
     setMobileOpen(false);
     setShowCategories(false);
-    setHoveredCategory(null);
     clearTimeout(closeTimeoutRef.current);
+    setShowMega(false);
+    setHoveredCategory(null);
+    clearTimeout(megaTimeoutRef.current);
   }, [location]);
 
-  const openMenu = () => { clearTimeout(closeTimeoutRef.current); setShowCategories(true); };
+  const openMenu = () => { clearTimeout(closeTimeoutRef.current); setShowMega(false); setShowCategories(true); };
   const closeMenuSoon = () => {
     clearTimeout(closeTimeoutRef.current);
-    closeTimeoutRef.current = setTimeout(() => { setShowCategories(false); setHoveredCategory(null); }, 200);
+    closeTimeoutRef.current = setTimeout(() => { setShowCategories(false); }, 200);
   };
-  const closeMenuNow = () => { clearTimeout(closeTimeoutRef.current); setShowCategories(false); setHoveredCategory(null); };
+  const closeMenuNow = () => { clearTimeout(closeTimeoutRef.current); setShowCategories(false); };
 
-  // Escape sluit het menu; producten voor de voorbeeldkaarten worden pas geladen als het menu voor het eerst opent
+  // Webshop-megamenu: categorieën met producten (los van het eenvoudige keuzemenu bij Producten)
+  const openMega = () => { clearTimeout(megaTimeoutRef.current); setShowCategories(false); setShowMega(true); };
+  const closeMegaSoon = () => {
+    clearTimeout(megaTimeoutRef.current);
+    megaTimeoutRef.current = setTimeout(() => { setShowMega(false); setHoveredCategory(null); }, 200);
+  };
+  const closeMegaNow = () => { clearTimeout(megaTimeoutRef.current); setShowMega(false); setHoveredCategory(null); };
+
+  useEffect(() => {
+    if (!showMega) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') closeMegaNow(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showMega]);
+
+  useEffect(() => {
+    if (!showMega || menuProducts.length > 0) return;
+    axios.get(`${API_URL}/api/products`)
+      .then(res => setMenuProducts(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
+  }, [showMega, menuProducts.length]);
+
+  // Escape sluit het menu
   useEffect(() => {
     if (!showCategories) return undefined;
     const onKey = (e) => { if (e.key === 'Escape') closeMenuNow(); };
@@ -165,12 +191,6 @@ const Header = () => {
     return () => document.removeEventListener('keydown', onKey);
   }, [showCategories]);
 
-  useEffect(() => {
-    if (!showCategories || menuProducts.length > 0) return;
-    axios.get(`${API_URL}/api/products`)
-      .then(res => setMenuProducts(Array.isArray(res.data) ? res.data : []))
-      .catch(() => {});
-  }, [showCategories, menuProducts.length]);
 
   useEffect(() => {
     const lang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
@@ -304,14 +324,55 @@ const Header = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
+                    {showCategories && menuCategories.length > 0 && (
+                      <div
+                        ref={menuRef}
+                        role="menu"
+                        aria-label={t('nav.products')}
+                        className="absolute left-0 top-full pt-2 z-50"
+                        onKeyDown={(e) => {
+                          if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+                          const items = Array.from(menuRef.current.querySelectorAll('[role=menuitem]'));
+                          const i = items.indexOf(document.activeElement);
+                          if (i === -1) return;
+                          e.preventDefault();
+                          items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+                        }}>
+                        <div className="w-64 bg-white rounded-2xl border border-gray-100 py-2 animate-in fade-in duration-150" style={{ boxShadow: '0 16px 40px rgba(0,0,0,0.14)' }}>
+                          {menuCategories.map(cat => (
+                            <Link
+                              key={cat.id}
+                              to={categoryLink(cat)}
+                              role="menuitem"
+                              onClick={closeMenuNow}
+                              className="flex items-center justify-between gap-3 px-5 py-3 text-[14px] font-semibold text-gray-700 hover:bg-primary/5 hover:text-primary focus:outline-none focus-visible:bg-primary/10 focus-visible:text-primary transition-colors">
+                              <span className="truncate">{categoryLabel(cat)}</span>
+                              <svg className="w-3.5 h-3.5 shrink-0 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </li>
                 )}
               </React.Fragment>
             ))}
-            <li>
+            <li className="relative"
+              onMouseEnter={openMega}
+              onMouseLeave={closeMegaSoon}
+              onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget) && !(megaRef.current && megaRef.current.contains(e.relatedTarget))) closeMegaSoon(); }}>
               <Link to={ROUTES.shop}
-                className={`px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center whitespace-nowrap border-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${isActive('/producten') ? 'bg-primary text-white border-primary' : 'text-primary border-primary/30 bg-primary/5 hover:bg-primary hover:text-white hover:border-primary'}`}>
+                aria-haspopup="true"
+                aria-expanded={showMega}
+                onFocus={openMega}
+                onKeyDown={(e) => { if (e.key === 'ArrowDown') { e.preventDefault(); openMega(); setTimeout(() => megaRef.current && megaRef.current.querySelector('[role=menuitem]') && megaRef.current.querySelector('[role=menuitem]').focus(), 30); } }}
+                className={`px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1 whitespace-nowrap border-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${isActive('/producten') || showMega ? 'bg-primary text-white border-primary' : 'text-primary border-primary/30 bg-primary/5 hover:bg-primary hover:text-white hover:border-primary'}`}>
                 {t('nav.shop')}
+                <svg className={`w-3 h-3 transition-transform ${showMega ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </Link>
             </li>
           </ul>
@@ -361,24 +422,24 @@ const Header = () => {
         </div>
 
         {/* Full-width mega dropdown: categorieën links, bijbehorende toepassing en producten rechts */}
-        {showCategories && menuCategories.length > 0 && (() => {
+        {showMega && menuCategories.length > 0 && (() => {
           const active = hoveredCategory || menuCategories[0];
           const catProducts = menuProducts.filter(p => p.categoryId === active.id || String(p.category || '').toLowerCase() === String(active.name || '').toLowerCase());
           const shown = catProducts.slice(0, 4);
           const count = active.productCount || catProducts.length;
           return (
             <div
-              ref={menuRef}
+              ref={megaRef}
               role="menu"
-              aria-label={t('nav.products')}
+              aria-label={t('nav.shop')}
               className="w-full bg-white border-t border-gray-100"
               style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
-              onMouseEnter={openMenu}
-              onMouseLeave={closeMenuSoon}
-              onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) closeMenuSoon(); }}
+              onMouseEnter={openMega}
+              onMouseLeave={closeMegaSoon}
+              onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) closeMegaSoon(); }}
               onKeyDown={(e) => {
                 if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-                const items = Array.from(menuRef.current.querySelectorAll('[role=menuitem]'));
+                const items = Array.from(megaRef.current.querySelectorAll('[role=menuitem]'));
                 const i = items.indexOf(document.activeElement);
                 if (i === -1) return;
                 e.preventDefault();
@@ -392,9 +453,9 @@ const Header = () => {
                     return (
                       <Link
                         key={cat.id}
-                        to={categoryLink(cat)}
+                        to={shopWithCategory(cat)}
                         role="menuitem"
-                        onClick={closeMenuNow}
+                        onClick={closeMegaNow}
                         onMouseEnter={() => setHoveredCategory(cat)}
                         onFocus={() => setHoveredCategory(cat)}
                         className={`flex items-center justify-between gap-3 px-6 py-3 text-[14px] font-semibold transition-colors duration-150 focus:outline-none focus-visible:bg-primary/10 ${isOn ? 'bg-primary/5 text-primary' : 'text-gray-700 hover:bg-gray-50'}`}>
@@ -405,9 +466,9 @@ const Header = () => {
                       </Link>
                     );
                   })}
-                  <Link to={ROUTES.shop} role="menuitem" onClick={closeMenuNow}
+                  <Link to={ROUTES.shop} role="menuitem" onClick={closeMegaNow}
                     className="flex items-center justify-between px-6 py-3 mt-1 border-t border-gray-100 text-[13px] font-bold text-gray-900 hover:text-primary hover:bg-gray-50 transition-colors focus:outline-none focus-visible:bg-primary/10">
-                    <span>Naar de webshop</span>
+                    <span>Alle producten</span>
                     <span aria-hidden="true">→</span>
                   </Link>
                 </div>
@@ -419,13 +480,13 @@ const Header = () => {
                     {active.description && <RichText value={active.description} className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-5" />}
                     {count > 0 && <p className="text-xs text-gray-400 mt-3">{count} {count === 1 ? 'product' : 'producten'}</p>}
                     <div className="mt-auto pt-5 flex flex-col gap-2">
-                      <Link to={categoryLink(active)} onClick={closeMenuNow}
+                      <Link to={shopWithCategory(active)} onClick={closeMegaNow}
                         className="inline-flex items-center justify-center gap-1.5 bg-primary text-white text-xs font-bold px-4 py-2.5 rounded-full hover:brightness-110 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
-                        Bekijk toepassing <span aria-hidden="true">→</span>
+                        Alle producten bekijken <span aria-hidden="true">→</span>
                       </Link>
-                      <Link to={shopWithCategory(active)} onClick={closeMenuNow}
+                      <Link to={categoryLink(active)} onClick={closeMegaNow}
                         className="inline-flex items-center justify-center text-xs font-bold text-gray-600 hover:text-primary px-4 py-2 rounded-full border border-gray-200 hover:border-primary/40 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
-                        Alle producten in de shop
+                        Meer over deze toepassing
                       </Link>
                     </div>
                   </div>
@@ -433,7 +494,7 @@ const Header = () => {
                     {shown.length > 0 ? (
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                         {shown.map(product => (
-                          <Link key={product.id} to={ROUTES.product(product.id)} onClick={closeMenuNow}
+                          <Link key={product.id} to={ROUTES.product(product.id)} onClick={closeMegaNow}
                             className="group block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
                             <div className="aspect-square rounded-xl bg-gray-50 overflow-hidden mb-2">
                               <img src={getImageSrc(product)} alt={product.name} className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105" loading="lazy" decoding="async" />
