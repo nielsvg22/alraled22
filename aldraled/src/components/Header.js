@@ -7,6 +7,7 @@ import { useTranslation, Trans } from 'react-i18next';
 import { getMediaUrl, API_URL } from '../lib/api';
 import { formatPrice } from '../lib/productHelpers';
 import { ROUTES, shopWithCategory, NAV_LINKS } from '../lib/routes';
+import RichText from './RichText';
 
 const DEFAULT_GENERAL = {
   tagline: '',
@@ -351,7 +352,7 @@ const Header = () => {
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/90 to-transparent pt-12 pb-5 px-8">
                           <h3 className="text-base font-bold text-gray-900">{hoveredCategory.name}</h3>
                           {hoveredCategory.description && (
-                            <p className="text-xs text-gray-500 mt-0.5 max-w-md">{hoveredCategory.description}</p>
+                            <RichText value={hoveredCategory.description} className="text-xs text-gray-500 mt-0.5 max-w-md" />
                           )}
                           {hoveredCategory.productCount > 0 && (
                             <p className="text-[11px] text-primary font-semibold mt-1">{hoveredCategory.productCount} producten &rarr;</p>
@@ -367,7 +368,7 @@ const Header = () => {
                         </div>
                         <h3 className="text-sm font-bold text-gray-900">{hoveredCategory.name}</h3>
                         {hoveredCategory.description && (
-                          <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">{hoveredCategory.description}</p>
+                          <RichText value={hoveredCategory.description} className="text-xs text-gray-500 mt-1 max-w-sm mx-auto" />
                         )}
                         {hoveredCategory.productCount > 0 && (
                           <p className="text-[11px] text-primary font-semibold mt-2">{hoveredCategory.productCount} producten &rarr;</p>

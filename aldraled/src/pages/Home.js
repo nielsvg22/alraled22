@@ -258,9 +258,7 @@ const Home = () => {
                 </span>
               </h1>
 
-              <p className="text-white/70 text-base md:text-lg max-w-xl leading-relaxed font-light">
-                {hero.subtitle}
-              </p>
+              <RichText value={hero.subtitle} className="text-white/70 text-base md:text-lg max-w-xl leading-relaxed font-light" />
 
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link to={ROUTES.shop} className="bg-primary text-white px-7 py-3 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
@@ -460,7 +458,7 @@ if (id === 'cases') {
                     <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/30 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-6">
                       <h3 className="text-white font-black text-lg leading-tight">{catTitle}</h3>
-                      {catDesc && <p className="text-white/60 text-xs mt-1 leading-relaxed">{catDesc}</p>}
+                      <RichText value={catDesc} className="text-white/60 text-xs mt-1 leading-relaxed" />
                       <span className="inline-flex items-center gap-1.5 mt-3 text-primary text-xs font-bold uppercase tracking-wider group-hover:gap-3 transition-all">
                         Bekijk <span>→</span>
                       </span>
@@ -529,7 +527,7 @@ if (id === 'cases') {
             <div className="bg-secondary rounded-3xl px-8 py-10 md:px-14 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div className="space-y-2">
                 <h2 className="text-2xl md:text-3xl font-black text-white leading-tight">{dealersCta.title}</h2>
-                <p className="text-white/60 text-sm max-w-xl">{dealersCta.subtitle}</p>
+                <RichText value={dealersCta.subtitle} className="text-white/60 text-sm max-w-xl" />
               </div>
               <Link
                 to={ROUTES.dealers}
@@ -597,7 +595,7 @@ if (id === 'cases') {
                     </div>
                     <div>
                       <h4 className="text-base font-bold text-secondary">{step.title}</h4>
-                      <p className="text-sm text-gray-500 mt-1 leading-relaxed">{step.description || step.desc}</p>
+                      <RichText value={step.description || step.desc} className="text-sm text-gray-500 mt-1 leading-relaxed" />
                     </div>
                   </div>
                 ))}
@@ -621,7 +619,7 @@ if (id === 'cases') {
                 <span className="w-8 h-px bg-primary" />
               </span>
               <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-secondary leading-[1.05] tracking-tight">{highlights.title}</h2>
-              <p className="text-gray-400 text-base md:text-lg max-w-2xl mx-auto font-light leading-relaxed">{highlights.subtitle}</p>
+              <RichText value={highlights.subtitle} className="text-gray-400 text-base md:text-lg max-w-2xl mx-auto font-light leading-relaxed" />
             </div>
             <div className="space-y-0">
               {hItems.map((item, idx) => (
@@ -681,7 +679,7 @@ if (id === 'cases') {
               </div>
               <div className="relative space-y-2 text-center md:text-left">
                 <h2 className="text-2xl md:text-4xl font-black text-white leading-tight">{cta.title}</h2>
-                <p className="text-white/50 text-sm">{cta.subtitle}</p>
+                <RichText value={cta.subtitle} className="text-white/50 text-sm" />
               </div>
               <div className="relative flex flex-col sm:flex-row gap-3 shrink-0">
                 <Link to={ROUTES.shop} className="bg-primary text-white px-7 py-3 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30 whitespace-nowrap">

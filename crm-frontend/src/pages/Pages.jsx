@@ -308,7 +308,7 @@ function BuilderEditor({ blockId, data, onChangeData }) {
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="sm:col-span-2">
                           <Field label="Tekst">
-                            <textarea className={`${taCls} ${iBdr}`} rows={5} value={e.text || ''} onChange={(ev) => updateElement(e.id, { text: ev.target.value })} />
+                            <RichTextEditor minHeight="8rem" value={e.text || ''} onChange={html => updateElement(e.id, { text: html })} />
                           </Field>
                         </div>
                         <Field label="Uitlijning">
@@ -550,7 +550,7 @@ function BannerEditor({ data, onChange }) {
         <input className={`${iCls} ${iBdr}`} value={d.heading || ''} onChange={(e) => set({ heading: e.target.value })} />
       </Field>
       <Field label="Tekst">
-        <textarea className={`${taCls} ${iBdr}`} rows={3} value={d.subtext || ''} onChange={(e) => set({ subtext: e.target.value })} />
+        <RichTextEditor minHeight="6rem" value={d.subtext || ''} onChange={html => set({ subtext: html })} />
       </Field>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Field label="Knop">
@@ -576,7 +576,7 @@ function TextBlockEditor({ data, onChange }) {
         <input className={`${iCls} ${iBdr}`} value={d.heading || ''} onChange={(e) => set({ heading: e.target.value })} />
       </Field>
       <Field label="Tekst">
-        <textarea className={`${taCls} ${iBdr}`} rows={6} value={d.body || ''} onChange={(e) => set({ body: e.target.value })} />
+        <RichTextEditor minHeight="10rem" value={d.body || ''} onChange={html => set({ body: html })} />
       </Field>
     </div>
   );
@@ -636,7 +636,7 @@ function ImageTextEditor({ data, onChange }) {
         </Field>
       </div>
       <Field label="Tekst">
-        <textarea className={`${taCls} ${iBdr}`} rows={5} value={d.body || ''} onChange={(e) => set({ body: e.target.value })} />
+        <RichTextEditor minHeight="8rem" value={d.body || ''} onChange={html => set({ body: html })} />
       </Field>
       <Field label="Afbeelding">
         <ImageField value={d.imageUrl || ''} onChange={(v) => set({ imageUrl: v })} height={22} />
@@ -682,7 +682,7 @@ function CtaBlockEditor({ data, onChange }) {
         <input className={`${iCls} ${iBdr}`} value={d.heading || ''} onChange={(e) => set({ heading: e.target.value })} />
       </Field>
       <Field label="Tekst">
-        <textarea className={`${taCls} ${iBdr}`} rows={3} value={d.subtext || ''} onChange={(e) => set({ subtext: e.target.value })} />
+        <RichTextEditor minHeight="6rem" value={d.subtext || ''} onChange={html => set({ subtext: html })} />
       </Field>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Primaire knop">
@@ -1502,7 +1502,7 @@ export default function Pages() {
                                   <input className={`${iCls} ${iBdr}`} value={h.titlePrefix || ''} onChange={e => setH({ titlePrefix: e.target.value })} placeholder="Verlichting voor" />
                                 </Field>
                                 <Field label="Ondertitel">
-                                  <textarea className={`${taCls} ${iBdr}`} rows={3} value={h.subtitle} onChange={e => setH({ subtitle: e.target.value })} />
+                                  <RichTextEditor minHeight="6rem" value={h.subtitle} onChange={html => setH({ subtitle: html })} />
                                 </Field>
                                 <div className="grid grid-cols-2 gap-3">
                                   <Field label="Primaire knop">
@@ -1598,7 +1598,7 @@ export default function Pages() {
                                         <input className={`${iCls} ${iBdr}`} value={s.title||''} onChange={e => { const a=[...specs]; a[i]={...a[i],title:e.target.value}; setSpecs(a); }} />
                                       </Field>
                                       <Field label="Beschrijving">
-                                        <textarea className={`${taCls} ${iBdr}`} rows={2} value={s.desc||''} onChange={e => { const a=[...specs]; a[i]={...a[i],desc:e.target.value}; setSpecs(a); }} />
+                                        <RichTextEditor minHeight="6rem" value={s.desc||''} onChange={html => { const a=[...specs]; a[i]={...a[i],desc:html}; setSpecs(a); }} />
                                       </Field>
                                       <Field label="Afbeelding">
                                         <ImageField value={s.image||''} onChange={v => { const a=[...specs]; a[i]={...a[i],image:v}; setSpecs(a); }} height={24} />
@@ -1735,7 +1735,7 @@ export default function Pages() {
                                   <input className={`${iCls} ${iBdr}`} value={hl.title||''} onChange={e => setHlMeta({ title: e.target.value })} placeholder="Voor de Groothandel" />
                                 </Field>
                                 <Field label="Ondertitel">
-                                  <textarea className={`${taCls} ${iBdr}`} rows={2} value={hl.subtitle||''} onChange={e => setHlMeta({ subtitle: e.target.value })} />
+                                  <RichTextEditor minHeight="6rem" value={hl.subtitle||''} onChange={html => setHlMeta({ subtitle: html })} />
                                 </Field>
                                 <div className="space-y-3">
                                   {(hl.items||[]).map((it, i) => (
@@ -1805,7 +1805,7 @@ export default function Pages() {
                                   <input className={`${iCls} ${iBdr}`} value={cta.title||''} onChange={e => setCta({ title:e.target.value })} />
                                 </Field>
                                 <Field label="Ondertitel">
-                                  <textarea className={`${taCls} ${iBdr}`} rows={2} value={cta.subtitle||''} onChange={e => setCta({ subtitle:e.target.value })} />
+                                  <RichTextEditor minHeight="6rem" value={cta.subtitle||''} onChange={html => setCta({ subtitle:html })} />
                                 </Field>
                               </Section>
                             )}
@@ -1822,7 +1822,7 @@ export default function Pages() {
                                   <input className={`${iCls} ${iBdr}`} value={dealersCta.title||''} onChange={e => setDealersCta({ title: e.target.value })} />
                                 </Field>
                                 <Field label="Ondertitel">
-                                  <textarea className={`${taCls} ${iBdr}`} rows={2} value={dealersCta.subtitle||''} onChange={e => setDealersCta({ subtitle: e.target.value })} />
+                                  <RichTextEditor minHeight="6rem" value={dealersCta.subtitle||''} onChange={html => setDealersCta({ subtitle: html })} />
                                 </Field>
                                 <Field label="Knoptekst">
                                   <input className={`${iCls} ${iBdr}`} value={dealersCta.buttonText||''} onChange={e => setDealersCta({ buttonText: e.target.value })} />
@@ -2002,7 +2002,7 @@ export default function Pages() {
                     onDelete={() => setAbout({ ...about, steps:(about.steps||[]).filter((_,j)=>j!==i) })}>
                     <div className="space-y-2">
                       <input className={`${iCls} ${iBdr}`} placeholder="Stap (Idee, Ontwerp, …)" value={st.title||''} onChange={e => { const a=[...(about.steps||[])]; a[i]={...a[i],title:e.target.value}; setAbout({ ...about, steps:a }); }} />
-                      <textarea className={`${taCls} ${iBdr}`} rows={3} placeholder="Uitleg" value={st.text||''} onChange={e => { const a=[...(about.steps||[])]; a[i]={...a[i],text:e.target.value}; setAbout({ ...about, steps:a }); }} />
+                      <RichTextEditor minHeight="6rem" value={st.text||''} onChange={html => { const a=[...(about.steps||[])]; a[i]={...a[i],text:html}; setAbout({ ...about, steps:a }); }} />
                     </div>
                   </ItemCard>
                 ))}
@@ -2013,7 +2013,7 @@ export default function Pages() {
 
             <Section title="Statement (donkere balk)" defaultOpen={false}>
               <Field label="Tekst">
-                <textarea className={`${taCls} ${iBdr}`} rows={3} value={about.quoteText||''} placeholder="Goede verlichting merk je pas echt wanneer je zonder nadenken door kunt werken." onChange={e => setAbout({ ...about, quoteText:e.target.value })} />
+                <RichTextEditor minHeight="6rem" value={about.quoteText||''} onChange={html => setAbout({ ...about, quoteText:html })} />
               </Field>
               <Field label="Achtergrondfoto" hint="Wordt donker en transparant getoond.">
                 <ImageField value={about.quoteImage||''} onChange={v => setAbout({ ...about, quoteImage:v })} height={28} />
@@ -2413,7 +2413,7 @@ export default function Pages() {
                 </Field>
               </div>
               <Field label="Tekst">
-                <textarea className={`${taCls} ${iBdr}`} rows={2} value={general.newsletterText||''} onChange={e => setGeneral({ ...general, newsletterText:e.target.value })} />
+                <RichTextEditor minHeight="6rem" value={general.newsletterText||''} onChange={html => setGeneral({ ...general, newsletterText:html })} />
               </Field>
               <Field label="Placeholder email">
                 <input className={`${iCls} ${iBdr}`} value={general.newsletterPlaceholder||''} onChange={e => setGeneral({ ...general, newsletterPlaceholder:e.target.value })} />
@@ -2422,7 +2422,7 @@ export default function Pages() {
 
             <Section title="Footer" defaultOpen={false}>
               <Field label="Bedrijfsbeschrijving">
-                <textarea className={`${taCls} ${iBdr}`} rows={3} value={general.footerDescription||''} onChange={e => setGeneral({ ...general, footerDescription:e.target.value })} />
+                <RichTextEditor minHeight="6rem" value={general.footerDescription||''} onChange={html => setGeneral({ ...general, footerDescription:html })} />
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Telefoon">
@@ -2538,7 +2538,7 @@ export default function Pages() {
                 <input className={`${iCls} ${iBdr}`} value={shop.hero.title || ''} onChange={e => setShopHero({ title: e.target.value })} placeholder="LED verlichting" />
               </Field>
               <Field label="Ondertitel">
-                <textarea className={`${taCls} ${iBdr}`} rows={3} value={shop.hero.subtitle || ''} onChange={e => setShopHero({ subtitle: e.target.value })} />
+                <RichTextEditor minHeight="6rem" value={shop.hero.subtitle || ''} onChange={html => setShopHero({ subtitle: html })} />
               </Field>
               <Field label="Waarden / USP's" hint="4 punten onder de tekst. Titel + toelichting per item.">
                 <div className="space-y-2 mt-1">

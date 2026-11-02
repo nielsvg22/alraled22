@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { API_URL, getMediaUrl } from '../lib/api';
 import { ROUTES, FOOTER_NAV_LINKS } from '../lib/routes';
+import RichText from './RichText';
 
 const DEFAULTS = {
   tagline: '',
@@ -42,7 +43,7 @@ const Footer = () => {
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <h3 className="text-base font-black text-white">{general.newsletterTitle}</h3>
-            <p className="text-white/50 text-xs mt-0.5">{general.newsletterText}</p>
+            <RichText value={general.newsletterText} className="text-white/50 text-xs mt-0.5" />
           </div>
           <form className="flex w-full md:w-auto gap-2" onSubmit={e => e.preventDefault()}>
             <label htmlFor="footer-newsletter" className="sr-only">Email address for newsletter</label>
@@ -74,9 +75,7 @@ const Footer = () => {
                 </span>
               )}
             </Link>
-            <p className="text-white/40 text-xs leading-relaxed">
-              {general.footerDescription}
-            </p>
+            <RichText value={general.footerDescription} className="text-white/40 text-xs leading-relaxed" />
             <div className="flex gap-3 pt-1">
               {[
                 { label: 'LinkedIn', href: 'https://www.linkedin.com/company/alra-led-solutions' },

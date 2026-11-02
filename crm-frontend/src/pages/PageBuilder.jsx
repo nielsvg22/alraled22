@@ -56,7 +56,7 @@ const FIXED_SECTION_SCHEMAS = {
     fields: [
       { key: 'titlePrefix', type: 'text', label: 'Titel prefix (bv. Verlichting voor)' },
       { key: 'title', type: 'text', label: 'Hoofdtitel' },
-      { key: 'subtitle', type: 'textarea', label: 'Ondertekst', rows: 3 },
+      { key: 'subtitle', type: 'richtext', label: 'Ondertekst', rows: 3 },
       { key: 'backgroundImage', type: 'image', label: 'Achtergrondafbeelding' },
       { key: 'primaryButtonText', type: 'text', label: 'Primaire knop' },
       { key: 'secondaryButtonText', type: 'text', label: 'Secundaire knop' },
@@ -93,7 +93,7 @@ const FIXED_SECTION_SCHEMAS = {
     fields: [
       { key: 'badge', type: 'text', label: 'Badge (bv. Over ALRA LED)' },
       { key: 'heading', type: 'text', label: 'Koptekst' },
-      { key: 'description', type: 'textarea', label: 'Beschrijving', rows: 5 },
+      { key: 'description', type: 'richtext', label: 'Beschrijving', rows: 5 },
       { key: 'image', type: 'image', label: 'Afbeelding' },
       { key: 'linkText', type: 'text', label: 'Link tekst' },
       { key: 'deliveryTitle', type: 'text', label: 'Titel levering' },
@@ -127,10 +127,10 @@ const FIXED_SECTION_SCHEMAS = {
     label: 'Groothandel',
     fields: [
       { key: 'title', type: 'text', label: 'Sectietitel' },
-      { key: 'subtitle', type: 'textarea', label: 'Ondertekst', rows: 2 },
+      { key: 'subtitle', type: 'richtext', label: 'Ondertekst', rows: 2 },
       { key: 'items', type: 'array', label: 'Product items', subfields: [
         { key: 'title', type: 'text', label: 'Titel' },
-        { key: 'description', type: 'textarea', label: 'Beschrijving', rows: 2 },
+        { key: 'description', type: 'richtext', label: 'Beschrijving', rows: 2 },
         { key: 'image', type: 'image', label: 'Afbeelding' },
         { key: 'link', type: 'text', label: 'Link (bv. /producten)' },
         { key: 'linkText', type: 'text', label: 'Link tekst' },
@@ -173,11 +173,11 @@ const FIXED_SECTION_SCHEMAS = {
     label: 'Proces',
     fields: [
       { key: 'title', type: 'text', label: 'Sectietitel' },
-      { key: 'description', type: 'textarea', label: 'Beschrijving', rows: 4 },
+      { key: 'description', type: 'richtext', label: 'Beschrijving', rows: 4 },
       { key: 'buttonText', type: 'text', label: 'Knoptekst' },
       { key: 'steps', type: 'array', label: 'Stappen', subfields: [
         { key: 'title', type: 'text', label: 'Titel' },
-        { key: 'description', type: 'textarea', label: 'Beschrijving', rows: 2 },
+        { key: 'description', type: 'richtext', label: 'Beschrijving', rows: 2 },
       ]},
     ],
     mapData: (data) => ({
@@ -202,7 +202,7 @@ const FIXED_SECTION_SCHEMAS = {
     label: 'Call-to-action',
     fields: [
       { key: 'title', type: 'text', label: 'Koptekst' },
-      { key: 'subtitle', type: 'textarea', label: 'Ondertekst', rows: 2 },
+      { key: 'subtitle', type: 'richtext', label: 'Ondertekst', rows: 2 },
       { key: 'primaryButton', type: 'text', label: 'Primaire knop' },
       { key: 'secondaryButton', type: 'text', label: 'Secundaire knop' },
     ],
@@ -228,7 +228,7 @@ const FIXED_SECTION_SCHEMAS = {
     label: 'Dealer CTA',
     fields: [
       { key: 'title', type: 'text', label: 'Koptekst' },
-      { key: 'subtitle', type: 'textarea', label: 'Ondertekst', rows: 2 },
+      { key: 'subtitle', type: 'richtext', label: 'Ondertekst', rows: 2 },
       { key: 'buttonText', type: 'text', label: 'Knoptekst' },
     ],
     mapData: (data) => ({
@@ -270,7 +270,7 @@ const FIXED_SECTION_SCHEMAS = {
 const SCHEMAS = {
   banner:       [
     { key: 'heading',   type: 'text',     label: 'Koptekst' },
-    { key: 'subtext',   type: 'textarea', label: 'Ondertekst' },
+    { key: 'subtext',   type: 'richtext', label: 'Ondertekst' },
     { key: 'buttonText',type: 'text',     label: 'Knoptekst' },
     { key: 'bgColor',   type: 'color',    label: 'Achtergrondkleur' },
     { key: 'textColor', type: 'color',    label: 'Tekstkleur' },
@@ -284,7 +284,7 @@ const SCHEMAS = {
     { key: 'items', type: 'array', label: 'Items', subfields: [
       { key: 'icon',        type: 'text',     label: 'Icoon (emoji)' },
       { key: 'title',       type: 'text',     label: 'Titel' },
-      { key: 'description', type: 'textarea', label: 'Beschrijving', rows: 2 },
+      { key: 'description', type: 'richtext', label: 'Beschrijving', rows: 2 },
     ]},
   ],
   image_text:   [
@@ -328,7 +328,7 @@ const SCHEMAS = {
   ],
   cta_block:    [
     { key: 'heading',         type: 'text',     label: 'Koptekst' },
-    { key: 'subtext',         type: 'textarea', label: 'Ondertekst', rows: 2 },
+    { key: 'subtext',         type: 'richtext', label: 'Ondertekst', rows: 2 },
     { key: 'primaryButton',   type: 'text',     label: 'Primaire knop' },
     { key: 'secondaryButton', type: 'text',     label: 'Secundaire knop' },
   ],
@@ -337,7 +337,7 @@ const SCHEMAS = {
     { key: 'items', type: 'array', label: 'Stappen', subfields: [
       { key: 'number',      type: 'text',     label: 'Nummer (bv. 01)' },
       { key: 'title',       type: 'text',     label: 'Titel' },
-      { key: 'description', type: 'textarea', label: 'Beschrijving', rows: 2 },
+      { key: 'description', type: 'richtext', label: 'Beschrijving', rows: 2 },
     ]},
   ],
   blog_post:    [
@@ -368,7 +368,7 @@ function FieldInput({ field, value, onChange }) {
     </select>
   );
   if (field.type === 'richtext') return (
-    <RichTextEditor value={value || ''} onChange={onChange} minHeight={field.minHeight || '10rem'} />
+    <RichTextEditor value={value || ''} onChange={onChange} minHeight={field.minHeight || '7rem'} />
   );
   if (field.type === 'textarea') return (
     <textarea value={value || ''} onChange={e => onChange(e.target.value)}

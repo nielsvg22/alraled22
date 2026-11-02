@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import CustomBlocks from '../components/CustomBlocks';
-import { getMediaUrl } from '../lib/api';
+import { getMediaUrl, isRichBlock } from '../lib/api';
 import { ROUTES } from '../lib/routes';
 import RichText from '../components/RichText';
 
@@ -267,7 +267,7 @@ const About = () => {
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <h3 className="text-lg font-extrabold text-secondary mt-5 leading-snug">{s.title}</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed mt-2 max-w-xs mx-auto">{s.text}</p>
+                  <RichText value={s.text} className="text-sm text-slate-500 leading-relaxed mt-2 max-w-xs mx-auto" />
                 </div>
               ))}
             </div>
@@ -283,9 +283,7 @@ const About = () => {
           <span className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/20 text-primary mb-8">
             <IconQuote className="w-6 h-6" />
           </span>
-          <blockquote className="text-[clamp(1.5rem,3vw,2.4rem)] font-extrabold leading-[1.15] text-white tracking-tight">
-            “{quoteText}”
-          </blockquote>
+          <RichText as="blockquote" value={isRichBlock(quoteText) ? quoteText : `“${quoteText}”`} className="text-[clamp(1.5rem,3vw,2.4rem)] font-extrabold leading-[1.15] text-white tracking-tight" />
         </div>
       </section>
 
