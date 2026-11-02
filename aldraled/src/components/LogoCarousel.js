@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../lib/config';
 import { getMediaUrl } from '../lib/api';
 
 export default function LogoCarousel() {
@@ -8,8 +9,7 @@ export default function LogoCarousel() {
   useEffect(() => {
     // API_URL should be imported from lib/api or kept local if needed, 
     // but getMediaUrl uses the centralized one.
-    const url = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
-    axios.get(`${url}/api/content/logos`)
+    axios.get(`${API_URL}/api/content/logos`)
       .then(r => setLogos(Array.isArray(r.data) ? r.data : []))
       .catch(() => setLogos([]));
   }, []);

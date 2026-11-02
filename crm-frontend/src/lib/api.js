@@ -17,8 +17,11 @@ function normalizeBaseUrl(value) {
   return trimmed;
 }
 
-const API_URL = normalizeBaseUrl(import.meta.env.VITE_API_URL) || 'http://localhost:5000';
-const API_BASE_FROM_ENV = normalizeBaseUrl(import.meta.env.VITE_API_BASE);
+// Op het eigen domein (crm.alra-led.com) praat het CRM met api.alra-led.com; op het tijdelijke adres
+// (en lokaal) met het adres uit de build-instellingen. Zo werken beide naast elkaar.
+export const IS_PRODUCTION_DOMAIN = typeof window !== 'undefined' && /(^|\.)alra-led\.com$/i.test(window.location.hostname);
+const API_URL = IS_PRODUCTION_DOMAIN ? 'https://api.alra-led.com' : (normalizeBaseUrl(import.meta.env.VITE_API_URL) || 'http://localhost:5000');
+const API_BASE_FROM_ENV = IS_PRODUCTION_DOMAIN ? '' : normalizeBaseUrl(import.meta.env.VITE_API_BASE);
 
 const API_BASE = API_BASE_FROM_ENV
   ? API_BASE_FROM_ENV

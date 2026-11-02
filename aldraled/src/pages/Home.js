@@ -10,7 +10,7 @@ import { getMediaUrl, readCache, writeCache, preloadImage } from '../lib/api';
 import { ROUTES, shopWithCategory } from '../lib/routes';
 import RichText from '../components/RichText';
 
-const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
+import { API_URL } from '../lib/config';
 
 const DEFAULTS = {
   hero: {

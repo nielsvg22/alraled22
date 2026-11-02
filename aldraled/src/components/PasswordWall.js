@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { IS_PRODUCTION_DOMAIN } from '../lib/config';
 
 const PasswordWall = ({ children }) => {
   const [password, setPassword] = useState('');
@@ -9,7 +10,7 @@ const PasswordWall = ({ children }) => {
 
   useEffect(() => {
     const auth = localStorage.getItem('staging_authorized');
-    if (auth === 'true' || process.env.NODE_ENV === 'development') {
+    if (auth === 'true' || process.env.NODE_ENV === 'development' || IS_PRODUCTION_DOMAIN) {
       setIsAuthorized(true);
     }
   }, []);

@@ -1,4 +1,6 @@
 import { Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import PDFDocument from 'pdfkit';
 import { z } from 'zod';
 import { products } from '../db/schema';
@@ -53,7 +55,7 @@ export const DEFAULT_DESIGN = {
     vatNumber: '',
     bank: '',
     bic: '',
-    logo: 'https://alra-led.com/wp-content/uploads/2024/06/Alra-led-logo-diap.png',
+    logo: '/uploads/alra-led-logo.png',
   },
   texts: {
     docLabel: 'Offerte',
@@ -170,15 +172,19 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
 
   if (company.logo) {
     try {
-      const protocol = company.logo.startsWith('https') ? 'https' : 'http';
-      const logoUrl = company.logo.replace('http://', 'https://');
-      const response = await fetch(logoUrl, { timeout: 5000 } as any);
-      if (response.ok) {
-        const buffer = await response.buffer();
-        doc.image(buffer, logoX, logoY, { width: logoSize, height: logoSize });
+      let buffer: Buffer;
+      if (company.logo.startsWith('/uploads/')) {
+        // Eigen uploads lezen we rechtstreeks van schijf (geen afhankelijkheid van een domeinnaam)
+        const dir = process.env.UPLOADS_DIR ? path.resolve(process.env.UPLOADS_DIR) : path.join(process.cwd(), 'uploads');
+        buffer = fs.readFileSync(path.join(dir, path.basename(company.logo)));
       } else {
-        throw new Error('Logo fetch failed');
+        const logoUrl = company.logo.replace('http://', 'https://');
+        const response = await fetch(logoUrl, { timeout: 5000 } as any);
+        if (!response.ok) throw new Error('Logo fetch failed');
+        buffer = await response.buffer();
       }
+      // Het logo is breed: past binnen 150 x 60 punten, rechts uitgelijnd
+      doc.image(buffer, pageW - mx - 150, logoY, { fit: [150, 60], align: 'right' });
     } catch {
       // Fallback: gold circle with initial
       doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2).fill(c.glow);

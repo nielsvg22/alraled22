@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../lib/api';
+import api, { getMediaUrl } from '../lib/api';
 import { Save, CheckCircle, AlertCircle, Eye, Palette, Type, Building2, FileText, Upload } from 'lucide-react';
 
 const SECTIONS = {
@@ -208,7 +208,7 @@ export default function QuoteDesign() {
                 <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Logo</label>
                 {design.company.logo ? (
                   <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-3">
-                    <img src={design.company.logo} alt="Logo" className="h-12 object-contain" />
+                    <img src={getMediaUrl(design.company.logo)} alt="Logo" className="h-12 object-contain" />
                     <button onClick={() => updateCompany('logo', '')} className="text-xs text-red-500 hover:text-red-600 font-semibold">Verwijderen</button>
                   </div>
                 ) : (

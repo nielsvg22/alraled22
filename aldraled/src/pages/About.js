@@ -7,7 +7,7 @@ import { getMediaUrl, isRichBlock } from '../lib/api';
 import { ROUTES } from '../lib/routes';
 import RichText from '../components/RichText';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import { API_URL } from '../lib/config';
 
 // Merk-accentblauw per visueel concept; primaire knoppen/iconen op deze pagina.
 const B = 'rgb(var(--color-primary))';
