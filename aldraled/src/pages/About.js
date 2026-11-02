@@ -78,6 +78,10 @@ const IconBolt = (p) => <Ic {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 
 const IconBook = (p) => <Ic {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></Ic>;
 const IconHeadphones = (p) => <Ic {...p}><path d="M3 18v-6a9 9 0 0 1 18 0v6" /><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" /></Ic>;
 const IconGem = (p) => <Ic {...p}><polygon points="6 3 18 3 22 9 12 22 2 9" /><path d="M2 9h20M12 3l-2.5 6L12 22l2.5-13L12 3z" /></Ic>;
+const IconCheck = (p) => <Ic {...p}><circle cx="12" cy="12" r="10" /><polyline points="8 12.5 11 15.5 16 9" /></Ic>;
+const IconStar = (p) => <Ic {...p}><polygon points="12 2 15.1 8.6 22 9.3 16.8 14 18.2 21 12 17.5 5.8 21 7.2 14 2 9.3 8.9 8.6 12 2" /></Ic>;
+const IconClock = (p) => <Ic {...p}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></Ic>;
+const IconPhone = (p) => <Ic {...p}><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z" /></Ic>;
 const IconArrow = (p) => <Ic {...p}><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></Ic>;
 const IconStock = (p) => <Ic {...p}><path d="M3 3v18h18" /><path d="M7 14l3-4 3 3 4-6" /></Ic>;
 const IconPercent = (p) => <Ic {...p}><line x1="19" y1="5" x2="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" /></Ic>;
@@ -87,6 +91,7 @@ const ICONMAP = {
   truck: IconTruck, shield: IconShield, chat: IconChat, package: IconPackage,
   grid: IconGrid, bolt: IconBolt, book: IconBook, headphones: IconHeadphones,
   gem: IconGem, arrow: IconArrow, stock: IconStock, percent: IconPercent, quote: IconQuote,
+  check: IconCheck, star: IconStar, clock: IconClock, phone: IconPhone,
 };
 
 const Eyebrow = ({ children, light }) => (
