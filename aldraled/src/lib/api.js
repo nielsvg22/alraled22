@@ -60,7 +60,7 @@ export const isRichBlock = (value) => /<(p|ul|ol|li|h[1-6]|table)\b/i.test(Strin
 export const sanitizeRich = (html) => DOMPurify.sanitize(String(html || ''), {
   ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'ul', 'ol', 'li', 'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td'],
   ALLOWED_ATTR: ['href', 'target', 'rel'],
-  ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|tel:)/i,
+  ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|tel:|\/(?!\/))/i,
 });
 
 // Zonder **dikgedrukt**-markeringen: voor kaarten, vergelijking en zoekmachine-data.

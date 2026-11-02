@@ -113,11 +113,11 @@ export default function BlogDetail() {
         {body ? (
           <RichContent
             value={body}
-            className="text-gray-700 leading-[1.7] text-base md:text-lg"
+            className="text-gray-700 leading-[1.55] text-base md:text-lg"
             legacy={(text) => (
               <div className="space-y-5">
                 {text.split('\n').filter(p => p.trim()).map((para, i) => (
-                  <p key={i} className="text-gray-700 leading-[1.7] text-base md:text-lg">{para}</p>
+                  <p key={i} className="text-gray-700 leading-[1.55] text-base md:text-lg">{para}</p>
                 ))}
               </div>
             )}
