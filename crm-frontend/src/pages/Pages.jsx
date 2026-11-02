@@ -1044,9 +1044,17 @@ const GENERAL_DEFAULTS = {
 };
 
 const DEFAULT_ABOUT_USPS = [
-  { title: 'Snel geleverd', text: 'Direct leverbaar' },
-  { title: 'Professionele kwaliteit', text: 'Geselecteerd voor de praktijk' },
-  { title: 'Persoonlijk advies', text: 'Direct contact, korte lijnen' },
+  { icon: 'truck', title: 'Snel geleverd', text: 'Direct leverbaar' },
+  { icon: 'shield', title: 'Professionele kwaliteit', text: 'Geselecteerd voor de praktijk' },
+  { icon: 'chat', title: 'Persoonlijk advies', text: 'Direct contact, korte lijnen' },
+];
+
+// Icoonkeuze voor de kenmerken op de Over ons-pagina (sleutels staan ook in About.js van de webshop)
+const ABOUT_ICON_OPTIONS = [
+  ['truck', 'Vrachtwagen (levering)'], ['shield', 'Schild (kwaliteit)'], ['chat', 'Praatwolkje (advies)'],
+  ['check', 'Vinkje'], ['star', 'Ster'], ['clock', 'Klok (snel)'], ['phone', 'Telefoon'],
+  ['package', 'Pakket'], ['bolt', 'Bliksem'], ['headphones', 'Headset (service)'], ['gem', 'Diamant (premium)'],
+  ['percent', 'Procent (korting)'], ['stock', 'Grafiek'], ['book', 'Boek'],
 ];
 
 const GROOTHANDELS_DEFAULTS = {
@@ -1976,21 +1984,26 @@ export default function Pages() {
             </Section>
 
             <Section title="Kenmerken onder de knoppen (met icoontjes)" icon={Info} defaultOpen={false}>
-              <p className="text-xs text-gray-400 mb-3">De drie korte kenmerken onder "Bekijk ons assortiment / Neem contact op". Het icoontje staat vast per plek (vrachtwagen, schild, praatwolkje).</p>
+              <p className="text-xs text-gray-400 mb-3">De drie korte kenmerken onder "Bekijk ons assortiment / Neem contact op". Kies bij elk kenmerk het icoontje.</p>
               <div className="space-y-2">
                 {(about.heroUsps && about.heroUsps.length ? about.heroUsps : DEFAULT_ABOUT_USPS).map((u, i) => {
                   const list = (about.heroUsps && about.heroUsps.length) ? about.heroUsps : DEFAULT_ABOUT_USPS;
                   const setU = (patch) => { const a = list.map(x => ({ ...x })); a[i] = { ...a[i], ...patch }; setAbout({ ...about, heroUsps: a }); };
                   return (
                     <ItemCard key={i} number={i} onDelete={() => setAbout({ ...about, heroUsps: list.filter((_, j) => j !== i) })}>
-                      <div className="grid grid-cols-2 gap-3">
-                        <input className={`${iCls} ${iBdr}`} placeholder="Titel (Snel geleverd)" value={u.title||''} onChange={e => setU({ title: e.target.value })} />
-                        <input className={`${iCls} ${iBdr}`} placeholder="Ondertitel (Direct leverbaar)" value={u.text||''} onChange={e => setU({ text: e.target.value })} />
+                      <div className="space-y-3">
+                        <select className={`${iCls} ${iBdr}`} value={u.icon || ['truck','shield','chat'][i] || 'chat'} onChange={e => setU({ icon: e.target.value })}>
+                          {ABOUT_ICON_OPTIONS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                        </select>
+                        <div className="grid grid-cols-2 gap-3">
+                          <input className={`${iCls} ${iBdr}`} placeholder="Titel (Snel geleverd)" value={u.title||''} onChange={e => setU({ title: e.target.value })} />
+                          <input className={`${iCls} ${iBdr}`} placeholder="Ondertitel (Direct leverbaar)" value={u.text||''} onChange={e => setU({ text: e.target.value })} />
+                        </div>
                       </div>
                     </ItemCard>
                   );
                 })}
-                <AddButton onClick={() => setAbout({ ...about, heroUsps: [...((about.heroUsps && about.heroUsps.length) ? about.heroUsps : DEFAULT_ABOUT_USPS), { title: '', text: '' }] })} label="Kenmerk toevoegen" />
+                <AddButton onClick={() => setAbout({ ...about, heroUsps: [...((about.heroUsps && about.heroUsps.length) ? about.heroUsps : DEFAULT_ABOUT_USPS), { icon: 'check', title: '', text: '' }] })} label="Kenmerk toevoegen" />
               </div>
             </Section>
 
