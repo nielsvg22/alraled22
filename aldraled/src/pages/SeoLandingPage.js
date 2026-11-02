@@ -7,6 +7,32 @@ import RichContent from '../components/RichContent';
 import CustomBlocks from '../components/CustomBlocks';
 import { getMediaUrl, API_URL, plainText } from '../lib/api';
 import RichText from '../components/RichText';
+import GROUP_DEFAULTS from '../lib/groupPages.json';
+import { getImageSrc, formatPrice } from '../lib/productHelpers';
+
+// Productgroep-pagina's hebben standaardteksten (overgenomen van de oude site); wat in het CRM is
+// ingevuld wint, lege velden vallen terug op de standaard.
+const mergeWithDefaults = (slug, data) => {
+  const defaults = GROUP_DEFAULTS[slug];
+  if (!defaults) return data;
+  const merged = { ...defaults };
+  Object.entries(data || {}).forEach(([k, v]) => {
+    const empty = v == null || v === '' || (Array.isArray(v) && v.length === 0);
+    if (!empty) merged[k] = v;
+  });
+  return merged;
+};
+
+// Video: YouTube/Vimeo-link wordt ingebed, een bestand (.mp4/.webm/upload) speelt direct af.
+export function videoEmbed(url) {
+  const u = String(url || '').trim();
+  if (!u) return null;
+  const yt = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/i);
+  if (yt) return { type: 'iframe', src: `https://www.youtube-nocookie.com/embed/${yt[1]}` };
+  const vm = u.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+  if (vm) return { type: 'iframe', src: `https://player.vimeo.com/video/${vm[1]}` };
+  return { type: 'file', src: getMediaUrl(u) };
+}
 
 function SeoLandingPage(props) {
   const params = useParams();
@@ -14,19 +40,40 @@ function SeoLandingPage(props) {
   const { i18n } = useTranslation();
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState([]);
+  const isGroup = Boolean(GROUP_DEFAULTS[slug]);
+
+  useEffect(() => {
+    if (!isGroup) return;
+    const words = (GROUP_DEFAULTS[slug].categoryMatch || []).map(w => w.toLowerCase());
+    axios.get(`${API_URL}/api/products`)
+      .then(res => {
+        const list = Array.isArray(res.data) ? res.data : [];
+        setProducts(list.filter(p => {
+          const hay = `${p.category || ''} ${p.name || ''}`.toLowerCase();
+          return words.some(w => hay.includes(w));
+        }));
+      })
+      .catch(() => setProducts([]));
+  }, [slug, isGroup]);
+
+  const applyPage = (data) => {
+    setPage(data);
+    if (data) {
+      document.title = data.seoTitle || `${slug.replace(/-/g, ' ')} | ALRA LED`;
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc && data.metaDescription) metaDesc.content = data.metaDescription;
+    }
+  };
 
   useEffect(() => {
     if (!slug) { setLoading(false); return; }
     const lang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
     axios.get(`${API_URL}/api/content/seo_page_${slug}`, { params: { lang } })
-      .then(res => {
-        setPage(res.data);
-        document.title = res.data?.seoTitle || `${slug.replace(/-/g, ' ')} | ALRA LED`;
-        const metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc && res.data?.metaDescription) metaDesc.content = res.data.metaDescription;
-      })
-      .catch(() => setPage(null))
+      .then(res => applyPage(mergeWithDefaults(slug, res.data)))
+      .catch(() => applyPage(GROUP_DEFAULTS[slug] ? mergeWithDefaults(slug, null) : null))
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, i18n.resolvedLanguage, i18n.language]);
 
   // Structured data JSON-LD
@@ -195,6 +242,55 @@ function SeoLandingPage(props) {
               value={page.content}
               legacy={(text) => text.split('\n\n').map((block, i) => renderContentBlock(block, i))}
             />
+          </div>
+        )}
+
+        {/* Specificaties */}
+        {page.specs && (
+          <div className="mt-12 bg-gray-50 rounded-3xl p-8 md:p-10">
+            {page.specsTitle && <h2 className="text-2xl font-black text-secondary mb-5">{page.specsTitle}</h2>}
+            <RichText as="div" value={page.specs} className="rich-description grid md:grid-cols-2 gap-x-10 text-gray-600" />
+          </div>
+        )}
+
+        {/* Afbeeldingen */}
+        {Array.isArray(page.images) && page.images.filter(Boolean).length > 0 && (
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {page.images.filter(Boolean).map((img, i) => (
+              <img key={i} src={getMediaUrl(img)} alt={page.title} className="w-full max-h-[32rem] object-contain rounded-2xl bg-gray-50" loading="lazy" decoding="async" />
+            ))}
+          </div>
+        )}
+
+        {/* Video's */}
+        {Array.isArray(page.videos) && page.videos.filter(Boolean).length > 0 && (
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {page.videos.filter(Boolean).map((url, i) => {
+              const v = videoEmbed(url);
+              if (!v) return null;
+              return v.type === 'iframe'
+                ? <div key={i} className="aspect-video rounded-2xl overflow-hidden bg-black"><iframe src={v.src} title={`${page.title} video ${i + 1}`} className="w-full h-full" allow="accelerometer; autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen loading="lazy" /></div>
+                : <video key={i} src={v.src} controls preload="metadata" className="w-full rounded-2xl bg-black" />;
+            })}
+          </div>
+        )}
+
+        {/* Producten uit deze groep */}
+        {isGroup && products.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-2xl font-black text-secondary mb-6">Producten</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {products.slice(0, 12).map(product => (
+                <Link key={product.id} to={ROUTES.product(product.id)} className="group block">
+                  <div className="aspect-square overflow-hidden rounded-xl bg-gray-100 mb-3">
+                    <img src={getImageSrc(product)} alt={product.name} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async" />
+                  </div>
+                  <p className="text-sm font-bold text-secondary leading-snug group-hover:text-primary transition-colors">{product.name}</p>
+                  <p className="text-sm font-black text-secondary mt-0.5">{formatPrice(product.price)} <span className="text-[10px] font-medium text-gray-400">excl. btw</span></p>
+                </Link>
+              ))}
+            </div>
+            <Link to={ROUTES.shop} className="inline-block mt-6 text-xs font-bold text-secondary hover:text-primary uppercase tracking-widest">Alle producten →</Link>
           </div>
         )}
 

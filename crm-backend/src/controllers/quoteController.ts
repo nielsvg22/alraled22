@@ -51,11 +51,11 @@ export const DEFAULT_DESIGN = {
     phone: '085-0021 606',
     email: 'info@alra-led.nl',
     website: 'www.alra-led.com',
-    kvk: '',
-    vatNumber: '',
-    bank: '',
+    kvk: '62609297',
+    vatNumber: 'NL854885821B01',
+    bank: 'NL26 RABO 0191 8676 24',
     bic: '',
-    logo: '/uploads/alra-led-logo.png',
+    logo: '/uploads/alra-led-logo-kleur.png',
   },
   texts: {
     docLabel: 'Offerte',
@@ -79,12 +79,24 @@ export const DEFAULT_DESIGN = {
   notes: '',
 };
 
+// Opgeslagen ontwerpen kunnen nog het oude (witte) logo of lege bedrijfsgegevens bevatten:
+// die vallen terug op de standaardwaarden zodat de offerte altijd compleet is.
+function withCompanyDefaults(company: any): typeof DEFAULT_DESIGN.company {
+  const merged: any = { ...DEFAULT_DESIGN.company, ...(company || {}) };
+  for (const key of ['kvk', 'vatNumber', 'bank'] as const) {
+    if (!String(merged[key] || '').trim()) merged[key] = (DEFAULT_DESIGN.company as any)[key];
+  }
+  const logo = String(merged.logo || '').trim();
+  if (!logo || /alra-led-logo\.png$/i.test(logo) || /diap/i.test(logo)) merged.logo = DEFAULT_DESIGN.company.logo;
+  return merged;
+}
+
 export async function getQuoteDesign(): Promise<typeof DEFAULT_DESIGN> {
   const stored = await getContent('quote_design') as typeof DEFAULT_DESIGN | null;
   if (!stored) return DEFAULT_DESIGN;
   return {
     colors: { ...DEFAULT_DESIGN.colors, ...stored.colors },
-    company: { ...DEFAULT_DESIGN.company, ...stored.company },
+    company: withCompanyDefaults(stored.company),
     texts: { ...DEFAULT_DESIGN.texts, ...stored.texts },
     notes: stored.notes || DEFAULT_DESIGN.notes,
   };
@@ -115,7 +127,7 @@ export const previewDesign = async (req: AuthRequest, res: Response) => {
       ...DEFAULT_DESIGN,
       ...body,
       colors: { ...DEFAULT_DESIGN.colors, ...body.colors },
-      company: { ...DEFAULT_DESIGN.company, ...body.company },
+      company: withCompanyDefaults(body.company),
       texts: { ...DEFAULT_DESIGN.texts, ...body.texts },
     };
     await generateQuotePdf(res, design, {

@@ -93,7 +93,7 @@ export default function DashboardLayout() {
     navigation.push({ name: 'Snelstart', href: '/snelstart', icon: Link2 });
     navigation.push({ name: 'Kortingscodes', href: '/discounts', icon: Ticket });
     navigation.push({ name: 'Juridisch', href: '/legal', icon: Scale });
-    navigation.push({ name: 'SEO Pagina\'s', href: '/seo', icon: Globe });
+    navigation.push({ name: 'Productgroepen & SEO', href: '/seo', icon: Globe });
     navigation.push({ name: 'Import', href: '/import', icon: Upload });
   }
 

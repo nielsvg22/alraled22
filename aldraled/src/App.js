@@ -32,7 +32,9 @@ const SeoLandingPage = lazy(() => import('./pages/SeoLandingPage'));
 
 // Adressen van de SEO-pagina's (beheerd in het CRM onder SEO Pagina's). React Router v6 kent geen
 // reguliere expressies in routes, dus elk adres krijgt een eigen route.
-const SEO_SLUGS = ['led-bouwlichtslang', 'professionele-bouwplaatsverlichting', 'led-lichtslang', 'bouwverlichting-huren', 'bedrijfswagenverlichting'];
+const SEO_SLUGS = ['led-bouwlichtslang', 'professionele-bouwplaatsverlichting', 'led-lichtslang', 'bouwverlichting-huren'];
+// Productgroep-pagina's (zelfde pagina-component; standaardtekst uit lib/groupPages.json, aanpasbaar in het CRM)
+const GROUP_SLUGS = ['lichtslangen', 'hefbrugverlichting', 'veiligheidsverlichting', 'bouwverlichting', 'bedrijfswagenverlichting'];
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Converts #rrggbb to "r g b" for CSS variable format Tailwind needs
@@ -138,7 +140,7 @@ function App() {
                       <Route path="/privacy-policy" element={<LegalPage />} />
                       <Route path="/retourbeleid" element={<LegalPage />} />
                       <Route path="/klachten" element={<LegalPage />} />
-                      {SEO_SLUGS.map((seoSlug) => (
+                      {[...SEO_SLUGS, ...GROUP_SLUGS].map((seoSlug) => (
                         <Route key={seoSlug} path={`/${seoSlug}`} element={<SeoLandingPage slug={seoSlug} />} />
                       ))}
                       <Route path="*" element={<NotFound />} />

@@ -7,7 +7,7 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { getMediaUrl, readCache, writeCache, preloadImage } from '../lib/api';
-import { ROUTES, shopWithCategory } from '../lib/routes';
+import { ROUTES, categoryLink } from '../lib/routes';
 import RichText from '../components/RichText';
 
 import { API_URL } from '../lib/config';
@@ -450,7 +450,7 @@ if (id === 'cases') {
                 const catImage = getMediaUrl(cat.imageUrl || cat.image);
                 const catTitle = cat.name || cat.title;
                 const catDesc = cat.description || cat.desc || '';
-                const catLink = cat.slug || cat.id ? shopWithCategory(cat) : ROUTES.shop;
+                const catLink = cat.link || categoryLink(cat);
 
                 return (
                   <Link key={cat.id || idx} to={catLink} className="group relative overflow-hidden rounded-2xl aspect-[4/3] block bg-gray-200">
