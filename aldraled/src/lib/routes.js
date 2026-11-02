@@ -32,6 +32,22 @@ export function shopWithCategory(cat) {
   return slug ? `${ROUTES.shop}?categorie=${encodeURIComponent(slug)}` : ROUTES.shop;
 }
 
+// Categorie → productgroep-pagina (op naam). Geen match: gewoon de shop met die categorie.
+const GROUP_PAGE_RULES = [
+  [/lichtslang/i, '/lichtslangen'],
+  [/hefbrug/i, '/hefbrugverlichting'],
+  [/bedrijfswagen|automotive/i, '/bedrijfswagenverlichting'],
+  [/veilig|verkeer/i, '/veiligheidsverlichting'],
+  [/bouw/i, '/bouwverlichting'],
+];
+
+export function categoryLink(cat) {
+  const name = String(cat?.name || cat?.title || cat?.slug || '');
+  const rule = GROUP_PAGE_RULES.find(([re]) => re.test(name));
+  if (rule) return rule[1];
+  return cat?.slug || cat?.id ? shopWithCategory(cat) : ROUTES.shop;
+}
+
 export const NAV_LINKS = [
   { to: ROUTES.home, labelKey: 'nav.home' },
   { to: ROUTES.about, labelKey: 'nav.about' },

@@ -56,7 +56,7 @@ function LiveSearch() {
   };
 
   return (
-    <div ref={wrapRef} className="relative w-full sm:w-64">
+    <div ref={wrapRef} className="relative w-full md:w-full sm:w-64">
       <div className="relative">
         <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -258,7 +258,7 @@ const Header = () => {
               onMouseEnter={() => { clearTimeout(closeTimeoutRef.current); setShowCategories(true); }}
               onMouseLeave={() => { closeTimeoutRef.current = setTimeout(() => { setShowCategories(false); setHoveredCategory(null); }, 150); }}>
               <Link to={ROUTES.shop}
-                className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 whitespace-nowrap ${isActive('/producten') ? 'text-primary bg-primary/5' : 'text-gray-600 hover:text-secondary hover:bg-gray-50'}`}>
+                className={`px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1 whitespace-nowrap border-2 ${isActive('/producten') ? 'bg-primary text-white border-primary' : 'text-primary border-primary/30 bg-primary/5 hover:bg-primary hover:text-white hover:border-primary'}`}>
                 {t('nav.products')}
                 <svg className={`w-3 h-3 transition-transform ${showCategories ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -268,7 +268,7 @@ const Header = () => {
           </ul>
 
           {/* Live search */}
-          <div className="hidden md:block flex-1 max-w-xs">
+          <div className="hidden md:block flex-1 max-w-[16rem] min-w-0">
             <LiveSearch />
           </div>
 
@@ -291,8 +291,12 @@ const Header = () => {
             </button>
 
             {/* CTA */}
-            <Link to={ROUTES.shop} className="hidden md:flex bg-secondary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary transition-all ml-1">
-              {t('nav.shopNow')}
+            {/* Leeg winkelmandje: naar de shop. Met producten: direct afrekenen. */}
+            <Link
+              to={cartCount > 0 ? ROUTES.checkout : ROUTES.shop}
+              className={`hidden md:flex items-center gap-1.5 text-white text-sm font-black px-4 py-2.5 rounded-full shadow-md shadow-primary/30 hover:shadow-lg hover:brightness-110 active:scale-95 transition-all ml-1 whitespace-nowrap ${cartCount > 0 ? 'bg-green-600' : 'bg-primary'}`}>
+              {cartCount > 0 ? `${t('nav.buyNow')} (${cartCount})` : t('nav.shopNow')}
+              <span aria-hidden="true">→</span>
             </Link>
 
             {/* Mobile hamburger */}

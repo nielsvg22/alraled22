@@ -330,8 +330,8 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
     const companyAddress = safeText(contact?.address) || safeText(general?.footerAddress) || '';
     const companyEmail = safeText(general?.footerEmail) || safeText(contact?.email) || '';
     const companyPhone = safeText(general?.footerPhone) || safeText(contact?.phone) || '';
-    const companyKvk = safeText(contact?.kvkValue) || '';
-    const companyVat = safeText(contact?.vatValue) || '';
+    const companyKvk = safeText(contact?.kvkValue) || '62609297';
+    const companyVat = safeText(contact?.vatValue) || 'NL854885821B01';
 
     const createdDate = new Date(order.createdAt);
     const invoiceDate = createdDate.toLocaleDateString('nl-NL');
@@ -377,12 +377,12 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
     const drawHeader = () => {
       const top = doc.page.margins.top;
       const headerY = top - 10;
-      doc.roundedRect(left, headerY, right - left, 86, 14).fill(surface);
-      doc.roundedRect(left, headerY, 8, 86, 4).fill(accent);
+      doc.roundedRect(left, headerY, right - left, 112, 14).fill(surface);
+      doc.roundedRect(left, headerY, 8, 112, 4).fill(accent);
 
       doc.fontSize(18).font('Helvetica-Bold').fillColor(ink).text(companyName, left + 18, headerY + 16, { width: 290 });
       doc.fontSize(10).font('Helvetica').fillColor(text);
-      const companyLines = [companyAddress, companyEmail, companyPhone, companyKvk ? `KvK: ${companyKvk}` : '', companyVat ? `BTW: ${companyVat}` : ''].filter(Boolean);
+      const companyLines = [companyAddress, companyEmail, companyPhone, [companyKvk ? `KvK: ${companyKvk}` : '', companyVat ? `BTW: ${companyVat}` : ''].filter(Boolean).join('  ·  '), 'IBAN: NL26 RABO 0191 8676 24'].filter(Boolean);
       doc.text(companyLines.join('\n'), left + 18, headerY + 40, { width: 290, lineGap: 2 });
 
       const boxW = 220;
@@ -393,7 +393,7 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
       doc.text(`Nr: ${invoiceNumber}`, boxX + 14, headerY + 42, { width: boxW - 28, align: 'right' });
       doc.text(`Datum: ${invoiceDate}`, boxX + 14, headerY + 54, { width: boxW - 28, align: 'right' });
 
-      return headerY + 96;
+      return headerY + 122;
     };
 
     const drawPartyBlocks = (yStart: number) => {
