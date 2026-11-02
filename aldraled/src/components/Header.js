@@ -277,35 +277,47 @@ const Header = () => {
           </Link>
 
           {/* Desktop nav */}
-          <ul className="hidden md:flex items-center gap-1.5">
-            {navLinks.map(({ to, label }) => (
-              <li key={to}>
-                <Link to={to}
-                  className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${isActive(to) ? 'text-primary bg-primary/5' : 'text-gray-600 hover:text-secondary hover:bg-gray-50'}`}>
-                  {label}
-                </Link>
-              </li>
+          <ul className="hidden md:flex items-center gap-0.5">
+            {navLinks.map(({ to, label }, idx) => (
+              <React.Fragment key={to}>
+                <li>
+                  <Link to={to}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${isActive(to) ? 'text-primary bg-primary/5' : 'text-gray-600 hover:text-secondary hover:bg-gray-50'}`}>
+                    {label}
+                  </Link>
+                </li>
+                {/* Producten: keuzemenu met de productgroepen (de webshop zelf staat apart, achteraan) */}
+                {idx === 1 && (
+                  <li className="relative"
+                    onMouseEnter={openMenu}
+                    onMouseLeave={closeMenuSoon}
+                    onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget) && !(menuRef.current && menuRef.current.contains(e.relatedTarget))) closeMenuSoon(); }}>
+                    <button type="button"
+                      aria-haspopup="true"
+                      aria-expanded={showCategories}
+                      onClick={() => (showCategories ? closeMenuNow() : openMenu())}
+                      onFocus={openMenu}
+                      onKeyDown={(e) => { if (e.key === 'ArrowDown') { e.preventDefault(); openMenu(); setTimeout(() => menuRef.current && menuRef.current.querySelector('[role=menuitem]') && menuRef.current.querySelector('[role=menuitem]').focus(), 30); } }}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${showCategories ? 'text-primary bg-primary/5' : 'text-gray-600 hover:text-secondary hover:bg-gray-50'}`}>
+                      {t('nav.products')}
+                      <svg className={`w-3 h-3 transition-transform ${showCategories ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </li>
+                )}
+              </React.Fragment>
             ))}
-            <li className="relative"
-              onMouseEnter={openMenu}
-              onMouseLeave={closeMenuSoon}
-              onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget) && !(menuRef.current && menuRef.current.contains(e.relatedTarget))) closeMenuSoon(); }}>
+            <li>
               <Link to={ROUTES.shop}
-                aria-haspopup="true"
-                aria-expanded={showCategories}
-                onFocus={openMenu}
-                onKeyDown={(e) => { if (e.key === 'ArrowDown') { e.preventDefault(); openMenu(); setTimeout(() => menuRef.current && menuRef.current.querySelector('[role=menuitem]') && menuRef.current.querySelector('[role=menuitem]').focus(), 30); } }}
-                className={`px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1 whitespace-nowrap border-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${isActive('/producten') || showCategories ? 'bg-primary text-white border-primary' : 'text-primary border-primary/30 bg-primary/5 hover:bg-primary hover:text-white hover:border-primary'}`}>
-                {t('nav.products')}
-                <svg className={`w-3 h-3 transition-transform ${showCategories ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                className={`px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center whitespace-nowrap border-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${isActive('/producten') ? 'bg-primary text-white border-primary' : 'text-primary border-primary/30 bg-primary/5 hover:bg-primary hover:text-white hover:border-primary'}`}>
+                {t('nav.shop')}
               </Link>
             </li>
           </ul>
 
           {/* Live search */}
-          <div className="hidden md:block flex-1 max-w-[16rem] min-w-0">
+          <div className="hidden md:block flex-1 max-w-[16rem] min-w-[7.5rem]">
             <LiveSearch />
           </div>
 
@@ -395,7 +407,7 @@ const Header = () => {
                   })}
                   <Link to={ROUTES.shop} role="menuitem" onClick={closeMenuNow}
                     className="flex items-center justify-between px-6 py-3 mt-1 border-t border-gray-100 text-[13px] font-bold text-gray-900 hover:text-primary hover:bg-gray-50 transition-colors focus:outline-none focus-visible:bg-primary/10">
-                    <span>Alle producten</span>
+                    <span>Naar de webshop</span>
                     <span aria-hidden="true">→</span>
                   </Link>
                 </div>
@@ -452,12 +464,12 @@ const Header = () => {
           <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-1">
             <Link to={ROUTES.shop}
               className={`block px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive('/producten') ? 'text-primary bg-primary/5' : 'text-gray-600 hover:bg-gray-50'}`}>
-              {t('nav.products')}
+              {t('nav.shop')}
             </Link>
             {categories.length > 0 && (
               <div className="py-2">
                 <div className="px-4 pb-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Categorieën</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('nav.products')}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 px-2">
                   {menuCategories.map(cat => (
