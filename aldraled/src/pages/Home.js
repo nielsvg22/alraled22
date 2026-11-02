@@ -248,10 +248,12 @@ const Home = () => {
 
           <div className="relative z-10 max-w-6xl mx-auto px-6 md:px-10 pb-20 pt-32 w-full">
             <div className="max-w-3xl space-y-6">
-              <span className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest" style={{ color: ACCENT_ON_DARK }}>
-                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: ACCENT_ON_DARK }} />
-                {intro.badge}
-              </span>
+              {hero.badge && (
+                <span className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest" style={{ color: ACCENT_ON_DARK }}>
+                  <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: ACCENT_ON_DARK }} />
+                  {hero.badge}
+                </span>
+              )}
 
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">
                 <span className="block">{hero.titlePrefix || 'Verlichting voor'}</span>
