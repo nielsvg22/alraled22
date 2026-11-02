@@ -104,7 +104,7 @@ export default function BlogDetail() {
             <img src={getMediaUrl(image)} alt={title} className="w-full max-h-[500px] object-cover" loading="lazy" decoding="async" />
           </div>
         ) : (
-          <div className="rounded-2xl bg-white border border-gray-100 flex items-center justify-center h-56 mb-10">
+          <div className="rounded-2xl bg-white border border-gray-100 flex items-center justify-center h-32 md:h-56 mb-6 md:mb-10">
             <img src={getMediaUrl('/uploads/alra-led-logo-kleur.png')} alt="ALRA LED Solutions" className="w-56 max-w-[60%] h-auto object-contain" loading="lazy" decoding="async" />
           </div>
         )}
@@ -113,11 +113,11 @@ export default function BlogDetail() {
         {body ? (
           <RichContent
             value={body}
-            className="text-gray-700 leading-[1.9] text-lg"
+            className="text-gray-700 leading-[1.7] text-base md:text-lg"
             legacy={(text) => (
               <div className="space-y-5">
                 {text.split('\n').filter(p => p.trim()).map((para, i) => (
-                  <p key={i} className="text-gray-700 leading-[1.9] text-lg">{para}</p>
+                  <p key={i} className="text-gray-700 leading-[1.7] text-base md:text-lg">{para}</p>
                 ))}
               </div>
             )}
