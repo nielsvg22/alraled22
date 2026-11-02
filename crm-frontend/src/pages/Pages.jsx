@@ -1048,6 +1048,16 @@ const GROOTHANDELS_DEFAULTS = {
   partnersEyebrow: 'Onze Groothandelspartners',
   partnersTitle: 'Landelijke dekking via sterke partners',
   partnersText: 'Onze producten zijn verkrijgbaar via een geselecteerd netwerk van professionele groothandels. Elke partner heeft een eigen specialisatie en regio waar ze marktleider zijn.',
+  benefitsEyebrow: 'Waarom ALRA?',
+  benefitsTitle: 'Uw voordelen als groothandelspartner',
+  benefits: [
+    { icon: '📦', title: 'Ruime voorraad', text: 'Direct leverbaar uit eigen magazijn\nGeen lange levertijden\nOok grotere aantallen mogelijk' },
+    { icon: '📋', title: 'Professioneel gemerkt', text: 'Alle producten CE, RoHS en/of TÜV gecertificeerd\nTechnische fiches beschikbaar\nMeertalige documentatie' },
+    { icon: '🤝', title: 'Samenwerken op maat', text: 'Scherpe inkoopcondities\nMarketingondersteuning\nTechnische training mogelijk' },
+  ],
+  ctaTitle: 'Klaar om samen te gaan?',
+  ctaText: 'Neem contact op voor een vrijblijvend gesprek over de mogelijkheden, condities en ons assortiment.',
+  ctaButton: 'Contact opnemen',
   partners: [
     { id: 'mastermate', name: 'Mastermate', description: 'Nederlands groothandelsnetwerk voor elektrotechnische materialen, verlichting en installatietechniek. Ruim 48 vestigingen landelijk.', website: 'https://www.mastermate.nl', logo: '/uploads/mastermate-logo.png' },
     { id: 'aic-visser', name: 'AIC Visser', description: 'Specialist in verlichting, elektromateriaal en installatietechniek. Drie vestigingen in Harderwijk, Assen en Veghel.', website: 'https://www.aic.nl', logo: '/uploads/aic-visser-logo.png' },
@@ -2152,6 +2162,53 @@ export default function Pages() {
                 <AddButton onClick={() => setGroothandels({ ...groothandels, partners:[...(groothandels.partners||[]),{ id:'', name:'', description:'', website:'', logo:'' }] })} label="Partner toevoegen" />
               </div>
               <p className="text-xs text-gray-400 mt-3">De vestigingen (verkooppunten) beheer je onder Verkooppunten in het menu.</p>
+            </Section>
+
+            <Section title={`Voordelen (${(groothandels.benefits||[]).length})`}>
+              <Field label="Label boven de titel">
+                <input className={`${iCls} ${iBdr}`} value={groothandels.benefitsEyebrow||''} onChange={e => setGroothandels({ ...groothandels, benefitsEyebrow:e.target.value })} />
+              </Field>
+              <Field label="Titel">
+                <input className={`${iCls} ${iBdr}`} value={groothandels.benefitsTitle||''} onChange={e => setGroothandels({ ...groothandels, benefitsTitle:e.target.value })} />
+              </Field>
+              <div className="space-y-2">
+                {(groothandels.benefits||[]).map((bn, i) => {
+                  const setB = (patch) => { const a=[...(groothandels.benefits||[])]; a[i]={...a[i],...patch}; setGroothandels({ ...groothandels, benefits:a }); };
+                  return (
+                    <ItemCard key={i} number={i}
+                      onDelete={() => setGroothandels({ ...groothandels, benefits:(groothandels.benefits||[]).filter((_,j)=>j!==i) })}>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-3 gap-3">
+                          <Field label="Icoon (emoji)">
+                            <input className={`${iCls} ${iBdr}`} value={bn.icon||''} onChange={e => setB({ icon:e.target.value })} />
+                          </Field>
+                          <div className="col-span-2">
+                            <Field label="Titel">
+                              <input className={`${iCls} ${iBdr}`} value={bn.title||''} onChange={e => setB({ title:e.target.value })} />
+                            </Field>
+                          </div>
+                        </div>
+                        <Field label="Punten" hint="Eén punt per regel.">
+                          <textarea className={`${taCls} ${iBdr}`} rows={4} value={bn.text||''} onChange={e => setB({ text:e.target.value })} />
+                        </Field>
+                      </div>
+                    </ItemCard>
+                  );
+                })}
+                <AddButton onClick={() => setGroothandels({ ...groothandels, benefits:[...(groothandels.benefits||[]),{ icon:'✅', title:'', text:'' }] })} label="Voordeel toevoegen" />
+              </div>
+            </Section>
+
+            <Section title="Afsluitend blok (Klaar om samen te gaan?)">
+              <Field label="Titel">
+                <input className={`${iCls} ${iBdr}`} value={groothandels.ctaTitle||''} onChange={e => setGroothandels({ ...groothandels, ctaTitle:e.target.value })} />
+              </Field>
+              <Field label="Tekst">
+                <RichTextEditor minHeight="6rem" value={groothandels.ctaText||''} onChange={html => setGroothandels({ ...groothandels, ctaText:html })} />
+              </Field>
+              <Field label="Knoptekst">
+                <input className={`${iCls} ${iBdr}`} value={groothandels.ctaButton||''} onChange={e => setGroothandels({ ...groothandels, ctaButton:e.target.value })} />
+              </Field>
             </Section>
 
             <SaveButton onSave={() => save('groothandels', groothandels)} saving={saving} saved={saved} />

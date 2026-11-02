@@ -50,7 +50,19 @@ const DEFAULT_PAGE = {
   partnersEyebrow: 'Onze Groothandelspartners',
   partnersTitle: 'Landelijke dekking via sterke partners',
   partnersText: 'Onze producten zijn verkrijgbaar via een geselecteerd netwerk van professionele groothandels. Elke partner heeft een eigen specialisatie en regio waar ze marktleider zijn.',
+  benefitsEyebrow: 'Waarom ALRA?',
+  benefitsTitle: 'Uw voordelen als groothandelspartner',
+  ctaTitle: 'Klaar om samen te gaan?',
+  ctaText: 'Neem contact op voor een vrijblijvend gesprek over de mogelijkheden, condities en ons assortiment.',
+  ctaButton: 'Contact opnemen',
 };
+
+// Voordelen-kaarten: de punten staan per regel (zo bewerk je ze in het CRM)
+const DEFAULT_BENEFITS = [
+  { icon: '📦', title: 'Ruime voorraad', text: 'Direct leverbaar uit eigen magazijn\nGeen lange levertijden\nOok grotere aantallen mogelijk' },
+  { icon: '📋', title: 'Professioneel gemerkt', text: 'Alle producten CE, RoHS en/of TÜV gecertificeerd\nTechnische fiches beschikbaar\nMeertalige documentatie' },
+  { icon: '🤝', title: 'Samenwerken op maat', text: 'Scherpe inkoopcondities\nMarketingondersteuning\nTechnische training mogelijk' },
+];
 
 const DEALERS_PREVIEW = 12;
 
@@ -58,6 +70,7 @@ const Groothandels = () => {
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(DEFAULT_PAGE);
   const [cmsPartners, setCmsPartners] = useState(null);
+  const [benefits, setBenefits] = useState(DEFAULT_BENEFITS);
   const [dealers, setDealers] = useState(DEFAULT_DEALERS);
   const [blocks, setBlocks] = useState([]);
   const [dealerBrand, setDealerBrand] = useState('Alle');
@@ -81,6 +94,7 @@ const Groothandels = () => {
         const d = res.data || {};
         setPage({ ...DEFAULT_PAGE, ...Object.fromEntries(Object.entries(d).filter(([k, v]) => k in DEFAULT_PAGE && typeof v === 'string' && v.trim())) });
         if (Array.isArray(d.partners) && d.partners.length > 0) setCmsPartners(d.partners);
+        if (Array.isArray(d.benefits) && d.benefits.length > 0) setBenefits(d.benefits);
       })
       .catch(() => {});
     axios.get(`${API_URL}/api/content/dealers`)
@@ -297,21 +311,17 @@ const Groothandels = () => {
       <section className="py-16 lg:py-24 px-6 md:px-10 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2">Waarom ALRA?</p>
-            <h2 className="text-3xl md:text-4xl font-black text-secondary">Uw voordelen als groothandelspartner</h2>
+            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2">{page.benefitsEyebrow}</p>
+            <h2 className="text-3xl md:text-4xl font-black text-secondary">{page.benefitsTitle}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { icon: '📦', title: 'Ruime voorraad', items: ['Direct leverbaar uit eigen magazijn', 'Geen lange levertijden', 'Ook grotere aantallen mogelijk'] },
-              { icon: '📋', title: 'Professioneel gemerkt', items: ['Alle producten CE, RoHS en/of TÜV gecertificeerd', 'Technische fiches beschikbaar', 'Meertalige documentatie'] },
-              { icon: '🤝', title: 'Samenwerken op maat', items: ['Scherpe inkoopcondities', 'Marketingondersteuning', 'Technische training mogelijk'] },
-            ].map((benefit, i) => (
+            {benefits.map((benefit, i) => (
               <div key={i} className="bg-gray-50 rounded-2xl p-8 border border-gray-100">
                 <div className="text-5xl mb-4">{benefit.icon}</div>
                 <h3 className="text-xl font-black text-secondary mb-4">{benefit.title}</h3>
                 <ul className="space-y-2">
-                  {benefit.items.map((item, j) => (
+                  {String(benefit.text || '').split('\n').map(t => t.trim()).filter(Boolean).map((item, j) => (
                     <li key={j} className="flex items-center gap-2 text-gray-600 text-sm">
                       <span className="w-1.5 h-1.5 bg-primary rounded-full flex-shrink-0 mt-1.5" />
                       {item}
@@ -330,13 +340,11 @@ const Groothandels = () => {
       <section className="py-16 lg:py-24 px-6 md:px-10 bg-secondary">
         <div className="max-w-3xl mx-auto text-center space-y-8">
           <h2 className="text-3xl md:text-4xl font-black text-white leading-tight">
-            Klaar om samen te gaan?
+            {page.ctaTitle}
           </h2>
-          <p className="text-white/60 text-lg leading-relaxed">
-            Neem contact op voor een vrijblijvend gesprek over de mogelijkheden, condities en ons assortiment.
-          </p>
+          <RichText value={page.ctaText} className="text-white/60 text-lg leading-relaxed" />
           <Link to={ROUTES.contact} className="inline-flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
-            Contact opnemen <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+            {page.ctaButton} <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
           </Link>
         </div>
       </section>
