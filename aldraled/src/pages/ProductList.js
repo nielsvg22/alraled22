@@ -6,6 +6,7 @@ import { API_URL, getMediaUrl, readCache, writeCache, preloadImage, plainText } 
 import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
 import { ROUTES } from '../lib/routes';
+import RichText from '../components/RichText';
 
 /* ── LINE ICONS (inline SVG, geen extra dependency) ───────── */
 const Icon = ({ className = 'w-4 h-4', children }) => (
@@ -627,7 +628,7 @@ const ProductList = () => {
             {shopHero.title}<br />
             <span className="text-accent">{shopHero.titleAccent}</span>
           </h1>
-          <p className="text-white/70 text-sm md:text-base mt-2 max-w-xl">{shopHero.subtitle}</p>
+          <RichText value={shopHero.subtitle} className="text-white/70 text-sm md:text-base mt-2 max-w-xl" />
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-7 max-w-3xl">
             {shopHero.usps.map((usp, i) => {

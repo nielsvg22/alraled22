@@ -5,7 +5,8 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import RichContent from '../components/RichContent';
 import CustomBlocks from '../components/CustomBlocks';
-import { getMediaUrl, API_URL } from '../lib/api';
+import { getMediaUrl, API_URL, plainText } from '../lib/api';
+import RichText from '../components/RichText';
 
 function SeoLandingPage(props) {
   const params = useParams();
@@ -52,7 +53,7 @@ function SeoLandingPage(props) {
         mainEntity: page.faq.map(item => ({
           '@type': 'Question',
           name: item.question,
-          acceptedAnswer: { '@type': 'Answer', text: item.answer },
+          acceptedAnswer: { '@type': 'Answer', text: plainText(item.answer) },
         })),
       });
     }
@@ -217,7 +218,7 @@ function SeoLandingPage(props) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </summary>
-                  <div className="px-6 pb-4 text-sm text-gray-500 leading-relaxed">{item.answer}</div>
+                  <RichText as="div" value={item.answer} className="px-6 pb-4 text-sm text-gray-500 leading-relaxed" />
                 </details>
               ))}
             </div>

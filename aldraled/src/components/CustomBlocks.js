@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
 import { getMediaUrl, isRichBlock, sanitizeRich } from '../lib/api';
+import RichText from './RichText';
 
 /* ─────────────────────────────────────────────────────────
    Shared high-end block renderer — used by Home, About,
@@ -57,9 +58,7 @@ function BannerBlock({ data }) {
           {data.heading}
         </h2>
         {data.subtext && (
-          <p className="text-lg opacity-75 max-w-2xl mx-auto font-light leading-relaxed">
-            {data.subtext}
-          </p>
+          <RichText value={data.subtext} className="text-lg opacity-75 max-w-2xl mx-auto font-light leading-relaxed" />
         )}
         {data.buttonText && (
           <div className="pt-2">
@@ -121,7 +120,7 @@ function FeatureGrid({ data }) {
                 {item.icon}
               </div>
               <h3 className="font-bold text-gray-900 text-lg mb-2">{item.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{item.description}</p>
+              <RichText value={item.description} className="text-sm text-gray-500 leading-relaxed" />
             </div>
           ))}
         </div>
@@ -183,7 +182,7 @@ function CtaBlock({ data }) {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgb(var(--color-primary)/0.08),_transparent_60%)]" />
       <div className="relative max-w-3xl mx-auto text-center space-y-5">
         <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">{data.heading}</h2>
-        {data.subtext && <p className="text-white/50 text-lg font-light">{data.subtext}</p>}
+        <RichText value={data.subtext} className="text-white/50 text-lg font-light" />
         <div className="flex flex-wrap justify-center gap-4 pt-3">
           {data.primaryButton && (
             <Link to={ROUTES.contact}
@@ -226,7 +225,7 @@ function StepsBlock({ data }) {
                   {step.number}
                 </div>
                 <h3 className="font-bold text-gray-900 mb-2">{step.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{step.description}</p>
+                <RichText value={step.description} className="text-sm text-gray-500 leading-relaxed" />
               </div>
             ))}
           </div>

@@ -167,9 +167,9 @@ export default function SeoPages() {
                     faq[i] = { ...faq[i], question: e.target.value };
                     updatePage({ faq });
                   }} />
-                  <textarea className={taCls} rows={3} placeholder="Antwoord" value={item.answer} onChange={e => {
+                  <RichTextEditor minHeight="6rem" value={item.answer || ''} onChange={html => {
                     const faq = [...(page.faq || [])];
-                    faq[i] = { ...faq[i], answer: e.target.value };
+                    faq[i] = { ...faq[i], answer: html };
                     updatePage({ faq });
                   }} />
                 </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import RichTextEditor from '../components/RichTextEditor';
 import api, { getMediaUrl } from '../lib/api';
 import { Plus, Edit, Trash2, Save, X, Loader2, Tag, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -262,9 +263,7 @@ export default function Categories() {
 
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1.5">Beschrijving</label>
-                <textarea value={formData.description} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                  rows={3} placeholder="Optionele beschrijving van de categorie" />
+                <RichTextEditor minHeight="7rem" value={formData.description || ''} onChange={html => setFormData(f => ({ ...f, description: html }))} />
               </div>
 
               <div>
