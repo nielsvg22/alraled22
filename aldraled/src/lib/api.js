@@ -53,8 +53,11 @@ export const htmlToText = (html) => {
 // Opgemaakte omschrijving (HTML uit de CRM-editor) veilig maken voor weergave.
 export const isRichHtml = (value) => /<\/?(p|br|ul|ol|li|strong|em|b|i|u|h[1-6]|a)\b/i.test(String(value || ''));
 
+// Opgemaakte tekst uit de CRM-editor (met alinea's, lijsten, koppen of tabellen)
+export const isRichBlock = (value) => /<(p|ul|ol|li|h[1-6]|table)\b/i.test(String(value || ''));
+
 export const sanitizeRich = (html) => DOMPurify.sanitize(String(html || ''), {
-  ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'ul', 'ol', 'li', 'a'],
+  ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'ul', 'ol', 'li', 'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td'],
   ALLOWED_ATTR: ['href', 'target', 'rel'],
   ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|tel:)/i,
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
-import { getMediaUrl } from '../lib/api';
+import { getMediaUrl, isRichBlock, sanitizeRich } from '../lib/api';
 
 /* ─────────────────────────────────────────────────────────
    Shared high-end block renderer — used by Home, About,
@@ -21,6 +21,10 @@ function splitParagraphs(text) {
 }
 
 function Paragraphs({ text, className = '', align = 'text-left', space = 'space-y-5' }) {
+  // Opgemaakte tekst uit de CRM-editor
+  if (isRichBlock(text)) {
+    return <div className={`rich-description ${className} ${align} leading-relaxed`} dangerouslySetInnerHTML={{ __html: sanitizeRich(text) }} />;
+  }
   const paragraphs = splitParagraphs(text);
   if (paragraphs.length <= 1) {
     return <p className={`${className} ${align} leading-relaxed`}>{text}</p>;

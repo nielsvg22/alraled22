@@ -28,6 +28,10 @@ const Groothandels = lazy(() => import('./pages/Groothandels'));
 const Returns = lazy(() => import('./pages/Returns'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 const SeoLandingPage = lazy(() => import('./pages/SeoLandingPage'));
+
+// Adressen van de SEO-pagina's (beheerd in het CRM onder SEO Pagina's). React Router v6 kent geen
+// reguliere expressies in routes, dus elk adres krijgt een eigen route.
+const SEO_SLUGS = ['led-bouwlichtslang', 'professionele-bouwplaatsverlichting', 'led-lichtslang', 'bouwverlichting-huren', 'bedrijfswagenverlichting'];
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -135,7 +139,9 @@ function App() {
                       <Route path="/privacy-policy" element={<LegalPage />} />
                       <Route path="/retourbeleid" element={<LegalPage />} />
                       <Route path="/klachten" element={<LegalPage />} />
-                      <Route path="/:slug(led-bouwlichtslang|professionele-bouwplaatsverlichting|led-lichtslang|bouwverlichting-huren|bedrijfswagenverlichting)" element={<SeoLandingPage />} />
+                      {SEO_SLUGS.map((seoSlug) => (
+                        <Route key={seoSlug} path={`/${seoSlug}`} element={<SeoLandingPage slug={seoSlug} />} />
+                      ))}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>

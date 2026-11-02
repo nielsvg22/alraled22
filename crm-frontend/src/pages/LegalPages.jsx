@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import { Save, CheckCircle, FileText, Shield, RotateCcw, AlertTriangle } from 'lucide-react';
+import RichTextEditor from '../components/RichTextEditor';
 
 const iCls = 'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white';
 const taCls = 'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none bg-white';
@@ -82,10 +83,9 @@ export default function LegalPages() {
                   placeholder={`${label} titel`} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1.5">Inhoud (Markdown of HTML)</label>
-                <textarea className={taCls} rows={15} value={page.content || ''}
-                  onChange={e => setPages(p => ({ ...p, [key]: { ...p[key], content: e.target.value } }))}
-                  placeholder="Voeg hier de inhoud toe..." />
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1.5">Inhoud</label>
+                <RichTextEditor minHeight="24rem" value={page.content || ''}
+                  onChange={html => setPages(p => ({ ...p, [key]: { ...p[key], content: html } }))} />
               </div>
             </div>
           </div>

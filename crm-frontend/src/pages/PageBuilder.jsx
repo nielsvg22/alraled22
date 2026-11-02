@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api, { getMediaUrl } from '../lib/api';
 import ImageUploader from '../components/ImageUploader';
+import RichTextEditor from '../components/RichTextEditor';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -276,7 +277,7 @@ const SCHEMAS = {
   ],
   text_block:   [
     { key: 'heading', type: 'text',     label: 'Koptekst' },
-    { key: 'body',    type: 'textarea', label: 'Tekst', rows: 6 },
+    { key: 'body',    type: 'richtext', label: 'Tekst', minHeight: '12rem' },
   ],
   feature_grid: [
     { key: 'heading', type: 'text', label: 'Sectietitel' },
@@ -288,14 +289,14 @@ const SCHEMAS = {
   ],
   image_text:   [
     { key: 'heading',       type: 'text',     label: 'Koptekst' },
-    { key: 'body',          type: 'textarea', label: 'Tekst', rows: 4 },
+    { key: 'body',          type: 'richtext', label: 'Tekst' },
     { key: 'imageUrl',      type: 'image',    label: 'Afbeelding' },
     { key: 'imagePosition', type: 'select',   label: 'Afbeeldingspositie', options: ['left', 'right'] },
   ],
   product_highlight: [
     { key: 'label',         type: 'text',     label: 'Label (bv. Productgroep)' },
     { key: 'heading',       type: 'text',     label: 'Producttitel' },
-    { key: 'body',          type: 'textarea', label: 'Beschrijving', rows: 4 },
+    { key: 'body',          type: 'richtext', label: 'Beschrijving' },
     { key: 'imageUrl',      type: 'image',    label: 'Productafbeelding' },
     { key: 'imagePosition', type: 'select',   label: 'Afbeeldingspositie', options: ['left', 'right'] },
     { key: 'badge',         type: 'text',     label: 'Badge tekst (bv. NIEUW)' },
@@ -308,7 +309,7 @@ const SCHEMAS = {
   about_alra: [
     { key: 'badge',         type: 'text',     label: 'Badge (bv. Over ALRA LED)' },
     { key: 'heading',       type: 'text',     label: 'Koptekst' },
-    { key: 'body',          type: 'textarea', label: 'Beschrijving', rows: 5 },
+    { key: 'body',          type: 'richtext', label: 'Beschrijving' },
     { key: 'imageUrl',      type: 'image',    label: 'Afbeelding' },
     { key: 'imagePosition', type: 'select',   label: 'Afbeeldingspositie', options: ['left', 'right'] },
     { key: 'features',      type: 'array',    label: 'Voordelen / kenmerken', subfields: [
@@ -342,7 +343,7 @@ const SCHEMAS = {
   blog_post:    [
     { key: 'title',    type: 'text',     label: 'Titel' },
     { key: 'excerpt',  type: 'textarea', label: 'Samenvatting', rows: 3 },
-    { key: 'content',  type: 'textarea', label: 'Volledige inhoud', rows: 8 },
+    { key: 'content',  type: 'richtext', label: 'Volledige inhoud', minHeight: '18rem' },
     { key: 'imageUrl', type: 'image',    label: 'Omslagfoto' },
     { key: 'author',   type: 'text',     label: 'Auteur' },
     { key: 'date',     type: 'text',     label: 'Datum (bv. 10 maart 2026)' },
@@ -365,6 +366,9 @@ function FieldInput({ field, value, onChange }) {
     <select value={value || ''} onChange={e => onChange(e.target.value)} className={cls}>
       {(field.options || []).map(o => <option key={o} value={o}>{o}</option>)}
     </select>
+  );
+  if (field.type === 'richtext') return (
+    <RichTextEditor value={value || ''} onChange={onChange} minHeight={field.minHeight || '10rem'} />
   );
   if (field.type === 'textarea') return (
     <textarea value={value || ''} onChange={e => onChange(e.target.value)}

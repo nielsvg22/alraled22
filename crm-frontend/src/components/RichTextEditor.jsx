@@ -1,18 +1,42 @@
 import React, { useEffect } from 'react';
 import { useEditor, EditorContent, useEditorState } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, Heading2, Heading3, Link2, Link2Off, Undo2, Redo2, RemoveFormatting } from 'lucide-react';
+import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
+import { Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, Heading2, Heading3, Link2, Link2Off, Undo2, Redo2, RemoveFormatting, Table2 } from 'lucide-react';
 
-// Oudere omschrijvingen zijn platte tekst (met eventueel **vet**): omzetten naar HTML voor de editor.
+// Oudere teksten zijn platte tekst, soms met eenvoudige markdown (## kop, - lijst, **vet**, | tabel |).
+// Die zetten we om naar HTML voor de editor.
 const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const inline = (s) => escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
 export function toEditorHtml(value) {
   const v = value || '';
   if (/<\/?[a-z][^>]*>/i.test(v)) return v;
-  return v
-    .split(/\n+/)
-    .filter((l) => l.trim())
-    .map((l) => `<p>${escapeHtml(l).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</p>`)
-    .join('');
+  const blocks = v.split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
+  const out = [];
+  for (const block of blocks) {
+    const lines = block.split('\n').map((l) => l.trim()).filter(Boolean);
+    if (lines[0].startsWith('|') && lines.length > 1) {
+      const cells = (l) => l.split('|').filter((c) => c.trim() !== '').map((c) => c.trim());
+      const hasSep = lines[1] && /^[\s|:-]+$/.test(lines[1]);
+      const head = cells(lines[0]);
+      const body = (hasSep ? lines.slice(2) : lines.slice(1)).map(cells);
+      out.push(`<table><tbody><tr>${head.map((c) => `<th>${inline(c)}</th>`).join('')}</tr>${body.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
+    } else if (/^#{1,2}\s/.test(lines[0])) {
+      out.push(`<h2>${inline(lines[0].replace(/^#+\s*/, ''))}</h2>`);
+      if (lines.length > 1) out.push(...lines.slice(1).map((l) => `<p>${inline(l)}</p>`));
+    } else if (/^#{3,}\s/.test(lines[0])) {
+      out.push(`<h3>${inline(lines[0].replace(/^#+\s*/, ''))}</h3>`);
+      if (lines.length > 1) out.push(...lines.slice(1).map((l) => `<p>${inline(l)}</p>`));
+    } else if (lines.every((l) => /^[-*]\s/.test(l))) {
+      out.push(`<ul>${lines.map((l) => `<li><p>${inline(l.replace(/^[-*]\s/, ''))}</p></li>`).join('')}</ul>`);
+    } else if (lines.every((l) => /^\d+[.)]\s/.test(l))) {
+      out.push(`<ol>${lines.map((l) => `<li><p>${inline(l.replace(/^\d+[.)]\s/, ''))}</p></li>`).join('')}</ol>`);
+    } else {
+      out.push(...lines.map((l) => `<p>${inline(l)}</p>`));
+    }
+  }
+  return out.join('');
 }
 
 const Btn = ({ onClick, active, disabled, title, children }) => (
@@ -31,13 +55,14 @@ const Btn = ({ onClick, active, disabled, title, children }) => (
 
 const Sep = () => <span className="w-px h-5 bg-gray-200 mx-1" />;
 
-export default function RichTextEditor({ value, onChange, minHeight = '14rem' }) {
+export default function RichTextEditor({ value, onChange, minHeight = '14rem', tables = false }) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [2, 3] },
         link: { openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } },
       }),
+      ...(tables ? [Table.configure({ resizable: false }), TableRow, TableHeader, TableCell] : []),
     ],
     content: toEditorHtml(value),
     editorProps: {
@@ -64,7 +89,7 @@ export default function RichTextEditor({ value, onChange, minHeight = '14rem' })
       bold: ed.isActive('bold'), italic: ed.isActive('italic'), underline: ed.isActive('underline'),
       h2: ed.isActive('heading', { level: 2 }), h3: ed.isActive('heading', { level: 3 }),
       bullet: ed.isActive('bulletList'), ordered: ed.isActive('orderedList'), link: ed.isActive('link'),
-      canUndo: ed.can().undo(), canRedo: ed.can().redo(),
+      canUndo: ed.can().undo(), canRedo: ed.can().redo(), table: ed.isActive('table'),
     }),
   }) || {};
 
@@ -99,6 +124,17 @@ export default function RichTextEditor({ value, onChange, minHeight = '14rem' })
         <Sep />
         <Btn title="Link toevoegen of wijzigen" active={state.link} onClick={setLink}><Link2 size={15} /></Btn>
         <Btn title="Link verwijderen" disabled={!state.link} onClick={() => editor.chain().focus().extendMarkRange('link').unsetLink().run()}><Link2Off size={15} /></Btn>
+        {tables && (<>
+          <Sep />
+          <Btn title="Tabel invoegen (3 x 3)" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><Table2 size={15} /></Btn>
+          {state.table && (<>
+            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().addRowAfter().run()} className="px-2 h-8 rounded-lg text-[11px] font-bold text-gray-600 hover:bg-gray-100">+ rij</button>
+            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().addColumnAfter().run()} className="px-2 h-8 rounded-lg text-[11px] font-bold text-gray-600 hover:bg-gray-100">+ kolom</button>
+            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().deleteRow().run()} className="px-2 h-8 rounded-lg text-[11px] font-bold text-gray-600 hover:bg-gray-100">- rij</button>
+            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().deleteColumn().run()} className="px-2 h-8 rounded-lg text-[11px] font-bold text-gray-600 hover:bg-gray-100">- kolom</button>
+            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().deleteTable().run()} className="px-2 h-8 rounded-lg text-[11px] font-bold text-red-500 hover:bg-red-50">tabel weg</button>
+          </>)}
+        </>)}
         <Sep />
         <Btn title="Opmaak wissen" onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}><RemoveFormatting size={15} /></Btn>
       </div>

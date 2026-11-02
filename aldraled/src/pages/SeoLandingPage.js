@@ -3,11 +3,13 @@ import { useParams, Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import RichContent from '../components/RichContent';
 import CustomBlocks from '../components/CustomBlocks';
 import { getMediaUrl, API_URL } from '../lib/api';
 
-function SeoLandingPage() {
-  const { slug } = useParams();
+function SeoLandingPage(props) {
+  const params = useParams();
+  const slug = props.slug || params.slug;
   const { i18n } = useTranslation();
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -188,7 +190,10 @@ function SeoLandingPage() {
       <div className="max-w-6xl mx-auto px-6 md:px-10 py-8">
         {page.content && (
           <div className="prose prose-lg max-w-none text-gray-600 leading-relaxed">
-            {page.content.split('\n\n').map((block, i) => renderContentBlock(block, i))}
+            <RichContent
+              value={page.content}
+              legacy={(text) => text.split('\n\n').map((block, i) => renderContentBlock(block, i))}
+            />
           </div>
         )}
 
