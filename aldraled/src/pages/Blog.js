@@ -4,6 +4,9 @@ import { ROUTES } from "../lib/routes";
 import axios from 'axios';
 import { getMediaUrl, API_URL, plainText } from '../lib/api';
 
+// Geen omslagfoto gekozen: het ALRA-logo als placeholder
+const LOGO_PLACEHOLDER = '/uploads/alra-led-logo-kleur.png';
+
 function readTime(text = '') {
   return Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 200));
 }
@@ -14,7 +17,6 @@ function GridPost({ block, index }) {
   const excerpt = plainText(data.excerpt || data.body  || '');
   const image   = data.imageUrl;
   const author  = data.author || 'ALRA LED';
-  const num     = String(index + 1).padStart(2, '0');
 
   return (
     <Link to={ROUTES.blogPost(id)} className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
@@ -27,7 +29,7 @@ function GridPost({ block, index }) {
         </div>
       ) : (
         <div className="h-48 shrink-0 flex items-center justify-center bg-gray-50 relative overflow-hidden">
-          <span className="text-5xl opacity-10 font-black text-gray-400">{num}</span>
+          <img src={getMediaUrl(LOGO_PLACEHOLDER)} alt="ALRA LED Solutions" className="w-40 max-w-[60%] h-auto object-contain opacity-80" loading="lazy" decoding="async" />
           <div className="absolute bottom-0 left-0 h-0.5 w-0 group-hover:w-full bg-primary transition-all duration-500" />
         </div>
       )}
