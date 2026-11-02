@@ -6,7 +6,7 @@ import { API_URL, getMediaUrl } from '../lib/api';
 import { ROUTES } from '../lib/routes';
 import CustomBlocks from '../components/CustomBlocks';
 
-const B = '#0B67D8';
+const B = 'rgb(var(--color-primary))';
 
 const HERO_IMG = '';
 // OpenStreetMap embed voor Dijkgraafweg 4a, 7336 AT Apeldoorn (ALRA kantoor)
@@ -71,7 +71,7 @@ const IconBuilding = (p) => <Ic {...p}><rect x="4" y="2" width="16" height="20" 
 
 const Eyebrow = ({ children, light }) => (
   <span className={`inline-flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.25em] ${light ? 'text-white/80' : 'text-primary'}`}>
-    <span className={`h-px w-8 ${light ? 'bg-white/40' : 'bg-[#0B67D8]'}`} />
+    <span className={`h-px w-8 ${light ? 'bg-white/40' : 'bg-primary'}`} />
     {children}
   </span>
 );
@@ -94,7 +94,7 @@ const InputField = ({ id, label, type = 'text', placeholder, value, onChange, er
       onChange={onChange}
       required={required}
       aria-invalid={!!error || undefined}
-      className={`w-full bg-white border rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-colors ${error ? 'border-red-400 focus:border-red-500' : 'border-[#E4EAF1] focus:border-[#0B67D8]'}`}
+      className={`w-full bg-white border rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-colors ${error ? 'border-red-400 focus:border-red-500' : 'border-[#E4EAF1] focus:border-primary'}`}
     />
     {error && <p className="text-red-500 text-[11px] font-medium mt-0.5" role="alert">{error}</p>}
   </div>
@@ -197,10 +197,10 @@ const Contact = () => {
             <h1 className="text-[clamp(2.1rem,4.8vw,4.4rem)] font-extrabold leading-[1.04] tracking-tight text-secondary">{info.title}</h1>
             <p className="text-[17px] leading-relaxed text-slate-500 max-w-lg">{info.description}</p>
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <a href="#contact-form" className="inline-flex items-center justify-center gap-2 bg-[#0B67D8] text-white font-bold text-sm px-7 py-3.5 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-[#0B67D8]/25">
+              <a href="#contact-form" className="inline-flex items-center justify-center gap-2 bg-primary text-white font-bold text-sm px-7 py-3.5 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-primary/25">
                 Stuur een bericht <IconArrow className="w-4 h-4" />
               </a>
-              <a href={`tel:${info.phone.replace(/[^+\d]/g, '')}`} className="inline-flex items-center justify-center gap-2 border border-slate-200 text-secondary font-bold text-sm px-7 py-3.5 rounded-[10px] bg-white hover:border-[#0B67D8]/40 hover:text-[#0B67D8] transition-all">
+              <a href={`tel:${info.phone.replace(/[^+\d]/g, '')}`} className="inline-flex items-center justify-center gap-2 border border-slate-200 text-secondary font-bold text-sm px-7 py-3.5 rounded-[10px] bg-white hover:border-primary/40 hover:text-primary transition-all">
                 Bel direct
               </a>
             </div>
@@ -230,7 +230,7 @@ const Contact = () => {
                   </span>
                   <div className="min-w-0">
                     <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{card.label}</p>
-                    <p className={`text-[15px] font-bold leading-snug mt-1 ${card.href ? 'group-hover:text-[#0B67D8] transition-colors text-secondary' : 'text-secondary'}`}>
+                    <p className={`text-[15px] font-bold leading-snug mt-1 ${card.href ? 'group-hover:text-primary transition-colors text-secondary' : 'text-secondary'}`}>
                       {card.value}
                     </p>
                   </div>
@@ -255,7 +255,7 @@ const Contact = () => {
                 <p className="text-slate-500 text-[15px] mt-2">{info.successText}</p>
                 <button
                   onClick={resetForm}
-                  className="mt-6 inline-flex items-center justify-center gap-2 text-[#0B67D8] font-bold text-sm hover:underline"
+                  className="mt-6 inline-flex items-center justify-center gap-2 text-primary font-bold text-sm hover:underline"
                 >
                   {info.newMessage} <IconArrow className="w-3.5 h-3.5" />
                 </button>
@@ -280,14 +280,14 @@ const Contact = () => {
                     onChange={e => setMessage(e.target.value)}
                     required
                     aria-invalid={!!fieldErrors.message || undefined}
-                    className={`w-full bg-white border rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-colors resize-none ${fieldErrors.message ? 'border-red-400 focus:border-red-500' : 'border-[#E4EAF1] focus:border-[#0B67D8]'}`}
+                    className={`w-full bg-white border rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-colors resize-none ${fieldErrors.message ? 'border-red-400 focus:border-red-500' : 'border-[#E4EAF1] focus:border-primary'}`}
                   />
                   {fieldErrors.message && <p className="text-red-500 text-[11px] font-medium" role="alert">{fieldErrors.message}</p>}
                 </div>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-secondary text-white font-bold py-3.5 rounded-[10px] hover:bg-[#0B67D8] transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-secondary/20"
+                  className="w-full bg-secondary text-white font-bold py-3.5 rounded-[10px] hover:bg-primary transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-secondary/20"
                 >
                   {submitting ? (
                     <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Versturen…</>
@@ -306,7 +306,7 @@ const Contact = () => {
               </div>
               <p className="font-extrabold text-[17px] leading-snug">{info.callTitle}</p>
               <p className="text-white/50 text-[13px] leading-relaxed">{info.callText}</p>
-              <a href={`tel:${info.phone.replace(/[^+\d]/g, '')}`} className="block text-center bg-[#0B67D8] text-white font-bold text-sm py-3 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-[#0B67D8]/30">
+              <a href={`tel:${info.phone.replace(/[^+\d]/g, '')}`} className="block text-center bg-primary text-white font-bold text-sm py-3 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-primary/30">
                 {info.phone}
               </a>
             </div>
@@ -315,7 +315,7 @@ const Contact = () => {
             {companyFields.length > 0 && (
               <div className="bg-[#F5F8FC] border border-[#E4EAF1] rounded-2xl p-6 space-y-3">
                 <div className="flex items-center gap-2.5 mb-1">
-                  <span className="w-9 h-9 rounded-lg flex items-center justify-center bg-[#0B67D8]/10 text-[#0B67D8]">
+                  <span className="w-9 h-9 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
                     <IconBuilding className="w-[18px] h-[18px]" />
                   </span>
                   <p className="text-xs font-bold text-secondary uppercase tracking-wider">{info.companyDetails}</p>
@@ -351,7 +351,7 @@ const Contact = () => {
                 href={`https://www.google.com/maps/dir/?api=1&query=${encodeURIComponent(info.address)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-[#0B67D8] font-bold text-sm hover:underline pt-1"
+                className="inline-flex items-center gap-2 text-primary font-bold text-sm hover:underline pt-1"
               >
                 Plan route <IconArrow className="w-3.5 h-3.5" />
               </a>
@@ -377,10 +377,10 @@ const Contact = () => {
               <h2 className="text-[clamp(1.7rem,3vw,2.5rem)] font-extrabold leading-[1.06] tracking-tight text-secondary">{info.ctaTitle}</h2>
               <p className="text-slate-500 text-[15px] leading-relaxed mt-3 max-w-lg">{info.ctaText}</p>
               <div className="flex flex-col sm:flex-row gap-3 mt-7">
-                <Link to={ROUTES.shop} className="inline-flex items-center justify-center gap-2 bg-[#0B67D8] text-white font-bold text-sm px-7 py-3.5 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-[#0B67D8]/25">
+                <Link to={ROUTES.shop} className="inline-flex items-center justify-center gap-2 bg-primary text-white font-bold text-sm px-7 py-3.5 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-primary/25">
                   {info.ctaShopButton} <IconArrow className="w-4 h-4" />
                 </Link>
-                <a href="#contact-form" className="inline-flex items-center justify-center gap-2 border border-slate-300 bg-white text-secondary font-bold text-sm px-7 py-3.5 rounded-[10px] hover:border-[#0B67D8]/40 hover:text-[#0B67D8] transition-all">
+                <a href="#contact-form" className="inline-flex items-center justify-center gap-2 border border-slate-300 bg-white text-secondary font-bold text-sm px-7 py-3.5 rounded-[10px] hover:border-primary/40 hover:text-primary transition-all">
                   {info.ctaContactButton}
                 </a>
               </div>

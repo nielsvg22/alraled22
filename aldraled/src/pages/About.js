@@ -9,7 +9,7 @@ import { ROUTES } from '../lib/routes';
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Merk-accentblauw per visueel concept; primaire knoppen/iconen op deze pagina.
-const B = '#0B67D8';
+const B = 'rgb(var(--color-primary))';
 
 const DEFAULTS = {
   eyebrow: 'Over ons',
@@ -87,7 +87,7 @@ const ICONMAP = {
 
 const Eyebrow = ({ children, light }) => (
   <span className={`inline-flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.25em] ${light ? 'text-white/80' : 'text-primary'}`}>
-    <span className={`h-px w-8 ${light ? 'bg-white/40' : `bg-[#0B67D8]`}`} />
+    <span className={`h-px w-8 ${light ? 'bg-white/40' : `bg-primary`}`} />
     {children}
   </span>
 );
@@ -177,13 +177,13 @@ const About = () => {
             <div className="flex flex-col sm:flex-row gap-3 pt-1">
               <Link
                 to={ROUTES.shop}
-                className="inline-flex items-center justify-center gap-2 bg-[#0B67D8] text-white font-bold text-sm px-7 py-3.5 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-[#0B67D8]/25"
+                className="inline-flex items-center justify-center gap-2 bg-primary text-white font-bold text-sm px-7 py-3.5 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-primary/25"
               >
                 Bekijk ons assortiment <IconArrow className="w-4 h-4" />
               </Link>
               <Link
                 to={ROUTES.contact}
-                className="inline-flex items-center justify-center gap-2 border border-slate-200 text-secondary font-bold text-sm px-7 py-3.5 rounded-[10px] bg-white hover:border-[#0B67D8]/40 hover:text-[#0B67D8] transition-all"
+                className="inline-flex items-center justify-center gap-2 border border-slate-200 text-secondary font-bold text-sm px-7 py-3.5 rounded-[10px] bg-white hover:border-primary/40 hover:text-primary transition-all"
               >
                 Neem contact op
               </Link>
@@ -276,7 +276,7 @@ const About = () => {
         <img src={quoteBg} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover opacity-25" loading="lazy" decoding="async" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#07192D]/80 via-[#07192D]/50 to-[#07192D]/90" />
         <div className="relative max-w-3xl mx-auto text-center">
-          <span className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#0B67D8]/20 text-[#0B67D8] mb-8">
+          <span className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/20 text-primary mb-8">
             <IconQuote className="w-6 h-6" />
           </span>
           <blockquote className="text-[clamp(1.5rem,3vw,2.4rem)] font-extrabold leading-[1.15] text-white tracking-tight">
@@ -297,10 +297,10 @@ const About = () => {
                 {ctaText}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 mt-7">
-                <Link to={ROUTES.shop} className="inline-flex items-center justify-center gap-2 bg-[#0B67D8] text-white font-bold text-sm px-7 py-3.5 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-[#0B67D8]/25">
+                <Link to={ROUTES.shop} className="inline-flex items-center justify-center gap-2 bg-primary text-white font-bold text-sm px-7 py-3.5 rounded-[10px] hover:brightness-110 transition-all shadow-lg shadow-primary/25">
                   Bekijk producten <IconArrow className="w-4 h-4" />
                 </Link>
-                <Link to={ROUTES.contact} className="inline-flex items-center justify-center gap-2 border border-slate-300 bg-white text-secondary font-bold text-sm px-7 py-3.5 rounded-[10px] hover:border-[#0B67D8]/40 hover:text-[#0B67D8] transition-all">
+                <Link to={ROUTES.contact} className="inline-flex items-center justify-center gap-2 border border-slate-300 bg-white text-secondary font-bold text-sm px-7 py-3.5 rounded-[10px] hover:border-primary/40 hover:text-primary transition-all">
                   Contact opnemen
                 </Link>
               </div>
