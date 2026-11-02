@@ -12,6 +12,9 @@ import RichText from '../components/RichText';
 
 import { API_URL } from '../lib/config';
 
+// Accentkleur voor tekst op donkere beelden: een lichte tint van de huisstijlkleur, altijd goed leesbaar
+const ACCENT_ON_DARK = 'color-mix(in srgb, rgb(var(--color-primary)) 45%, white)';
+
 const DEFAULTS = {
   hero: {
     title: "ALRA LED Solutions.",
@@ -245,16 +248,16 @@ const Home = () => {
 
           <div className="relative z-10 max-w-6xl mx-auto px-6 md:px-10 pb-20 pt-32 w-full">
             <div className="max-w-3xl space-y-6">
-              <span className="inline-flex items-center gap-2 bg-primary/20 border border-primary/30 text-primary text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest">
-                <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+              <span className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest" style={{ color: ACCENT_ON_DARK }}>
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: ACCENT_ON_DARK }} />
                 {intro.badge}
               </span>
 
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">
                 <span className="block">{hero.titlePrefix || 'Verlichting voor'}</span>
-                <span className="text-primary flex items-center gap-1" style={{ minHeight: '1.2em' }}>
+                <span className="flex items-center gap-1" style={{ minHeight: '1.2em', color: ACCENT_ON_DARK }}>
                   <span style={{ display: 'inline-block', minWidth: '14ch' }}>{typeword}</span>
-                  <span className="inline-block w-0.5 h-[0.8em] bg-primary align-middle animate-pulse flex-shrink-0" />
+                  <span className="inline-block w-0.5 h-[0.8em] align-middle animate-pulse flex-shrink-0" style={{ background: ACCENT_ON_DARK }} />
                 </span>
               </h1>
 
@@ -459,7 +462,7 @@ if (id === 'cases') {
                     <div className="absolute bottom-0 left-0 p-6">
                       <h3 className="text-white font-black text-lg leading-tight">{catTitle}</h3>
                       <RichText value={catDesc} className="text-white/60 text-xs mt-1 leading-relaxed" />
-                      <span className="inline-flex items-center gap-1.5 mt-3 text-primary text-xs font-bold uppercase tracking-wider group-hover:gap-3 transition-all">
+                      <span className="inline-flex items-center gap-1.5 mt-3 text-xs font-bold uppercase tracking-wider group-hover:gap-3 transition-all" style={{ color: ACCENT_ON_DARK }}>
                         Bekijk <span>→</span>
                       </span>
                     </div>
