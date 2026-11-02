@@ -46,6 +46,17 @@ function hexToRgbVars(hex) {
   return `${r} ${g} ${b}`;
 }
 
+// Bij elke nieuwe pagina bovenaan beginnen (anders blijft de scrollstand van de vorige pagina staan,
+// bv. een productpagina die direct onderaan opent). Met een #anker scrollen we daar naartoe.
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+  useEffect(() => {
+    if (hash) return;
+    window.scrollTo(0, 0);
+  }, [pathname, hash]);
+  return null;
+}
+
 function ThemeLoader() {
   useEffect(() => {
     if (typeof fetch !== 'function') return;
@@ -115,6 +126,7 @@ function App() {
           <CartProvider>
             <Router>
               <ThemeLoader />
+              <ScrollToTop />
               <RouteTracker />
               <GlobalImageFallback />
               <PasswordWall>
