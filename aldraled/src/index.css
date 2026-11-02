@@ -80,15 +80,17 @@ body {
 
 /* ── Opgemaakte productomschrijving (HTML uit de CRM-editor) ── */
 .rich-description p { margin: 0 0 1rem; }
-.rich-description strong { font-weight: 700; color: rgb(var(--color-secondary)); }
+/* kleur erft van de omgeving (licht of donker); lichte pagina's zetten de kleur via de klassen in RichContent */
+.rich-description strong { font-weight: 700; }
 .rich-description em { font-style: italic; }
 .rich-description u { text-decoration: underline; }
-.rich-description h2 { font-size: 1.2rem; font-weight: 800; color: rgb(var(--color-secondary)); margin: 1.25rem 0 0.5rem; }
-.rich-description h3 { font-size: 1.05rem; font-weight: 700; color: rgb(var(--color-secondary)); margin: 1rem 0 0.4rem; }
+.rich-description h2 { font-size: 1.2rem; font-weight: 800; margin: 1.25rem 0 0.5rem; }
+.rich-description h3 { font-size: 1.05rem; font-weight: 700; margin: 1rem 0 0.4rem; }
 .rich-description ul { list-style: disc; padding-left: 1.4rem; margin: 0 0 1rem; }
 .rich-description ol { list-style: decimal; padding-left: 1.4rem; margin: 0 0 1rem; }
 .rich-description li { margin-bottom: 0.25rem; }
-.rich-description a { color: rgb(var(--color-primary)); text-decoration: underline; }
+.rich-description a { text-decoration: underline; }
+.rich-description > :last-child { margin-bottom: 0; }
 
 .rich-description table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.875rem; }
 .rich-description th { background: #f3f4f6; text-align: left; font-weight: 800; padding: 0.6rem 0.8rem; border-bottom: 1px solid #e5e7eb; }
@@ -99,4 +101,4 @@ body {
    (Tekst in de code zelf blijft gewoon doorlopen: JSX voegt regels daar al samen.) */
 p, h1, h2, h3, h4, h5, h6, li, blockquote, dd, figcaption { white-space: pre-line; }
 /* Opgemaakte tekst uit de editor heeft zijn eigen alinea's; regeleinden in de bron tellen daar niet */
-.rich-description p, .rich-description li, .rich-description h2, .rich-description h3 { white-space: normal; }
+.rich-description p, .rich-description li, .rich-description h2, .rich-description h3 { font-size: 1.05rem; font-weight: 700; margin: 1rem 0 0.4rem; }

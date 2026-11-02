@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { getMediaUrl, readCache, writeCache, preloadImage } from '../lib/api';
 import { ROUTES, shopWithCategory } from '../lib/routes';
+import RichText from '../components/RichText';
 
 const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
 
@@ -329,9 +330,7 @@ const Home = () => {
                   {is.heading}
                 </h2>
                 <div className="w-12 h-1 bg-primary rounded-full" />
-                <p className="text-gray-500 text-sm md:text-base leading-relaxed max-w-lg">
-                  {is.description}
-                </p>
+                <RichText value={is.description} className="text-gray-500 text-sm md:text-base leading-relaxed max-w-lg" />
                 {Array.isArray(is.usps) && is.usps.length > 0 ? (
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {is.usps.map((usp, idx) => (
@@ -585,7 +584,7 @@ if (id === 'cases') {
               <div className="md:sticky md:top-24 space-y-5">
                 <p className="text-xs font-bold text-primary uppercase tracking-widest">Onze aanpak</p>
                 <h2 className="text-3xl font-black text-secondary leading-tight">{process.title}</h2>
-                <p className="text-gray-500 text-sm leading-relaxed">{process.description}</p>
+                <RichText value={process.description} className="text-gray-500 text-sm leading-relaxed" />
                 <Link to={ROUTES.about} className="inline-flex items-center gap-2 bg-secondary text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-primary transition-all">
                   {process.buttonText}
                 </Link>
@@ -645,7 +644,7 @@ if (id === 'cases') {
                   <div className={`flex flex-col justify-center px-8 py-12 lg:px-16 ${idx % 2 === 1 ? 'lg:order-1' : ''}`}>
                     <span className="text-[10px] font-bold text-primary uppercase tracking-[0.3em] mb-3">Productgroep</span>
                     <h3 className="text-3xl md:text-4xl font-black text-secondary leading-tight mb-4">{item.title}</h3>
-                    <p className="text-gray-500 text-sm md:text-base leading-relaxed mb-6 max-w-md">{item.description}</p>
+                    <RichText value={item.description} className="text-gray-500 text-sm md:text-base leading-relaxed mb-6 max-w-md" />
                     {item.features && item.features.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-8">
                         {item.features.map((feat, fi) => (

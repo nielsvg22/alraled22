@@ -360,7 +360,7 @@ const ProductDetail = () => {
                   <section className="bg-white rounded-2xl border border-[#E4EAF1] shadow-sm p-6 md:p-7">
                     <h3 className="text-lg font-black text-secondary mb-4">Beschrijving</h3>
                     {product.description && isRichHtml(product.description) ? (
-                      <div className="rich-description text-[15px] text-gray-500 leading-[1.75]" dangerouslySetInnerHTML={{ __html: sanitizeRich(product.description) }} />
+                      <div className="rich-description text-[15px] text-gray-500 leading-[1.75] [&_strong]:text-secondary [&_h2]:text-secondary [&_h3]:text-secondary [&_a]:text-primary" dangerouslySetInnerHTML={{ __html: sanitizeRich(product.description) }} />
                     ) : product.description ? (
                       <div className="text-[15px] text-gray-500 leading-[1.75] space-y-4">
                         {htmlToText(product.description).split('\n').filter(Boolean).map((p, i) => {
