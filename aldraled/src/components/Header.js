@@ -473,43 +473,53 @@ const Header = () => {
                   </Link>
                 </div>
 
-                {/* Rechts: toelichting + producten van de gekozen categorie */}
-                <div key={active.id} className="flex-1 min-w-0 p-8 flex gap-8 animate-in fade-in duration-200">
-                  <div className="w-[240px] shrink-0 flex flex-col">
-                    <h3 className="text-lg font-black text-gray-900 leading-tight">{categoryLabel(active)}</h3>
-                    {active.description && <RichText value={active.description} className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-5" />}
-                    {count > 0 && <p className="text-xs text-gray-400 mt-3">{count} {count === 1 ? 'product' : 'producten'}</p>}
-                    <div className="mt-auto pt-5 flex flex-col gap-2">
+                {/* Rechts: toelichting links, producten rechts; vaste hoogte zodat het paneel niet verspringt */}
+                <div key={active.id} className="flex-1 min-w-0 p-8 flex gap-8 animate-in fade-in duration-200" style={{ minHeight: '380px' }}>
+                  <div className="w-[210px] shrink-0 flex flex-col">
+                    <h3 className="text-xl font-black text-gray-900 leading-tight">{categoryLabel(active)}</h3>
+                    {count > 0 && (
+                      <span className="self-start mt-3 text-[11px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                        {count} {count === 1 ? 'product' : 'producten'}
+                      </span>
+                    )}
+                    {active.description && <RichText value={active.description} className="text-[13px] text-gray-500 mt-4 leading-relaxed line-clamp-6" />}
+                    <div className="mt-auto pt-6 flex flex-col gap-2.5">
                       <Link to={shopWithCategory(active)} onClick={closeMegaNow}
-                        className="inline-flex items-center justify-center gap-1.5 bg-primary text-white text-xs font-bold px-4 py-2.5 rounded-full hover:brightness-110 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
+                        className="flex items-center justify-center gap-1.5 h-11 bg-primary text-white text-[13px] font-bold rounded-full hover:brightness-110 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
                         Alle producten bekijken <span aria-hidden="true">→</span>
                       </Link>
                       <Link to={categoryLink(active)} onClick={closeMegaNow}
-                        className="inline-flex items-center justify-center text-xs font-bold text-gray-600 hover:text-primary px-4 py-2 rounded-full border border-gray-200 hover:border-primary/40 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
+                        className="flex items-center justify-center h-11 text-[13px] font-bold text-gray-600 hover:text-primary rounded-full border border-gray-200 hover:border-primary/40 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
                         Meer over deze toepassing
                       </Link>
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 flex flex-col border-l border-gray-100 pl-8">
+                    <div className="flex items-center justify-between mb-5">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-400">Producten</p>
+                      <Link to={shopWithCategory(active)} onClick={closeMegaNow} className="text-xs font-bold text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded">
+                        Bekijk alles →
+                      </Link>
+                    </div>
                     {shown.length > 0 ? (
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-4 gap-4 items-start">
                         {shown.map(product => (
                           <Link key={product.id} to={ROUTES.product(product.id)} onClick={closeMegaNow}
-                            className="group block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
-                            <div className="aspect-square rounded-xl bg-gray-50 overflow-hidden mb-2">
+                            className="group block rounded-2xl border border-gray-100 p-3 hover:border-primary/30 hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
+                            <div className="aspect-square rounded-xl bg-gray-50 overflow-hidden">
                               <img src={getImageSrc(product)} alt={product.name} className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105" loading="lazy" decoding="async" />
                             </div>
-                            <p className="text-xs font-bold text-gray-800 leading-snug line-clamp-2 group-hover:text-primary transition-colors">{product.name}</p>
-                            <p className="text-xs font-black text-gray-900 mt-0.5">{formatPrice(product.price)}</p>
+                            <p className="mt-3 text-[12px] font-bold text-gray-800 leading-[1.3] line-clamp-3 h-[3.1rem] overflow-hidden break-words group-hover:text-primary transition-colors">{product.name}</p>
+                            <p className="mt-2 text-sm font-black text-gray-900">{formatPrice(product.price)}</p>
                           </Link>
                         ))}
                       </div>
                     ) : active.imageUrl ? (
-                      <div className="h-full min-h-[200px] rounded-2xl bg-gray-50 flex items-center justify-center overflow-hidden">
-                        <img src={getMediaUrl(active.imageUrl)} alt={categoryLabel(active)} className="max-h-[240px] max-w-full object-contain p-4" loading="lazy" decoding="async" />
+                      <div className="flex-1 min-h-[200px] rounded-2xl bg-gray-50 flex items-center justify-center overflow-hidden">
+                        <img src={getMediaUrl(active.imageUrl)} alt={categoryLabel(active)} className="max-h-[260px] max-w-full object-contain p-4" loading="lazy" decoding="async" />
                       </div>
                     ) : (
-                      <div className="h-full min-h-[160px] rounded-2xl bg-gray-50 flex items-center justify-center text-sm text-gray-400">
+                      <div className="flex-1 min-h-[200px] rounded-2xl bg-gray-50 flex items-center justify-center text-sm text-gray-400">
                         {menuProducts.length === 0 ? 'Producten laden…' : 'Binnenkort meer producten'}
                       </div>
                     )}
