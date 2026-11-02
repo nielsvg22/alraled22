@@ -3,6 +3,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import RichContent from '../components/RichContent';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -71,9 +72,12 @@ const LegalPage = () => {
       <div className="max-w-4xl mx-auto px-6 md:px-10 py-12">
         <h1 className="text-3xl md:text-4xl font-black text-secondary leading-tight mb-8">{title}</h1>
         <div className="prose prose-sm max-w-none text-gray-600 leading-relaxed">
-          {content.split('\n').map((paragraph, i) => (
-            paragraph.trim() ? <p key={i} className="mb-4">{paragraph}</p> : null
-          ))}
+          <RichContent
+            value={content}
+            legacy={(text) => text.split('\n').map((paragraph, i) => (
+              paragraph.trim() ? <p key={i} className="mb-4">{paragraph}</p> : null
+            ))}
+          />
         </div>
       </div>
     </div>

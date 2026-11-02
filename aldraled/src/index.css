@@ -89,3 +89,14 @@ body {
 .rich-description ol { list-style: decimal; padding-left: 1.4rem; margin: 0 0 1rem; }
 .rich-description li { margin-bottom: 0.25rem; }
 .rich-description a { color: rgb(var(--color-primary)); text-decoration: underline; }
+
+.rich-description table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.875rem; }
+.rich-description th { background: #f3f4f6; text-align: left; font-weight: 800; padding: 0.6rem 0.8rem; border-bottom: 1px solid #e5e7eb; }
+.rich-description td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #f1f5f9; }
+.rich-description table p { margin: 0; }
+
+/* Enters uit de tekstvakken van het CRM worden op de site als regeleinden getoond.
+   (Tekst in de code zelf blijft gewoon doorlopen: JSX voegt regels daar al samen.) */
+p, h1, h2, h3, h4, h5, h6, li, blockquote, dd, figcaption { white-space: pre-line; }
+/* Opgemaakte tekst uit de editor heeft zijn eigen alinea's; regeleinden in de bron tellen daar niet */
+.rich-description p, .rich-description li, .rich-description h2, .rich-description h3 { white-space: normal; }

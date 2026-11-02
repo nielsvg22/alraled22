@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
 import axios from 'axios';
-import { getMediaUrl, API_URL } from '../lib/api';
+import { getMediaUrl, API_URL, plainText } from '../lib/api';
 
 function readTime(text = '') {
   return Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 200));
@@ -11,7 +11,7 @@ function readTime(text = '') {
 function GridPost({ block, index }) {
   const { id, data } = block;
   const title   = data.title || data.heading || 'Zonder titel';
-  const excerpt = data.excerpt || data.body  || '';
+  const excerpt = plainText(data.excerpt || data.body  || '');
   const image   = data.imageUrl;
   const author  = data.author || 'ALRA LED';
   const num     = String(index + 1).padStart(2, '0');

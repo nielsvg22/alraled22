@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
 import axios from 'axios';
-import { getMediaUrl, API_URL } from '../lib/api';
+import { getMediaUrl, API_URL, plainText } from '../lib/api';
+import RichContent from '../components/RichContent';
 
 function readTime(text = '') {
-  return Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 200));
+  return Math.max(1, Math.ceil(plainText(text).trim().split(/\s+/).length / 200));
 }
 
 export default function BlogDetail() {
@@ -95,11 +96,17 @@ export default function BlogDetail() {
 
         {/* Body */}
         {body ? (
-          <div className="space-y-5">
-            {body.split('\n').filter(p => p.trim()).map((para, i) => (
-              <p key={i} className="text-gray-700 leading-[1.9] text-lg">{para}</p>
-            ))}
-          </div>
+          <RichContent
+            value={body}
+            className="text-gray-700 leading-[1.9] text-lg"
+            legacy={(text) => (
+              <div className="space-y-5">
+                {text.split('\n').filter(p => p.trim()).map((para, i) => (
+                  <p key={i} className="text-gray-700 leading-[1.9] text-lg">{para}</p>
+                ))}
+              </div>
+            )}
+          />
         ) : (
           <p className="text-gray-400 italic text-lg">Geen inhoud beschikbaar.</p>
         )}
@@ -149,7 +156,7 @@ export default function BlogDetail() {
               {related.map(rel => {
                 const d = rel.data;
                 const t = d.title || d.heading || 'Artikel';
-                const e = d.excerpt || d.body   || '';
+                const e = plainText(d.excerpt || d.body   || '');
                 const mins2 = readTime(e);
                 return (
                   <Link key={rel.id} to={ROUTES.blogPost(rel.id)}

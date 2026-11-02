@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import { Save, CheckCircle, Search, Plus, X, Globe } from 'lucide-react';
 import ImageUploader from '../components/ImageUploader';
+import RichTextEditor from '../components/RichTextEditor';
 
 const iCls = 'w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white';
 const taCls = 'w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none bg-white';
@@ -140,8 +141,8 @@ export default function SeoPages() {
             <ImageUploader value={page.heroImage || ''} onChange={v => updatePage({ heroImage: v })} label={null} />
           </div>
           <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1.5">Inhoud (Markdown-stijl: ## voor H2, ### voor H3, - voor lijsten, dubbele newline voor paragrafen)</label>
-            <textarea className={taCls} rows={15} value={page.content || ''} onChange={e => updatePage({ content: e.target.value })} placeholder="Voeg de inhoud toe..." />
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1.5">Inhoud</label>
+            <RichTextEditor tables minHeight="26rem" value={page.content || ''} onChange={html => updatePage({ content: html })} />
           </div>
 
           {/* FAQ */}
