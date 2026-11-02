@@ -128,6 +128,17 @@ export default function Blog() {
             <label className={labelCls}>Inhoud</label>
             <RichTextEditor tables minHeight="24rem" value={d.content || ''} onChange={html => updatePost(editing.id, { content: html })} />
           </div>
+          <div className="border-t border-gray-100 pt-5 space-y-4">
+            <p className={labelCls}>Zoekmachine (SEO)</p>
+            <div>
+              <label className={labelCls}>SEO titel</label>
+              <input className={iCls} value={d.seoTitle || ''} onChange={e => updatePost(editing.id, { seoTitle: e.target.value })} placeholder="Titel in Google (leeg = titel van het bericht)" />
+            </div>
+            <div>
+              <label className={labelCls}>Meta omschrijving</label>
+              <input className={iCls} value={d.metaDescription || ''} onChange={e => updatePost(editing.id, { metaDescription: e.target.value })} placeholder="Korte tekst in Google (leeg = samenvatting)" />
+            </div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Auteur</label>

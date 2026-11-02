@@ -26,6 +26,17 @@ export default function BlogDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // SEO: eigen titel en omschrijving uit het CRM (Blog > Bericht bewerken), anders titel + samenvatting
+  useEffect(() => {
+    if (!block) return;
+    const d = block.data || {};
+    const title = d.title || d.heading;
+    if (title) document.title = d.seoTitle || `${title} | ALRA LED`;
+    const meta = document.querySelector('meta[name="description"]');
+    const desc = d.metaDescription || plainText(d.excerpt || '').slice(0, 160);
+    if (meta && desc) meta.content = desc;
+  }, [block]);
+
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
