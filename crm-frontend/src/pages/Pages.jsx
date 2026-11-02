@@ -3,6 +3,7 @@ import api, { getMediaUrl } from '../lib/api';
 import ImageUploader from '../components/ImageUploader';
 import { errorText } from '../lib/errorText';
 import RichTextEditor from '../components/RichTextEditor';
+import SeoPages from './SeoPages';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -1012,6 +1013,7 @@ const BLOCK_PRESETS = {
 const TABS = [
   { id: 'home',    label: 'Homepagina',       icon: Home     },
   { id: 'shop',    label: 'Webshop',          icon: ShoppingBag },
+  { id: 'producten', label: 'Producten',      icon: LayoutGrid },
   { id: 'about',   label: 'Over Ons',          icon: Info     },
   { id: 'contact', label: 'Contact',           icon: Phone    },
   { id: 'general', label: 'Instellingen',      icon: Settings },
@@ -2561,6 +2563,8 @@ export default function Pages() {
           </>)}
 
           {/* ══ LOGOS ══ */}
+          {tab === 'producten' && <SeoPages mode="groups" embedded />}
+
           {tab === 'logos' && (<>
             <Section title={`Partner Logo's (${logos.length})`} icon={Image}>
               <p className="text-xs text-gray-400 leading-relaxed">

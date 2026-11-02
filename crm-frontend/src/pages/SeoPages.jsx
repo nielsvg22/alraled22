@@ -18,18 +18,20 @@ const SEO_SLUGS = [
 const GROUP_SLUGS = Object.keys(GROUP_DEFAULTS);
 const ALL_SLUGS = [...GROUP_SLUGS, ...SEO_SLUGS];
 
-export default function SeoPages() {
+// mode 'groups' = alleen de productgroep-pagina's (tab Producten bij Pagina's); embedded = zonder grote paginatitel
+export default function SeoPages({ mode = 'all', embedded = false }) {
+  const SLUGS = mode === 'groups' ? GROUP_SLUGS : ALL_SLUGS;
   const [pages, setPages] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [activeSlug, setActiveSlug] = useState(ALL_SLUGS[0]);
+  const [activeSlug, setActiveSlug] = useState(SLUGS[0]);
   const [lang, setLang] = useState('nl');
 
   useEffect(() => {
     setLoading(true);
     Promise.all(
-      ALL_SLUGS.map(slug =>
+      SLUGS.map(slug =>
         api.get(`/content/seo_page_${slug}`, { params: { lang } })
           .then(r => ({ slug, data: r.data }))
           .catch(() => ({ slug, data: null }))
@@ -87,11 +89,20 @@ export default function SeoPages() {
   const page = pages[activeSlug] || {};
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className={`${embedded ? '' : 'max-w-4xl '}space-y-6`}>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Productgroepen & SEO Pagina's</h1>
-          <p className="text-sm text-gray-400 font-medium mt-1">Beheer SEO-geoptimaliseerde landingspagina's</p>
+          {embedded ? (
+            <>
+              <h2 className="text-lg font-black text-gray-900">Productpagina's (menu "Producten")</h2>
+              <p className="text-sm text-gray-400 font-medium mt-1">Het verhaal, de foto's, video's en specificaties per productgroep. Onderaan de pagina staan automatisch de bijbehorende producten.</p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl font-black text-gray-900 tracking-tight">Productgroepen & SEO Pagina's</h1>
+              <p className="text-sm text-gray-400 font-medium mt-1">Beheer SEO-geoptimaliseerde landingspagina's</p>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <select value={lang} onChange={e => setLang(e.target.value)}
@@ -110,7 +121,7 @@ export default function SeoPages() {
 
       {/* Slug tabs */}
       <div className="flex gap-2 flex-wrap">
-        {ALL_SLUGS.map(slug => (
+        {SLUGS.map(slug => (
           <button key={slug} onClick={() => setActiveSlug(slug)}
             className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
               activeSlug === slug ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
@@ -167,7 +178,7 @@ export default function SeoPages() {
                 <RichTextEditor minHeight="12rem" value={page.specs || ''} onChange={html => updatePage({ specs: html })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1.5">Extra afbeeldingen</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1.5">Foto's (meerdere mogelijk)</label>
                 <div className="space-y-3">
                   {(page.images || []).map((img, i) => (
                     <div key={i} className="flex items-start gap-3">
@@ -175,7 +186,7 @@ export default function SeoPages() {
                       <button type="button" onClick={() => updatePage({ images: page.images.filter((_, j) => j !== i) })} className="text-gray-400 hover:text-red-500 mt-2"><X size={14} /></button>
                     </div>
                   ))}
-                  <button type="button" onClick={() => updatePage({ images: [...(page.images || []), ''] })} className="text-xs font-bold text-blue-600 hover:text-blue-800">+ Afbeelding toevoegen</button>
+                  <button type="button" onClick={() => updatePage({ images: [...(page.images || []), ''] })} className="text-xs font-bold text-blue-600 hover:text-blue-800">+ Foto toevoegen</button>
                 </div>
               </div>
               <div>
