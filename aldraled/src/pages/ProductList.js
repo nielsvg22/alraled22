@@ -484,6 +484,9 @@ const ProductList = () => {
     if (catParam) {
       const matched = categories.find(c => c.slug === catParam || c.id === catParam);
       if (matched) setActiveCategory(matched.id);
+    } else {
+      // De URL is leidend: zonder ?categorie= (bv. via "Alle producten" of terug-knop) tonen we alles
+      setActiveCategory('Alle');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, categories]);
