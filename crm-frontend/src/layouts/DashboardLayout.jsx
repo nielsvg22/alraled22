@@ -26,7 +26,8 @@ import {
   Tag,
   Bell,
   Truck,
-  ScrollText
+  ScrollText,
+  Newspaper,
 } from 'lucide-react';
 
 export default function DashboardLayout() {
@@ -82,6 +83,7 @@ export default function DashboardLayout() {
     navigation.push({ name: 'Logs', href: '/logs', icon: ScrollText });
     navigation.push({ name: 'Users', href: '/users', icon: Users });
     navigation.push({ name: 'Pagina\'s', href: '/pages', icon: FileText });
+    navigation.push({ name: 'Blog', href: '/blog', icon: Newspaper });
     navigation.push({ name: 'Pagina Bouwer', href: '/builder', icon: Layers });
     navigation.push({ name: 'Retouren', href: '/rmas', icon: RotateCcw });
     navigation.push({ name: 'Verkooppunten', href: '/dealers', icon: MapPin });
