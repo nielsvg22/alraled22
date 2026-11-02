@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { getMediaUrl, API_URL } from '../lib/api';
 import { ROUTES } from '../lib/routes';
-import { DEFAULT_DEALERS, buildDealerAddress } from '../lib/dealers';
+import { buildDealerAddress, mergeDealers, DEFAULT_DEALERS } from '../lib/dealers';
+import CustomBlocks from '../components/CustomBlocks';
 
 const WHOLESALE_BRANDS = [
   {
@@ -56,19 +57,21 @@ const Groothandels = () => {
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(DEFAULT_PAGE);
   const [cmsPartners, setCmsPartners] = useState(null);
+  const [dealers, setDealers] = useState(DEFAULT_DEALERS);
+  const [blocks, setBlocks] = useState([]);
   const [dealerBrand, setDealerBrand] = useState('Alle');
   const [dealerQuery, setDealerQuery] = useState('');
   const [showAllDealers, setShowAllDealers] = useState(false);
 
-  const dealerBrands = useMemo(() => ['Alle', ...Array.from(new Set(DEFAULT_DEALERS.map(d => d.brand).filter(Boolean)))], []);
+  const dealerBrands = useMemo(() => ['Alle', ...Array.from(new Set(dealers.map(d => d.brand).filter(Boolean)))], [dealers]);
   const filteredDealers = useMemo(() => {
     const q = dealerQuery.trim().toLowerCase();
-    return DEFAULT_DEALERS.filter(d => {
+    return dealers.filter(d => {
       if (dealerBrand !== 'Alle' && d.brand !== dealerBrand) return false;
       if (!q) return true;
       return [d.name, d.city, d.postalCode, d.address].some(v => String(v || '').toLowerCase().includes(q));
     });
-  }, [dealerBrand, dealerQuery]);
+  }, [dealers, dealerBrand, dealerQuery]);
   const visibleDealers = showAllDealers || dealerQuery.trim() ? filteredDealers : filteredDealers.slice(0, DEALERS_PREVIEW);
 
   useEffect(() => {
@@ -78,6 +81,12 @@ const Groothandels = () => {
         setPage({ ...DEFAULT_PAGE, ...Object.fromEntries(Object.entries(d).filter(([k, v]) => k in DEFAULT_PAGE && typeof v === 'string' && v.trim())) });
         if (Array.isArray(d.partners) && d.partners.length > 0) setCmsPartners(d.partners);
       })
+      .catch(() => {});
+    axios.get(`${API_URL}/api/content/dealers`)
+      .then(res => setDealers(mergeDealers(res.data)))
+      .catch(() => {});
+    axios.get(`${API_URL}/api/content/page_blocks_groothandels`)
+      .then(res => setBlocks(Array.isArray(res.data) ? res.data.filter(b => b.visible !== false) : []))
       .catch(() => {});
     axios.get(`${API_URL}/api/products`)
       .then(res => setProducts(res.data))
@@ -198,7 +207,7 @@ const Groothandels = () => {
             <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2">Verkooppunten</p>
             <h2 className="text-3xl md:text-4xl font-black text-secondary">Vind een vestiging bij jou in de buurt</h2>
             <p className="text-gray-500 text-base mt-4 max-w-2xl mx-auto">
-              {DEFAULT_DEALERS.length} vestigingen van onze groothandelspartners in Nederland.
+              {dealers.length} vestigingen van onze groothandelspartners in Nederland.
             </p>
           </div>
 
@@ -317,6 +326,8 @@ const Groothandels = () => {
           </div>
         </div>
       </section>
+
+      <CustomBlocks blocks={blocks.filter(b => (b.mount || 'bottom') === 'bottom')} />
 
       {/* CTA */}
       <section className="py-16 lg:py-24 px-6 md:px-10 bg-secondary">

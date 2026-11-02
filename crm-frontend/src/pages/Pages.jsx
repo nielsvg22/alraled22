@@ -31,8 +31,9 @@ function Section({ title, icon: Icon, children, defaultOpen = true, accent, drag
   return (
     <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #f1f5f9', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
       <div
-        className="w-full px-5 py-3.5 flex items-center justify-between transition-colors hover:opacity-90"
+        className="w-full px-5 py-3.5 flex items-center justify-between transition-colors hover:opacity-90 cursor-pointer select-none"
         style={{ background: accent || 'linear-gradient(135deg,#1e293b,#334155)' }}
+        onClick={() => setOpen(o => !o)}
       >
         <div className="flex items-center gap-2.5">
           {dragHandleProps && (
@@ -50,7 +51,7 @@ function Section({ title, icon: Icon, children, defaultOpen = true, accent, drag
         </div>
         <button
           type="button"
-          onClick={() => setOpen(o => !o)}
+          onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
           className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-colors"
           title={open ? 'Inklappen' : 'Uitklappen'}
         >
@@ -1018,6 +1019,27 @@ const TABS = [
 ];
 
 // Standaardwaarden van de Groothandels-pagina (zelfde als op de website, zodat ze hier direct bewerkbaar zijn)
+const GENERAL_DEFAULTS = {
+  tagline: '',
+  footerDescription: 'Specialist in professionele LED-verlichting voor bedrijfswagens, bouwplaatsen en werkplaatsen. Kwaliteit en betrouwbaarheid voorop.',
+  footerPhone: '085-0021 606',
+  footerEmail: 'info@alra-led.nl',
+  footerAddress: 'Dijkgraafweg 4a, Apeldoorn',
+  newsletterTitle: 'Blijf op de hoogte',
+  newsletterText: 'Ontvang nieuws, productlanceringen en exclusieve aanbiedingen.',
+  newsletterPlaceholder: 'uw@email.nl',
+  newsletterButton: 'Aanmelden',
+  navigationTitle: 'Navigatie',
+  productsTitle: 'Producten',
+  contactTitle: 'Contact',
+  productLinks: ['Bedrijfswagenverlichting', 'LED Bouwlichtslangen', 'LED Hefbrugverlichting', 'Accessoires'],
+  privacyLabel: 'Privacy Policy',
+  termsLabel: 'Algemene Voorwaarden',
+  bottomCopy: 'ALRA LED Solutions. Alle rechten voorbehouden.',
+  logoUrl: '',
+  webkeurmerkId: '',
+};
+
 const GROOTHANDELS_DEFAULTS = {
   heroEyebrow: 'Voor Groothandels',
   heroTitle: 'Partners in\nprofessionele verlichting',
@@ -1120,26 +1142,8 @@ export default function Pages() {
       submit: '',
     },
   });
-  const [general, setGeneral] = useState({
-    tagline: '',
-    footerDescription: '',
-    footerPhone: '',
-    footerEmail: '',
-    footerAddress: '',
-    newsletterTitle: '',
-    newsletterText: '',
-    newsletterPlaceholder: '',
-    newsletterButton: '',
-    navigationTitle: '',
-    productsTitle: '',
-    contactTitle: '',
-    productLinks: [],
-    privacyLabel: '',
-    termsLabel: '',
-    bottomCopy: '',
-    logoUrl: '',
-    webkeurmerkId: '',
-  });
+  // Zelfde standaardteksten als de footer en header op de site; zo zie je in het CRM wat er nu online staat
+  const [general, setGeneral] = useState(GENERAL_DEFAULTS);
   const [groothandels, setGroothandels] = useState(GROOTHANDELS_DEFAULTS);
   const [logos, setLogos]     = useState([]);
   const [logoUploading, setLogoUploading] = useState(false);
@@ -1158,7 +1162,7 @@ export default function Pages() {
       if (key === 'shop')    setShop({ ...SHOP_DEFAULTS, ...res.data });
       if (key === 'about')   setAbout(res.data);
       if (key === 'contact') setContact(res.data);
-      if (key === 'general') setGeneral(res.data);
+      if (key === 'general') setGeneral({ ...GENERAL_DEFAULTS, ...res.data });
       if (key === 'groothandels') setGroothandels({ ...GROOTHANDELS_DEFAULTS, ...res.data });
       if (key === 'logos')   setLogos(Array.isArray(res.data) ? res.data : []);
     } catch {}

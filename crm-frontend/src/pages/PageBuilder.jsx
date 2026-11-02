@@ -16,6 +16,7 @@ const PAGES = [
   { key: 'about',   label: 'Over Ons',    icon: '👥' },
   { key: 'contact', label: 'Contact',     icon: '📬' },
   { key: 'blog',    label: 'Blog',        icon: '📝' },
+  { key: 'groothandels', label: 'Groothandels', icon: '🏪' },
 ];
 
 const FIXED_SECTIONS = [

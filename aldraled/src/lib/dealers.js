@@ -118,3 +118,20 @@ export function buildDealerAddress(d) {
   const parts = [d.address, d.postalCode, d.city].filter(Boolean);
   return parts.length > 0 ? parts.join(', ') : d.address || d.city || '';
 }
+// Combineert de standaard-verkooppunten met de locaties uit het CRM (Verkooppunten).
+// Duplicaten worden vermeden op merk + naam + adres + postcode.
+export function mergeDealers(apiDealers) {
+  const norm = (v) => String(v || '').trim();
+  const seen = new Set();
+  const result = [];
+  const push = (d) => {
+    if (!d || typeof d !== 'object') return;
+    const key = [norm(d.brand), norm(d.name), norm(d.address), norm(d.postalCode)].join('|').toLowerCase();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    result.push(d);
+  };
+  DEFAULT_DEALERS.forEach(push);
+  (Array.isArray(apiDealers) ? apiDealers : []).forEach(push);
+  return result;
+}
