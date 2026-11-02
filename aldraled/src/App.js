@@ -10,6 +10,7 @@ import PasswordWall from './components/PasswordWall';
 import analytics from './lib/analytics';
 import { PLACEHOLDER_IMAGE } from './lib/api';
 import './App.css';
+import { API_URL } from './lib/config';
 
 const Home = lazy(() => import('./pages/Home'));
 const About = lazy(() => import('./pages/About'));
@@ -33,8 +34,6 @@ const SeoLandingPage = lazy(() => import('./pages/SeoLandingPage'));
 // reguliere expressies in routes, dus elk adres krijgt een eigen route.
 const SEO_SLUGS = ['led-bouwlichtslang', 'professionele-bouwplaatsverlichting', 'led-lichtslang', 'bouwverlichting-huren', 'bedrijfswagenverlichting'];
 const NotFound = lazy(() => import('./pages/NotFound'));
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Converts #rrggbb to "r g b" for CSS variable format Tailwind needs
 function hexToRgbVars(hex) {

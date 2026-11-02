@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import RichContent from '../components/RichContent';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import { API_URL } from '../lib/config';
 
 const PAGE_KEYS = {
   'algemene-voorwaarden': 'legal_terms',

@@ -1,7 +1,8 @@
 import axios from 'axios';
 import DOMPurify from 'dompurify';
 
-export const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
+import { API_URL } from './config';
+export { API_URL };
 
 // Transparante 1×1 fallback: kapotte afbeeldingen vallen weg in de achtergrond
 // van hun container (geen zichtbare placeholder-flits meer).

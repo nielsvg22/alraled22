@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { IS_PRODUCTION_DOMAIN } from '../lib/api';
 
 const PasswordWall = ({ children }) => {
   const [password, setPassword] = useState('');
@@ -10,6 +11,7 @@ const PasswordWall = ({ children }) => {
 
   useEffect(() => {
     const auth = localStorage.getItem('crm_staging_authorized');
+    if (IS_PRODUCTION_DOMAIN) { setIsAuthorized(true); return; }
     if (auth === 'true' || import.meta.env.DEV) {
       setIsAuthorized(true);
     }
