@@ -36,6 +36,7 @@ export function shopWithCategory(cat) {
 const GROUP_PAGE_RULES = [
   [/lichtslang/i, '/lichtslangen'],
   [/hefbrug/i, '/hefbrugverlichting'],
+  [/draagbare|werkverlichting/i, '/bouwverlichting'],
   [/bedrijfswagen|automotive/i, '/bedrijfswagenverlichting'],
   [/veilig|verkeer/i, '/veiligheidsverlichting'],
   [/bouw/i, '/bouwverlichting'],
@@ -46,6 +47,25 @@ export function categoryLink(cat) {
   const rule = GROUP_PAGE_RULES.find(([re]) => re.test(name));
   if (rule) return rule[1];
   return cat?.slug || cat?.id ? shopWithCategory(cat) : ROUTES.shop;
+}
+
+// Weergavenaam in het menu (korter/gebruiksvriendelijker dan de categorienaam in het CRM)
+const MENU_LABEL_RULES = [
+  [/lichtslang/i, 'Bouwlichtslangen'],
+  [/draagbare|werkverlichting/i, 'Bouwlampen'],
+  [/hefbrug/i, 'Hefbrugverlichting'],
+];
+export function categoryLabel(cat) {
+  const name = String(cat?.name || cat?.title || '');
+  const rule = MENU_LABEL_RULES.find(([re]) => re.test(name));
+  return rule ? rule[1] : name;
+}
+
+// Volgorde in het menu: bouwlichtslangen, bouwlampen, veiligheid, bedrijfswagen, hefbrug; de rest daarna
+const MENU_ORDER = [/lichtslang/i, /draagbare|werkverlichting/i, /veilig|verkeer/i, /bedrijfswagen|automotive/i, /hefbrug/i];
+export function sortMenuCategories(list) {
+  const rank = (c) => { const i = MENU_ORDER.findIndex(re => re.test(String(c?.name || ''))); return i === -1 ? MENU_ORDER.length : i; };
+  return [...(list || [])].sort((a, b) => rank(a) - rank(b));
 }
 
 export const NAV_LINKS = [

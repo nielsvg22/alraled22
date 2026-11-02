@@ -6,7 +6,8 @@ import axios from 'axios';
 import { useTranslation, Trans } from 'react-i18next';
 import { getMediaUrl, API_URL } from '../lib/api';
 import { formatPrice } from '../lib/productHelpers';
-import { ROUTES, shopWithCategory, NAV_LINKS } from '../lib/routes';
+import { ROUTES, shopWithCategory, categoryLink, categoryLabel, sortMenuCategories, NAV_LINKS } from '../lib/routes';
+import { getImageSrc } from '../lib/productHelpers';
 import RichText from './RichText';
 
 const DEFAULT_GENERAL = {
@@ -130,7 +131,10 @@ const Header = () => {
   const [categories, setCategories] = useState([]);
   const [showCategories, setShowCategories] = useState(false);
   const [hoveredCategory, setHoveredCategory] = useState(null);
+  const [menuProducts, setMenuProducts] = useState([]);
+  const menuCategories = React.useMemo(() => sortMenuCategories(categories), [categories]);
   const closeTimeoutRef = useRef(null);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -138,7 +142,35 @@ const Header = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  useEffect(() => setMobileOpen(false), [location]);
+  // Bij elke paginawissel menu- en hoverstates resetten
+  useEffect(() => {
+    setMobileOpen(false);
+    setShowCategories(false);
+    setHoveredCategory(null);
+    clearTimeout(closeTimeoutRef.current);
+  }, [location]);
+
+  const openMenu = () => { clearTimeout(closeTimeoutRef.current); setShowCategories(true); };
+  const closeMenuSoon = () => {
+    clearTimeout(closeTimeoutRef.current);
+    closeTimeoutRef.current = setTimeout(() => { setShowCategories(false); setHoveredCategory(null); }, 200);
+  };
+  const closeMenuNow = () => { clearTimeout(closeTimeoutRef.current); setShowCategories(false); setHoveredCategory(null); };
+
+  // Escape sluit het menu; producten voor de voorbeeldkaarten worden pas geladen als het menu voor het eerst opent
+  useEffect(() => {
+    if (!showCategories) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') closeMenuNow(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showCategories]);
+
+  useEffect(() => {
+    if (!showCategories || menuProducts.length > 0) return;
+    axios.get(`${API_URL}/api/products`)
+      .then(res => setMenuProducts(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
+  }, [showCategories, menuProducts.length]);
 
   useEffect(() => {
     const lang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
@@ -255,10 +287,15 @@ const Header = () => {
               </li>
             ))}
             <li className="relative"
-              onMouseEnter={() => { clearTimeout(closeTimeoutRef.current); setShowCategories(true); }}
-              onMouseLeave={() => { closeTimeoutRef.current = setTimeout(() => { setShowCategories(false); setHoveredCategory(null); }, 150); }}>
+              onMouseEnter={openMenu}
+              onMouseLeave={closeMenuSoon}
+              onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget) && !(menuRef.current && menuRef.current.contains(e.relatedTarget))) closeMenuSoon(); }}>
               <Link to={ROUTES.shop}
-                className={`px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1 whitespace-nowrap border-2 ${isActive('/producten') ? 'bg-primary text-white border-primary' : 'text-primary border-primary/30 bg-primary/5 hover:bg-primary hover:text-white hover:border-primary'}`}>
+                aria-haspopup="true"
+                aria-expanded={showCategories}
+                onFocus={openMenu}
+                onKeyDown={(e) => { if (e.key === 'ArrowDown') { e.preventDefault(); openMenu(); setTimeout(() => menuRef.current && menuRef.current.querySelector('[role=menuitem]') && menuRef.current.querySelector('[role=menuitem]').focus(), 30); } }}
+                className={`px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1 whitespace-nowrap border-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${isActive('/producten') || showCategories ? 'bg-primary text-white border-primary' : 'text-primary border-primary/30 bg-primary/5 hover:bg-primary hover:text-white hover:border-primary'}`}>
                 {t('nav.products')}
                 <svg className={`w-3 h-3 transition-transform ${showCategories ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -311,91 +348,104 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Full-width mega dropdown */}
-        {showCategories && categories.length > 0 && (
-          <div
-            className="w-full bg-white border-t border-gray-100"
-            style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
-            onMouseEnter={() => clearTimeout(closeTimeoutRef.current)}
-            onMouseLeave={() => { closeTimeoutRef.current = setTimeout(() => { setShowCategories(false); setHoveredCategory(null); }, 150); }}>
-            <div className="max-w-6xl mx-auto flex" style={{ minHeight: '360px' }}>
-              {/* Left: category sidebar */}
-              <div className="w-[280px] border-r border-gray-100 py-1 shrink-0">
-                <Link to={ROUTES.shop} onClick={() => setShowCategories(false)}
-                  className="flex items-center justify-between px-6 py-3.5 text-sm font-bold text-gray-900 hover:bg-gray-50 transition-colors border-b border-gray-100">
-                  <span>Alle producten</span>
-                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-                {categories.map(cat => (
-                  <Link
-                    key={cat.id}
-                    to={shopWithCategory(cat)}
-                    onClick={() => setShowCategories(false)}
-                    onMouseEnter={() => setHoveredCategory(cat)}
-                    className="flex items-center justify-between px-6 py-3.5 text-[13px] font-semibold transition-all duration-150 border-b border-gray-50 last:border-0 group"
-                    style={hoveredCategory?.id === cat.id
-                      ? { backgroundColor: '#f0f7ff', color: '#2563eb', paddingLeft: '28px' }
-                      : { color: '#374151' }}>
-                    <span>{cat.name}</span>
-                    <svg className="w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition-opacity duration-150" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+        {/* Full-width mega dropdown: categorieën links, bijbehorende toepassing en producten rechts */}
+        {showCategories && menuCategories.length > 0 && (() => {
+          const active = hoveredCategory || menuCategories[0];
+          const catProducts = menuProducts.filter(p => p.categoryId === active.id || String(p.category || '').toLowerCase() === String(active.name || '').toLowerCase());
+          const shown = catProducts.slice(0, 4);
+          const count = active.productCount || catProducts.length;
+          return (
+            <div
+              ref={menuRef}
+              role="menu"
+              aria-label={t('nav.products')}
+              className="w-full bg-white border-t border-gray-100"
+              style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
+              onMouseEnter={openMenu}
+              onMouseLeave={closeMenuSoon}
+              onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) closeMenuSoon(); }}
+              onKeyDown={(e) => {
+                if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+                const items = Array.from(menuRef.current.querySelectorAll('[role=menuitem]'));
+                const i = items.indexOf(document.activeElement);
+                if (i === -1) return;
+                e.preventDefault();
+                items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+              }}>
+              <div className="max-w-6xl mx-auto flex">
+                {/* Links: categorieën */}
+                <div className="w-[270px] border-r border-gray-100 py-2 shrink-0">
+                  {menuCategories.map(cat => {
+                    const isOn = active.id === cat.id;
+                    return (
+                      <Link
+                        key={cat.id}
+                        to={categoryLink(cat)}
+                        role="menuitem"
+                        onClick={closeMenuNow}
+                        onMouseEnter={() => setHoveredCategory(cat)}
+                        onFocus={() => setHoveredCategory(cat)}
+                        className={`flex items-center justify-between gap-3 px-6 py-3 text-[14px] font-semibold transition-colors duration-150 focus:outline-none focus-visible:bg-primary/10 ${isOn ? 'bg-primary/5 text-primary' : 'text-gray-700 hover:bg-gray-50'}`}>
+                        <span className="truncate">{categoryLabel(cat)}</span>
+                        <svg className={`w-3.5 h-3.5 shrink-0 transition-opacity ${isOn ? 'opacity-70' : 'opacity-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
+                    );
+                  })}
+                  <Link to={ROUTES.shop} role="menuitem" onClick={closeMenuNow}
+                    className="flex items-center justify-between px-6 py-3 mt-1 border-t border-gray-100 text-[13px] font-bold text-gray-900 hover:text-primary hover:bg-gray-50 transition-colors focus:outline-none focus-visible:bg-primary/10">
+                    <span>Alle producten</span>
+                    <span aria-hidden="true">→</span>
                   </Link>
-                ))}
-              </div>
-              {/* Right: image content area */}
-              <div className="flex-1 relative overflow-hidden bg-white">
-                {hoveredCategory ? (
-                  <div key={hoveredCategory.id} className="absolute inset-0 animate-in fade-in duration-200 flex items-center justify-center">
-                    {hoveredCategory.imageUrl ? (
-                      <div className="relative w-full h-full flex items-center justify-center p-6">
-                        <img src={getMediaUrl(hoveredCategory.imageUrl)} alt={hoveredCategory.name}
-                          className="max-w-[80%] max-h-[80%] object-contain drop-shadow-sm" loading="lazy" decoding="async" />
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/90 to-transparent pt-12 pb-5 px-8">
-                          <h3 className="text-base font-bold text-gray-900">{hoveredCategory.name}</h3>
-                          {hoveredCategory.description && (
-                            <RichText value={hoveredCategory.description} className="text-xs text-gray-500 mt-0.5 max-w-md" />
-                          )}
-                          {hoveredCategory.productCount > 0 && (
-                            <p className="text-[11px] text-primary font-semibold mt-1">{hoveredCategory.productCount} producten &rarr;</p>
-                          )}
-                        </div>
+                </div>
+
+                {/* Rechts: toelichting + producten van de gekozen categorie */}
+                <div key={active.id} className="flex-1 min-w-0 p-8 flex gap-8 animate-in fade-in duration-200">
+                  <div className="w-[240px] shrink-0 flex flex-col">
+                    <h3 className="text-lg font-black text-gray-900 leading-tight">{categoryLabel(active)}</h3>
+                    {active.description && <RichText value={active.description} className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-5" />}
+                    {count > 0 && <p className="text-xs text-gray-400 mt-3">{count} {count === 1 ? 'product' : 'producten'}</p>}
+                    <div className="mt-auto pt-5 flex flex-col gap-2">
+                      <Link to={categoryLink(active)} onClick={closeMenuNow}
+                        className="inline-flex items-center justify-center gap-1.5 bg-primary text-white text-xs font-bold px-4 py-2.5 rounded-full hover:brightness-110 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
+                        Bekijk toepassing <span aria-hidden="true">→</span>
+                      </Link>
+                      <Link to={shopWithCategory(active)} onClick={closeMenuNow}
+                        className="inline-flex items-center justify-center text-xs font-bold text-gray-600 hover:text-primary px-4 py-2 rounded-full border border-gray-200 hover:border-primary/40 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
+                        Alle producten in de shop
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {shown.length > 0 ? (
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        {shown.map(product => (
+                          <Link key={product.id} to={ROUTES.product(product.id)} onClick={closeMenuNow}
+                            className="group block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
+                            <div className="aspect-square rounded-xl bg-gray-50 overflow-hidden mb-2">
+                              <img src={getImageSrc(product)} alt={product.name} className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105" loading="lazy" decoding="async" />
+                            </div>
+                            <p className="text-xs font-bold text-gray-800 leading-snug line-clamp-2 group-hover:text-primary transition-colors">{product.name}</p>
+                            <p className="text-xs font-black text-gray-900 mt-0.5">{formatPrice(product.price)}</p>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : active.imageUrl ? (
+                      <div className="h-full min-h-[200px] rounded-2xl bg-gray-50 flex items-center justify-center overflow-hidden">
+                        <img src={getMediaUrl(active.imageUrl)} alt={categoryLabel(active)} className="max-h-[240px] max-w-full object-contain p-4" loading="lazy" decoding="async" />
                       </div>
                     ) : (
-                      <div className="text-center">
-                        <div className="w-16 h-16 mx-auto rounded-full bg-gray-50 flex items-center justify-center mb-3">
-                          <svg className="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <h3 className="text-sm font-bold text-gray-900">{hoveredCategory.name}</h3>
-                        {hoveredCategory.description && (
-                          <RichText value={hoveredCategory.description} className="text-xs text-gray-500 mt-1 max-w-sm mx-auto" />
-                        )}
-                        {hoveredCategory.productCount > 0 && (
-                          <p className="text-[11px] text-primary font-semibold mt-2">{hoveredCategory.productCount} producten &rarr;</p>
-                        )}
+                      <div className="h-full min-h-[160px] rounded-2xl bg-gray-50 flex items-center justify-center text-sm text-gray-400">
+                        {menuProducts.length === 0 ? 'Producten laden…' : 'Binnenkort meer producten'}
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="w-14 h-14 mx-auto rounded-full bg-gray-50 flex items-center justify-center mb-3">
-                        <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
-                        </svg>
-                      </div>
-                      <p className="text-[11px] text-gray-400 font-medium">Hover over een categorie</p>
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Mobile menu */}
         {mobileOpen && (
@@ -410,10 +460,10 @@ const Header = () => {
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Categorieën</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 px-2">
-                  {categories.map(cat => (
+                  {menuCategories.map(cat => (
                     <Link
                       key={cat.id}
-                      to={shopWithCategory(cat)}
+                      to={categoryLink(cat)}
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gray-50 hover:bg-primary/5 border border-gray-100 hover:border-primary/20 transition-all group"
                     >
@@ -423,7 +473,7 @@ const Header = () => {
                           : <svg className="w-4 h-4 text-gray-300 group-hover:text-primary/40 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                         }
                       </div>
-                      <span className="text-xs font-semibold text-gray-700 group-hover:text-primary transition-colors truncate">{cat.name}</span>
+                      <span className="text-xs font-semibold text-gray-700 group-hover:text-primary transition-colors leading-tight break-words">{categoryLabel(cat)}</span>
                     </Link>
                   ))}
                 </div>
