@@ -99,9 +99,13 @@ export default function BlogDetail() {
         </header>
 
         {/* Hero image */}
-        {image && (
+        {image ? (
           <div className="rounded-2xl overflow-hidden shadow-lg mb-10">
             <img src={getMediaUrl(image)} alt={title} className="w-full max-h-[500px] object-cover" loading="lazy" decoding="async" />
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-white border border-gray-100 flex items-center justify-center h-56 mb-10">
+            <img src={getMediaUrl('/uploads/alra-led-logo-kleur.png')} alt="ALRA LED Solutions" className="w-56 max-w-[60%] h-auto object-contain" loading="lazy" decoding="async" />
           </div>
         )}
 

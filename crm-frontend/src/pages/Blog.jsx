@@ -117,7 +117,7 @@ export default function Blog() {
             <input className={iCls} value={d.title || ''} onChange={e => updatePost(editing.id, { title: e.target.value })} placeholder="Titel van het bericht" />
           </div>
           <div>
-            <label className={labelCls}>Omslagfoto</label>
+            <label className={labelCls}>Omslagfoto (leeg = ALRA-logo als placeholder)</label>
             <ImageUploader value={d.imageUrl || ''} onChange={v => updatePost(editing.id, { imageUrl: v })} label={null} />
           </div>
           <div>
@@ -193,7 +193,7 @@ export default function Blog() {
             return (
               <div key={b.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
                 <div className="w-20 h-14 rounded-lg bg-gray-100 overflow-hidden shrink-0">
-                  {d.imageUrl && <img src={getMediaUrl(d.imageUrl)} alt="" className="w-full h-full object-cover" />}
+                  <img src={getMediaUrl(d.imageUrl || '/uploads/alra-led-logo-kleur.png')} alt="" className={d.imageUrl ? 'w-full h-full object-cover' : 'w-full h-full object-contain p-2'} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-black text-gray-900 truncate">{d.title || d.heading || 'Zonder titel'}</p>
