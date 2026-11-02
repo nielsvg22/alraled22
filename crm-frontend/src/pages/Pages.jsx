@@ -1041,6 +1041,12 @@ const GENERAL_DEFAULTS = {
   webkeurmerkId: '',
 };
 
+const DEFAULT_ABOUT_USPS = [
+  { title: 'Snel geleverd', text: 'Direct leverbaar' },
+  { title: 'Professionele kwaliteit', text: 'Geselecteerd voor de praktijk' },
+  { title: 'Persoonlijk advies', text: 'Direct contact, korte lijnen' },
+];
+
 const GROOTHANDELS_DEFAULTS = {
   heroEyebrow: 'Voor Groothandels',
   heroTitle: 'Partners in\nprofessionele verlichting',
@@ -1965,6 +1971,25 @@ export default function Pages() {
               <Field label="Afbeelding">
                 <ImageField value={about.image||''} onChange={v => setAbout({ ...about, image:v })} height={28} />
               </Field>
+            </Section>
+
+            <Section title="Kenmerken onder de knoppen (met icoontjes)" icon={Info} defaultOpen={false}>
+              <p className="text-xs text-gray-400 mb-3">De drie korte kenmerken onder "Bekijk ons assortiment / Neem contact op". Het icoontje staat vast per plek (vrachtwagen, schild, praatwolkje).</p>
+              <div className="space-y-2">
+                {(about.heroUsps && about.heroUsps.length ? about.heroUsps : DEFAULT_ABOUT_USPS).map((u, i) => {
+                  const list = (about.heroUsps && about.heroUsps.length) ? about.heroUsps : DEFAULT_ABOUT_USPS;
+                  const setU = (patch) => { const a = list.map(x => ({ ...x })); a[i] = { ...a[i], ...patch }; setAbout({ ...about, heroUsps: a }); };
+                  return (
+                    <ItemCard key={i} number={i} onDelete={() => setAbout({ ...about, heroUsps: list.filter((_, j) => j !== i) })}>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input className={`${iCls} ${iBdr}`} placeholder="Titel (Snel geleverd)" value={u.title||''} onChange={e => setU({ title: e.target.value })} />
+                        <input className={`${iCls} ${iBdr}`} placeholder="Ondertitel (Direct leverbaar)" value={u.text||''} onChange={e => setU({ text: e.target.value })} />
+                      </div>
+                    </ItemCard>
+                  );
+                })}
+                <AddButton onClick={() => setAbout({ ...about, heroUsps: [...((about.heroUsps && about.heroUsps.length) ? about.heroUsps : DEFAULT_ABOUT_USPS), { title: '', text: '' }] })} label="Kenmerk toevoegen" />
+              </div>
             </Section>
 
             <Section title="Wie wij zijn (tekst, foto en cijfers)" icon={Info}>
