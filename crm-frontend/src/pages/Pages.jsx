@@ -1511,6 +1511,9 @@ export default function Pages() {
                                 <Field label="Titel prefix (vóór roterende tekst)">
                                   <input className={`${iCls} ${iBdr}`} value={h.titlePrefix || ''} onChange={e => setH({ titlePrefix: e.target.value })} placeholder="Verlichting voor" />
                                 </Field>
+                                <Field label="Label boven de titel (leeg = niet tonen)" hint="Het kleine labeltje boven de grote titel, bv. 'Duurzame toekomst'.">
+                                  <input className={`${iCls} ${iBdr}`} value={h.badge || ''} onChange={e => setH({ badge: e.target.value })} placeholder="Leeg laten om te verbergen" />
+                                </Field>
                                 <Field label="Ondertitel">
                                   <RichTextEditor minHeight="6rem" value={h.subtitle} onChange={html => setH({ subtitle: html })} />
                                 </Field>
