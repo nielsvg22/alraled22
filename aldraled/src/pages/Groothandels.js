@@ -6,6 +6,7 @@ import { ROUTES } from '../lib/routes';
 import { buildDealerAddress, mergeDealers, DEFAULT_DEALERS } from '../lib/dealers';
 import CustomBlocks from '../components/CustomBlocks';
 import RichText from '../components/RichText';
+import DealersMiniMap from '../components/DealersMiniMap';
 
 const WHOLESALE_BRANDS = [
   {
@@ -234,6 +235,8 @@ const Groothandels = () => {
             <input type="search" value={dealerQuery} onChange={e => setDealerQuery(e.target.value)} placeholder="Zoek op plaats of postcode"
               className="w-full md:w-72 px-4 py-2.5 rounded-full border border-[#E4EAF1] bg-white text-sm text-secondary placeholder-gray-400 focus:outline-none focus:border-primary" />
           </div>
+
+          <DealersMiniMap dealers={filteredDealers} className="mb-8" />
 
           {visibleDealers.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
