@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, double, int, text, timestamp, mysqlEnum, index, tinyint } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, double, int, text, timestamp, mysqlEnum, index, boolean } from 'drizzle-orm/mysql-core';
 import { relations, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 
@@ -390,7 +390,7 @@ export const contactSubmissions = mysqlTable('ContactSubmission', {
 export const userTwoFactor = mysqlTable('UserTwoFactor', {
   userId: varchar('userId', { length: 36 }).primaryKey(),
   secret: varchar('secret', { length: 64 }).notNull(),
-  enabled: tinyint('enabled').notNull().default(0),
+  enabled: boolean('enabled').notNull().default(false),
   backupCodes: text('backupCodes'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
