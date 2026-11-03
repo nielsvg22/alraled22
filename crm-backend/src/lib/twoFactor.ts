@@ -20,7 +20,11 @@ export async function isTwoFactorEnabled(userId: string): Promise<boolean> {
   return !!row && Number(row.enabled) === 1;
 }
 
+// Zolang 2FA nog niet bevestigd is, blijft hetzelfde geheim gelden. Zo geeft elke nieuwe inlogpoging dezelfde QR-code
+// (anders ontstaan er meerdere items in de app en klopt de code van het "verkeerde" item niet).
 export async function beginSetup(userId: string): Promise<string> {
+  const existing = await getTwoFactor(userId);
+  if (existing && Number(existing.enabled) === 0) return existing.secret;
   const secret = generateSecret();
   await pool.execute(
     'INSERT INTO `UserTwoFactor` (userId, secret, enabled, backupCodes) VALUES (?, ?, 0, NULL) ON DUPLICATE KEY UPDATE secret = VALUES(secret), enabled = 0, backupCodes = NULL',

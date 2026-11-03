@@ -31,7 +31,7 @@ export async function enable(req: AuthRequest, res: Response) {
   const userId = req.user!.userId;
   if (isLocked(userId)) return res.status(429).json({ error: 'Te veel foute codes. Probeer het over 10 minuten opnieuw.' });
   const codes = await finishSetup(userId, code);
-  if (!codes) { registerFailure(userId); return res.status(400).json({ error: 'Code klopt niet. Controleer de tijd op je telefoon en probeer opnieuw.' }); }
+  if (!codes) { registerFailure(userId); return res.status(400).json({ error: 'Code klopt niet. Gebruik het nieuwste item in je app (verwijder oudere ALRA LED-items) en zet de tijd van je telefoon op automatisch.' }); }
   clearFailures(userId);
   res.json({ enabled: true, backupCodes: codes });
 }
@@ -85,7 +85,7 @@ export async function loginEnable(req: Request, res: Response) {
   if (!user) return res.status(401).json({ error: 'Instelling verlopen. Log opnieuw in.' });
   if (isLocked(user.id)) return res.status(429).json({ error: 'Te veel foute codes. Probeer het over 10 minuten opnieuw.' });
   const codes = await finishSetup(user.id, body.code);
-  if (!codes) { registerFailure(user.id); return res.status(400).json({ error: 'Code klopt niet. Controleer de tijd op je telefoon en probeer opnieuw.' }); }
+  if (!codes) { registerFailure(user.id); return res.status(400).json({ error: 'Code klopt niet. Gebruik het nieuwste item in je app (verwijder oudere ALRA LED-items) en zet de tijd van je telefoon op automatisch.' }); }
   clearFailures(user.id);
   const deviceToken = body.rememberDevice ? await issueTrustedDevice(user.id, req.headers['user-agent'] as string | undefined) : undefined;
   res.json({
