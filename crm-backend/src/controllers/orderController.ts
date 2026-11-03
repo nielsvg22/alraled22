@@ -8,6 +8,7 @@ import { sendOrderConfirmation, sendAdminNotification, sendStatusUpdate } from '
 import PDFDocument from 'pdfkit';
 import { getContent } from '../db/contentRepo';
 import { getEffectiveUnitPrice, getPricingContextForUser } from '../lib/pricing';
+import { checkVatNumber, qualifiesForReverseCharge } from '../lib/vat';
 import createMollieClient, { Payment } from '@mollie/api-client';
 import { createShipment, getSendcloudSettings } from '../lib/sendcloud';
 
@@ -17,6 +18,7 @@ const orderSchema = z.object({
     quantity: z.number().int().positive(),
   })).min(1),
   discountCodeId: z.string().uuid().optional(),
+  vatNumber: z.string().max(40).optional(),
   shipping: z.object({
     name: z.string().optional(),
     company: z.string().optional(),
@@ -57,7 +59,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { items, discountCodeId, shipping } = orderSchema.parse(req.body);
+    const { items, discountCodeId, shipping, vatNumber } = orderSchema.parse(req.body);
 
     const productIds = items.map((item) => item.productId);
     const foundProducts = await db.select().from(products).where(inArray(products.id, productIds));
@@ -90,7 +92,23 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    const total = Math.max(0, subtotal - discountAmount + (shipping?.cost || 0));
+    // BTW: standaard 21%. Verlegd (0%) bij een klantgroep met verlegging, of een geldig EU-BTW-nummer (VIES, op de server
+    // gecontroleerd) bij levering aan een ander EU-land dan Nederland. `total` = het bedrag dat de klant betaalt, incl. BTW.
+    let vatReverse = !!pricing.vatReverseCharge;
+    let storedVatNumber: string | null = null;
+    if (vatNumber && vatNumber.trim()) {
+      const vat = await checkVatNumber(vatNumber, shipping?.country || 'NL');
+      if (qualifiesForReverseCharge(vat, shipping?.country || 'NL')) {
+        vatReverse = true;
+        storedVatNumber = `${vat.country}${vat.number}`;
+      } else if (!vat.valid && vat.unavailable) {
+        return res.status(503).json({ error: 'De BTW-controle is tijdelijk niet beschikbaar. Probeer het over een paar minuten opnieuw of reken af met BTW.' });
+      } else if (!vat.valid) {
+        return res.status(400).json({ error: 'Dit BTW-nummer is niet geldig. Controleer het nummer of laat het leeg om met BTW af te rekenen.' });
+      }
+    }
+    const exVat = Math.max(0, subtotal - discountAmount + (shipping?.cost || 0));
+    const total = Math.round((exVat * (vatReverse ? 1 : 1.21) + Number.EPSILON) * 100) / 100;
 
     const newOrder = await db.transaction(async (tx) => {
       const orderId = crypto.randomUUID();
@@ -109,6 +127,8 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         shippingPhone: shipping?.phone || null,
         shippingMethod: shipping?.method || null,
         shippingCost: shipping?.cost || 0,
+        vatNumber: storedVatNumber,
+        vatReverse,
       });
       
       await tx.insert(orderItems).values(
@@ -338,16 +358,19 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
     const invoiceNumber = `INV-${createdDate.toISOString().slice(0, 10).replace(/-/g, '')}-${order.id.slice(0, 6).toUpperCase()}`;
     const filename = `factuur-${invoiceNumber}.pdf`;
 
-    const total = Number(order.total || 0);
     const discountAmount = Number(order.discountAmount || 0);
-    
+    const shippingEx = Number((order as any).shippingCost || 0);
+
+    // Bedragen uit de regels zelf (excl. BTW); BTW 21% of verlegd (klantgroep of geldig EU-BTW-nummer)
     const pricing = await getPricingContextForUser(order.userId);
-    const vatRate = pricing.vatReverseCharge ? 0 : 0.21;
-    
-    const subtotalEx = (total + discountAmount) / (1 + vatRate);
-    const discountEx = discountAmount / (1 + vatRate);
-    const subtotalAfterDiscountEx = subtotalEx - discountEx;
-    const vatAmount = subtotalAfterDiscountEx * vatRate;
+    const vatReverse = !!(order as any).vatReverse || !!pricing.vatReverseCharge;
+    const vatRate = vatReverse ? 0 : 0.21;
+
+    const subtotalEx = order.items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 0), 0);
+    const discountEx = discountAmount;
+    const baseEx = Math.max(0, subtotalEx - discountEx + shippingEx);
+    const vatAmount = baseEx * vatRate;
+    const total = baseEx + vatAmount;
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -367,11 +390,15 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
     const accent = '#0c4684';
 
     const drawFooter = (page: number) => {
-      const y = doc.page.height - doc.page.margins.bottom + 10;
+      // De voettekst staat in de onderrand: zonder rand-correctie voegt pdfkit daar automatisch een nieuwe pagina toe
+      const savedBottom = doc.page.margins.bottom;
+      doc.page.margins.bottom = 0;
+      const y = doc.page.height - savedBottom + 10;
       doc.fontSize(9).font('Helvetica').fillColor(muted);
       const leftText = [companyEmail, companyPhone].filter(Boolean).join(' · ');
       if (leftText) doc.text(leftText, left, y, { align: 'left' });
       doc.text(`Pagina ${page}`, left, y, { align: 'right' });
+      doc.page.margins.bottom = savedBottom;
     };
 
     const drawHeader = () => {
@@ -449,7 +476,8 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
     });
 
     const totalsBoxW = 250;
-    const totalsBoxH = discountAmount > 0 ? 106 : 88;
+    const extraRows = (discountAmount > 0 ? 1 : 0) + (shippingEx > 0 ? 1 : 0) + (vatReverse ? 1 : 0);
+    const totalsBoxH = 88 + extraRows * 18;
     const totalsX = right - totalsBoxW;
     const totalsY = Math.max(y + 12, doc.page.height - doc.page.margins.bottom - totalsBoxH - 10);
     doc.roundedRect(totalsX, totalsY, totalsBoxW, totalsBoxH, 14).fill(surface).strokeColor(border).lineWidth(1).stroke();
@@ -465,9 +493,21 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
       doc.text(`-${formatEuro(discountEx)}`, totalsX + 14, currentY, { width: totalsBoxW - 28, align: 'right' });
     }
 
+    if (shippingEx > 0) {
+      currentY += 18;
+      doc.text('Verzendkosten', totalsX + 14, currentY, { width: 140 });
+      doc.text(formatEuro(shippingEx), totalsX + 14, currentY, { width: totalsBoxW - 28, align: 'right' });
+    }
+
     currentY += 18;
-    doc.text('BTW (21%)', totalsX + 14, currentY, { width: 140 });
+    doc.text(vatReverse ? 'BTW (verlegd, 0%)' : 'BTW (21%)', totalsX + 14, currentY, { width: 140 });
     doc.text(formatEuro(vatAmount), totalsX + 14, currentY, { width: totalsBoxW - 28, align: 'right' });
+    if (vatReverse) {
+      currentY += 18;
+      doc.fontSize(7.5).fillColor(muted);
+      doc.text(`BTW verlegd (intracommunautaire levering)${(order as any).vatNumber ? ` — BTW-nr klant: ${(order as any).vatNumber}` : ''}`, totalsX + 14, currentY, { width: totalsBoxW - 28 });
+      doc.fontSize(9).fillColor(text);
+    }
     
     currentY += 24;
     doc.fontSize(11).font('Helvetica-Bold').fillColor(ink);
