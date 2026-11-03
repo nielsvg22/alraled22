@@ -309,16 +309,6 @@ export async function getShippingMethods(country: string = 'NL'): Promise<any[]>
       service_area: opt.service_area || 'domestic',
     }));
 
-    methods.push({
-      id: 99,
-      name: 'Test verzending (gratis)',
-      shipping_option_code: 'sendcloud:letter',
-      carrier: { name: 'SendCloud', code: 'sendcloud', logo: '' },
-      price: 0,
-      delivery_time: 'Test',
-      service_area: 'domestic',
-    });
-
     return methods;
   } catch (err: any) {
     console.error('[sendcloud] Dynamisch ophalen verzendmethoden mislukt:', err.message);
@@ -331,7 +321,6 @@ function getFallbackMethods() {
     { id: 1, name: 'PostNL Standaard', shipping_option_code: 'postnl:standard', carrier: { name: 'PostNL', code: 'postnl', logo: '' }, price: 0, delivery_time: '2-3 werkdagen' },
     { id: 8, name: 'DHL Pakket', shipping_option_code: 'dhl Parcel NL:parcel', carrier: { name: 'DHL', code: 'dhl', logo: '' }, price: 0, delivery_time: '1-2 werkdagen' },
     { id: 11, name: 'DPD Pakket', shipping_option_code: 'dpd:dpd_nl_32480', carrier: { name: 'DPD', code: 'dpd', logo: '' }, price: 0, delivery_time: '1-2 werkdagen' },
-    { id: 99, name: 'Test verzending (gratis)', shipping_option_code: 'sendcloud:letter', carrier: { name: 'SendCloud', code: 'sendcloud', logo: '' }, price: 0, delivery_time: 'Test' },
   ];
 }
 
