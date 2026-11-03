@@ -18,6 +18,9 @@ router.patch('/users/:id/customer-group', authMiddleware, adminMiddleware, setUs
 
 // Twee-staps verificatie (alleen admins)
 router.get('/2fa/status', authMiddleware, adminMiddleware, wrap(twoFactor.status));
+// Instellen tijdens het inloggen (setup-token uit /login, geen sessie nodig)
+router.post('/2fa/login-setup', wrap(twoFactor.loginSetup));
+router.post('/2fa/login-enable', wrap(twoFactor.loginEnable));
 router.post('/2fa/setup', authMiddleware, adminMiddleware, wrap(twoFactor.setup));
 router.post('/2fa/enable', authMiddleware, adminMiddleware, wrap(twoFactor.enable));
 router.post('/2fa/disable', authMiddleware, adminMiddleware, wrap(twoFactor.disable));

@@ -45,6 +45,20 @@ function serializeUser(user: { id: string; email: string; name: string | null; r
   };
 }
 
+// Kortlevend token (15 min) dat alleen de 2FA-instelling tijdens het inloggen toestaat
+export function signSetupToken(userId: string) {
+  return jwt.sign({ userId, purpose: '2fa-setup' }, JWT_SECRET, { expiresIn: '15m' });
+}
+
+export function verifySetupToken(token: string): string | null {
+  try {
+    const p = jwt.verify(token, JWT_SECRET) as { userId?: string; purpose?: string };
+    return p.purpose === '2fa-setup' && p.userId ? p.userId : null;
+  } catch { return null; }
+}
+
+export { serializeUser, signToken };
+
 function signToken(user: { id: string; role: usersRepo.Role }) {
   return jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 }
@@ -95,6 +109,11 @@ export async function login(req: Request, res: Response) {
         clearFailures(user.id);
         if (rememberDevice) newDeviceToken = await issueTrustedDevice(user.id, req.headers['user-agent'] as string | undefined);
       }
+    }
+
+    // Admin zonder 2FA: verplicht eerst instellen (tenzij REQUIRE_ADMIN_2FA=false). Geen sessie-token tot dat gelukt is.
+    if (user.role === 'ADMIN' && process.env.REQUIRE_ADMIN_2FA !== 'false' && !(await isTwoFactorEnabled(user.id))) {
+      return res.json({ twoFactorSetupRequired: true, setupToken: signSetupToken(user.id) });
     }
 
     const token = signToken(user);
