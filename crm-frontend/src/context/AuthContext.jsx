@@ -51,12 +51,23 @@ export const AuthProvider = ({ children }) => {
       email, password, deviceToken,
       ...(opts.code ? { code: opts.code, rememberDevice: !!opts.remember } : {}),
     });
-    if (res.data.twoFactorRequired && !res.data.token) return res.data;
+    if ((res.data.twoFactorRequired || res.data.twoFactorSetupRequired) && !res.data.token) return res.data;
     if (res.data.deviceToken) localStorage.setItem('crm_device_token', res.data.deviceToken);
     localStorage.setItem('token', res.data.token);
     localStorage.setItem('user', JSON.stringify(res.data.user));
     setUser(res.data.user);
     return res.data;
+  };
+
+  // 2FA instellen tijdens het inloggen (admin zonder 2FA): secret ophalen en bevestigen; de sessie start pas bij finishLogin
+  const loginSetup = async (setupToken) => (await api.post('/auth/2fa/login-setup', { setupToken })).data;
+  const loginEnable = async (setupToken, code, remember) => (await api.post('/auth/2fa/login-enable', { setupToken, code, rememberDevice: !!remember })).data;
+  const finishLogin = (data) => {
+    if (data.deviceToken) localStorage.setItem('crm_device_token', data.deviceToken);
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    setUser(data.user);
+    return data;
   };
 
   const refreshUser = async () => {
@@ -81,7 +92,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, refreshUser, loading, isAdmin: user?.role === 'ADMIN' }}>
+    <AuthContext.Provider value={{ user, login, loginSetup, loginEnable, finishLogin, register, logout, refreshUser, loading, isAdmin: user?.role === 'ADMIN' }}>
       {children}
     </AuthContext.Provider>
   );

@@ -57,3 +57,41 @@ export async function adminReset(req: AuthRequest, res: Response) {
   await disableTwoFactor(id);
   res.json({ enabled: false });
 }
+
+// ── Instellen tijdens het inloggen (admin zonder 2FA; alleen met het korte setup-token uit /login) ──
+import { verifySetupToken, serializeUser, signToken } from './authJsonController';
+import { issueTrustedDevice } from '../lib/twoFactor';
+import { Request } from 'express';
+
+async function adminFromSetupToken(raw: unknown) {
+  const userId = typeof raw === 'string' ? verifySetupToken(raw) : null;
+  if (!userId) return null;
+  const user = await usersRepo.findUserByIdWithGroup(userId);
+  if (!user || user.role !== 'ADMIN') return null;
+  if (await isTwoFactorEnabled(user.id)) return null;
+  return user;
+}
+
+export async function loginSetup(req: Request, res: Response) {
+  const user = await adminFromSetupToken(req.body?.setupToken);
+  if (!user) return res.status(401).json({ error: 'Instelling verlopen. Log opnieuw in.' });
+  const secret = await beginSetup(user.id);
+  res.json({ secret, otpauthUrl: otpauthUrl(secret, user.email) });
+}
+
+export async function loginEnable(req: Request, res: Response) {
+  const body = z.object({ setupToken: z.string(), code: z.string().min(6).max(12), rememberDevice: z.boolean().optional() }).parse(req.body);
+  const user = await adminFromSetupToken(body.setupToken);
+  if (!user) return res.status(401).json({ error: 'Instelling verlopen. Log opnieuw in.' });
+  if (isLocked(user.id)) return res.status(429).json({ error: 'Te veel foute codes. Probeer het over 10 minuten opnieuw.' });
+  const codes = await finishSetup(user.id, body.code);
+  if (!codes) { registerFailure(user.id); return res.status(400).json({ error: 'Code klopt niet. Controleer de tijd op je telefoon en probeer opnieuw.' }); }
+  clearFailures(user.id);
+  const deviceToken = body.rememberDevice ? await issueTrustedDevice(user.id, req.headers['user-agent'] as string | undefined) : undefined;
+  res.json({
+    user: { ...serializeUser(user), twoFactorEnabled: true },
+    token: signToken(user),
+    backupCodes: codes,
+    ...(deviceToken ? { deviceToken } : {}),
+  });
+}
