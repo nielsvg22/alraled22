@@ -882,7 +882,7 @@ function SortableBlockCard({ block, active, draft, error, mountOptions, onSelect
 const HOME_DEFAULTS = {
   hero: { title: 'Kwaliteit die straalt.', titlePrefix: 'Verlichting voor', subtitle: '', backgroundImage: '', primaryButtonText: 'START PROJECT', secondaryButtonText: 'BEKIJK CASES', typewriterWords: ['bedrijfswagens.', 'bouwplaatsen.', 'werkplaatsen.', 'professionals.'] },
   introduction: { badge: 'Duurzame Toekomst', marqueeText: 'LED SPECIALISTS' },
-  introSection: { badge: 'Over ALRA LED', heading: 'Professionele LED-oplossingen voor de moderne werkplek', description: 'Wij zijn specialist in hoogwaardige LED-verlichting voor bedrijfswagens, bouwplaatsen en werkplaatsen.', linkText: 'Meer over ons', deliveryTitle: 'Direct leverbaar uit voorraad', deliverySubtitle: 'Snelle levering in heel Nederland en België' },
+  introSection: { badge: 'Over ALRA LED', heading: 'Professionele LED-oplossingen voor de moderne werkplek', description: 'Wij zijn specialist in hoogwaardige LED-verlichting voor bedrijfswagens, bouwplaatsen en werkplaatsen.', linkText: 'Meer over ons', deliveryTitle: 'Direct leverbaar uit voorraad', deliverySubtitle: 'Snelle levering in heel Nederland en België', usps: ['Specialist in professionele LED-oplossingen', 'Persoonlijk advies en meedenken in oplossingen', 'Betrouwbare, gecertificeerde producten', 'Voor zakelijke en professionele toepassingen'] },
   dealersCta: { title: 'Waar te koop?', subtitle: 'Vind een verkooppunt bij jou in de buurt.', buttonText: 'Bekijk verkooppunten' },
   specializations: [],
   stats: [],
@@ -1607,6 +1607,16 @@ export default function Pages() {
                                     <input className={`${iCls} ${iBdr}`} value={is.deliverySubtitle||''} onChange={e => setIs({ deliverySubtitle: e.target.value })} />
                                   </Field>
                                 </div>
+                                <Field label="Kenmerken (vinkjes onder de tekst)" hint="Korte punten met een vinkje. Voeg toe, wijzig of verwijder naar wens.">
+                                  <div className="space-y-2 mt-1">
+                                    {(Array.isArray(is.usps) ? is.usps : HOME_DEFAULTS.introSection.usps).map((usp, i, all) => (
+                                      <ItemCard key={i} number={i} onDelete={() => setIs({ usps: all.filter((_, j) => j !== i) })}>
+                                        <input className={`${iCls} ${iBdr}`} value={usp || ''} onChange={e => setIs({ usps: all.map((u, j) => j === i ? e.target.value : u) })} placeholder="Kenmerk" />
+                                      </ItemCard>
+                                    ))}
+                                    <AddButton onClick={() => setIs({ usps: [...(Array.isArray(is.usps) ? is.usps : HOME_DEFAULTS.introSection.usps), ''] })} label="Kenmerk toevoegen" />
+                                  </div>
+                                </Field>
                               </Section>
                             )}
                           </SortableSection>

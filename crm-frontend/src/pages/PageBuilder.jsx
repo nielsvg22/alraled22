@@ -98,8 +98,12 @@ const FIXED_SECTION_SCHEMAS = {
       { key: 'linkText', type: 'text', label: 'Link tekst' },
       { key: 'deliveryTitle', type: 'text', label: 'Titel levering' },
       { key: 'deliverySubtitle', type: 'text', label: 'Ondertekst levering' },
+      { key: 'usps', type: 'array', label: 'Kenmerken (vinkjes)', subfields: [
+        { key: 'text', type: 'text', label: 'Kenmerk' },
+      ]},
     ],
     mapData: (data) => ({
+      usps: (data?.introSection?.usps || []).map(t => ({ text: t })),
       badge: data?.introSection?.badge || '',
       heading: data?.introSection?.heading || '',
       description: data?.introSection?.description || '',
@@ -119,6 +123,7 @@ const FIXED_SECTION_SCHEMAS = {
         linkText: form.linkText,
         deliveryTitle: form.deliveryTitle,
         deliverySubtitle: form.deliverySubtitle,
+        usps: (form.usps || []).map(i => i.text ?? i).filter(Boolean),
       },
     }),
   },
