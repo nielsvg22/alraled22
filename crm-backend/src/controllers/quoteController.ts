@@ -8,7 +8,7 @@ import { db } from '../lib/db';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { quotes, notifications } from '../db/schema';
 import { AuthRequest } from '../middleware/authMiddleware';
-import { getEffectiveUnitPrice, getPricingContextForUser } from '../lib/pricing';
+import { getPriceBreakdown, getPricingContextForUser } from '../lib/pricing';
 import { getContent, setContent } from '../db/contentRepo';
 import fetch from 'node-fetch';
 
@@ -147,7 +147,7 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   date: string;
   validUntil: string;
   customer: { name: string; attention?: string; address?: string; postcode?: string; city?: string; email?: string };
-  lines: { name: string; qty: number; unit?: string; unitPrice: number; vatRate: number; total: number }[];
+  lines: { name: string; qty: number; unit?: string; unitPrice: number; vatRate: number; total: number; listPrice?: number; volumePercent?: number; volumeMinQty?: number }[];
 }) {
   const { colors: c, company, texts: t } = design;
   const { refNr, date, validUntil, customer, lines } = data;
@@ -306,8 +306,10 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
     const line = lines[idx];
     if (!line) continue;
 
+    const hasVolume = Number(line.volumePercent) > 0 && Number(line.listPrice) > line.unitPrice;
+    const rowH = hasVolume ? 42 : 28;
     if (idx % 2 === 1) {
-      doc.rect(mx, y, colW, 28).fill(c.surface);
+      doc.rect(mx, y, colW, rowH).fill(c.surface);
     }
 
     doc.fontSize(10).font('Helvetica').fillColor(c.ink);
@@ -319,9 +321,15 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
     doc.font('Helvetica-Bold').fillColor(c.blueDark);
     doc.text(formatEuro(line.total), c6, y + 9, { width: w6, align: 'right' });
 
+    if (hasVolume) {
+      // Staffelkorting zichtbaar op de offerte: percentage, vanaf hoeveel stuks en de normale prijs
+      doc.fontSize(8).font('Helvetica').fillColor('#047857');
+      doc.text(`Staffelkorting ${line.volumePercent}% (vanaf ${line.volumeMinQty} stuks) — normaal ${formatEuro(Number(line.listPrice))} per stuk`, c1 + 10, y + 26, { width: w1 + w2 + w3 + w4, align: 'left' });
+    }
+
     // Bottom line
-    doc.moveTo(mx, y + 28).lineTo(mx + colW, y + 28).lineWidth(0.3).stroke(c.line);
-    y += 32;
+    doc.moveTo(mx, y + rowH).lineTo(mx + colW, y + rowH).lineWidth(0.3).stroke(c.line);
+    y += rowH + 4;
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -336,6 +344,15 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   doc.text('Bedrag excl. BTW', totX, y, { width: 180 });
   doc.text(formatEuro(subtotalExcl), totX, y, { width: totW, align: 'right' });
   y += 22;
+
+  const volumeSaving = lines.reduce((sum, l) => sum + (Number(l.volumePercent) > 0 && Number(l.listPrice) > l.unitPrice ? (Number(l.listPrice) - l.unitPrice) * l.qty : 0), 0);
+  if (volumeSaving > 0.004) {
+    doc.fontSize(9).font('Helvetica').fillColor('#047857');
+    doc.text('Hierin verwerkt: staffelkorting', totX, y, { width: 180 });
+    doc.text(`- ${formatEuro(volumeSaving)}`, totX, y, { width: totW, align: 'right' });
+    doc.fontSize(10).font('Helvetica').fillColor(c.ink);
+    y += 22;
+  }
 
   // BTW
   doc.text('BTW', totX, y, { width: 180 });
@@ -421,7 +438,7 @@ export const downloadQuotePdf = async (req: AuthRequest, res: Response) => {
     const lines = items.map(i => {
       const qty = Number(i.qty) || 1;
       const unitPrice = Number(i.unitPrice) || 0;
-      return { name: i.name, qty, unit: typeof i.unit === 'string' ? i.unit : 'Stuk', unitPrice, vatRate: Number(i.vatRate) || 21, total: Number(i.total) || qty * unitPrice };
+      return { name: i.name, qty, unit: typeof i.unit === 'string' ? i.unit : 'Stuk', unitPrice, vatRate: Number(i.vatRate) || 21, total: Number(i.total) || qty * unitPrice, listPrice: Number((i as any).listPrice) || undefined, volumePercent: Number((i as any).volumePercent) || undefined, volumeMinQty: Number((i as any).volumeMinQty) || undefined };
     });
 
     const created = quote.createdAt ? new Date(quote.createdAt) : new Date();
@@ -459,12 +476,12 @@ export const createQuotePdf = async (req: AuthRequest, res: Response) => {
       : { discountPercent: 0, vatReverseCharge: false };
     const lines = await Promise.all(prods.map(async (p) => {
       const q = qtyMap.get(p.id) || 1;
-      const unit = await getEffectiveUnitPrice(p.id, q, pricing.discountPercent);
-      return { name: p.name, qty: q, unit: 'Stuk', unitPrice: unit, vatRate: 21, total: q * unit };
+      const b = await getPriceBreakdown(p.id, q, pricing.discountPercent);
+      return { name: p.name, qty: q, unit: 'Stuk', unitPrice: b.unitPrice, vatRate: 21, total: q * b.unitPrice, listPrice: b.listPrice, volumePercent: b.volumePercent, volumeMinQty: b.volumeMinQty };
     }));
 
   try {
-    const itemsJson = JSON.stringify(lines.map(l => ({ name: l.name, qty: l.qty, unit: l.unit, unitPrice: l.unitPrice, vatRate: l.vatRate, total: l.total })));
+    const itemsJson = JSON.stringify(lines.map(l => ({ name: l.name, qty: l.qty, unit: l.unit, unitPrice: l.unitPrice, vatRate: l.vatRate, total: l.total, listPrice: l.listPrice, volumePercent: l.volumePercent, volumeMinQty: l.volumeMinQty })));
     const subtotalExcl = lines.reduce((s, l) => s + l.total, 0);
     const vatAmount = lines.reduce((s, l) => s + (l.total * l.vatRate / 100), 0);
     const totalIncl = subtotalExcl + vatAmount;

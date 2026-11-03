@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import analytics from './analytics';
+import { useVolumeDiscount, volumeFor, discountedUnitPrice } from './volumeDiscount';
 
 const CartContext = createContext();
 
@@ -73,10 +74,15 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = () => setCartItems([]);
 
-  const cartTotal = cartItems.reduce((total, item) => {
+  const volumeConfig = useVolumeDiscount();
+  // Prijs per stuk inclusief staffelkorting (bv. 10% vanaf 10 stuks van hetzelfde product)
+  const getUnitPrice = (item) => {
     const price = item.attributes?.price || item.price || 0;
-    return total + (price * item.quantity);
-  }, 0);
+    return discountedUnitPrice(price, volumeFor(volumeConfig, item.quantity).percent);
+  };
+  const getVolume = (item) => volumeFor(volumeConfig, item.quantity);
+
+  const cartTotal = cartItems.reduce((total, item) => total + getUnitPrice(item) * item.quantity, 0);
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
@@ -90,6 +96,8 @@ export const CartProvider = ({ children }) => {
       isCartOpen, 
       setIsCartOpen,
       cartTotal,
+      getUnitPrice,
+      getVolume,
       cartCount,
       guestId
     }}>

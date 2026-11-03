@@ -9,6 +9,7 @@ import analytics from '../lib/analytics';
 import { getProductImages, getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
 import QuoteModal from '../components/QuoteModal';
+import { useVolumeDiscount, volumeFor, discountedUnitPrice } from '../lib/volumeDiscount';
 
 const parseSpecs = (specsStr) => {
   if (!specsStr) return [];
@@ -34,6 +35,7 @@ const ProductDetail = () => {
   const [bundle, setBundle]             = useState(null);
   const [loading, setLoading]           = useState(true);
   const [qty, setQty]                   = useState(1);
+  const volumeConfig = useVolumeDiscount();
   const [added, setAdded]               = useState(false);
   const [stickyVisible, setStickyVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -242,6 +244,17 @@ const ProductDetail = () => {
 
               {/* Qty + CTA */}
               <div ref={mainBtnRef} className="space-y-3 pt-1">
+                {volumeConfig.enabled && volumeConfig.tiers.length > 0 && (
+                  <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-2.5 text-xs text-emerald-800">
+                    <span className="font-bold">Staffelkorting: </span>
+                    {volumeConfig.tiers.map(t => `vanaf ${t.minQty} stuks ${t.percent}% korting`).join(' · ')}
+                    {volumeFor(volumeConfig, qty).percent > 0 && (
+                      <span className="block font-bold mt-0.5">
+                        Bij {qty} stuks: {formatPrice(discountedUnitPrice(product.price, volumeFor(volumeConfig, qty).percent))} per stuk (excl. btw)
+                      </span>
+                    )}
+                  </div>
+                )}
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Aantal</span>
                   <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white">
