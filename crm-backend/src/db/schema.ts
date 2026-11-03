@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, double, int, text, timestamp, mysqlEnum, index } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, double, int, text, timestamp, mysqlEnum, index, tinyint } from 'drizzle-orm/mysql-core';
 import { relations, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 
@@ -384,4 +384,26 @@ export const contactSubmissions = mysqlTable('ContactSubmission', {
 }, (t) => [
   index('ContactSubmission_status_idx').on(t.status),
   index('ContactSubmission_createdAt_idx').on(t.createdAt),
+]);
+
+// Twee-staps verificatie (admins). Staan in het schema zodat `drizzle-kit push` bij het opstarten ze niet als "onbekende" tabellen verwijdert.
+export const userTwoFactor = mysqlTable('UserTwoFactor', {
+  userId: varchar('userId', { length: 36 }).primaryKey(),
+  secret: varchar('secret', { length: 64 }).notNull(),
+  enabled: tinyint('enabled').notNull().default(0),
+  backupCodes: text('backupCodes'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
+});
+
+export const trustedDevices = mysqlTable('TrustedDevice', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  userId: varchar('userId', { length: 36 }).notNull(),
+  tokenHash: varchar('tokenHash', { length: 64 }).notNull(),
+  expiresAt: timestamp('expiresAt').notNull(),
+  userAgent: varchar('userAgent', { length: 255 }),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+}, (t) => [
+  index('TrustedDevice_user_idx').on(t.userId),
+  index('TrustedDevice_hash_idx').on(t.tokenHash),
 ]);

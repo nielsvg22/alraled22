@@ -10,4 +10,5 @@ RUN npm run build
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx drizzle-kit push 2>/dev/null; node dist/index.js"]
+# De schema-sync mag het opstarten nooit blokkeren: stdin dicht (geen vragen) en maximaal 120 seconden
+CMD ["sh", "-c", "timeout 120 npx drizzle-kit push </dev/null 2>/dev/null; node dist/index.js"]
