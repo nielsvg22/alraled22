@@ -4,6 +4,7 @@ import { z } from 'zod';
 import dotenv from 'dotenv';
 import * as usersRepo from '../db/usersRepo';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { pool } from '../lib/db';
 import { isTwoFactorEnabled, verifyCode, isTrustedDevice, issueTrustedDevice, isLocked, registerFailure, clearFailures } from '../lib/twoFactor';
 
 dotenv.config();
@@ -149,7 +150,10 @@ export async function me(req: AuthRequest, res: Response) {
 export async function listUsers(req: AuthRequest, res: Response) {
   try {
     const users = await usersRepo.listUsers();
-    return res.json(users);
+    // Per admin tonen of twee-staps verificatie aan staat (om te kunnen resetten)
+    const [rows] = await pool.execute('SELECT userId FROM `UserTwoFactor` WHERE enabled = 1');
+    const enabled = new Set((rows as any[]).map(r => r.userId));
+    return res.json(users.map((u: any) => ({ ...u, twoFactorEnabled: u.role === 'ADMIN' ? enabled.has(u.id) : false })));
   } catch (error: any) {
     return res.status(500).json({ error: 'Failed to load users', message: error?.message || String(error) });
   }
