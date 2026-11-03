@@ -86,6 +86,9 @@ export const orders = mysqlTable('Order', {
   trackingNumber: varchar('trackingNumber', { length: 255 }),
   trackingUrl: varchar('trackingUrl', { length: 512 }),
   sendcloudShipmentId: varchar('sendcloudShipmentId', { length: 50 }),
+  // BTW: klant-BTW-nummer (EU) en of de BTW verlegd is (0%). `total` is het te betalen bedrag incl. BTW.
+  vatNumber: varchar('vatNumber', { length: 32 }),
+  vatReverse: boolean('vatReverse').notNull().default(false),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });

@@ -7,6 +7,7 @@ import path from 'path';
 import fs from 'fs';
 import productRoutes from './routes/productRoutes';
 import authRoutes from './routes/authJsonRoutes';
+import vatRoutes from './routes/vatRoutes';
 import orderRoutes from './routes/orderRoutes';
 import rmaRoutes from './routes/rmaRoutes';
 import quoteRoutes from './routes/quoteRoutes';
@@ -164,6 +165,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/vat', rateLimit({ windowMs: 15 * 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many requests, please try again later' } }), vatRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/rmas', rmaRoutes);

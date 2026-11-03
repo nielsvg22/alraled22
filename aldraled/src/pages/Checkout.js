@@ -8,6 +8,9 @@ import analytics from '../lib/analytics';
 import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
 
+// EU-landen waarnaar we leveren; buiten Nederland kan een geldig BTW-nummer BTW verleggen (0%)
+const EU_COUNTRIES = [['NL', 'Nederland'], ['BE', 'België'], ['DE', 'Duitsland'], ['FR', 'Frankrijk'], ['LU', 'Luxemburg'], ['AT', 'Oostenrijk'], ['BG', 'Bulgarije'], ['HR', 'Kroatië'], ['CY', 'Cyprus'], ['CZ', 'Tsjechië'], ['DK', 'Denemarken'], ['EE', 'Estland'], ['FI', 'Finland'], ['GR', 'Griekenland'], ['HU', 'Hongarije'], ['IE', 'Ierland'], ['IT', 'Italië'], ['LV', 'Letland'], ['LT', 'Litouwen'], ['MT', 'Malta'], ['PL', 'Polen'], ['PT', 'Portugal'], ['RO', 'Roemenië'], ['SK', 'Slowakije'], ['SI', 'Slovenië'], ['ES', 'Spanje'], ['SE', 'Zweden']];
+
 const Checkout = () => {
   const { cartItems, cartTotal, clearCart, updateQuantity, removeFromCart, getUnitPrice, getVolume } = useCart();
   const { user } = useAuth();
@@ -26,6 +29,9 @@ const Checkout = () => {
   const [address, setAddress] = useState('');
   const [postcode, setPostcode] = useState('');
   const [city, setCity] = useState('');
+  const [country, setCountry] = useState('NL');
+  const [vatNumber, setVatNumber] = useState('');
+  const [vat, setVat] = useState({ status: 'idle', reverseCharge: false, message: '' });
 
   const [discountCode, setDiscountCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(null);
@@ -38,20 +44,39 @@ const Checkout = () => {
   const [selectedMethod, setSelectedMethod] = useState(null);
 
   useEffect(() => {
-    fetch(`${api.defaults?.baseURL?.replace('/api', '') || 'http://localhost:5000'}/api/shipping/methods/public?country=NL`)
+    fetch(`${api.defaults?.baseURL?.replace('/api', '') || 'http://localhost:5000'}/api/shipping/methods/public?country=${country}`)
       .then(r => r.json())
       .then(data => {
         const methods = Array.isArray(data) ? data : [];
         setShippingMethods(methods);
-        if (methods.length > 0) setSelectedMethod(methods[0]);
+        setSelectedMethod(methods.length > 0 ? methods[0] : null);
       })
       .catch(() => {
         setShippingMethods([{ id: 1, name: 'Standaard verzending', carrier_name: 'PostNL', price: 6.95, delivery_time: '2-3 werkdagen' }]);
         setSelectedMethod({ id: 1, name: 'Standaard verzending', carrier_name: 'PostNL', price: 6.95, delivery_time: '2-3 werkdagen' });
       });
-  }, []);
+  }, [country]);
 
-  const vatMultiplier = showInclVat ? (1 + VAT_RATE) : 1;
+  // Land of nummer gewijzigd: eerdere controle vervalt
+  useEffect(() => { setVat({ status: 'idle', reverseCharge: false, message: '' }); }, [country, vatNumber]);
+
+  const checkVat = async () => {
+    if (!vatNumber.trim()) return;
+    setVat({ status: 'checking', reverseCharge: false, message: '' });
+    try {
+      const res = await api.post('/vat/validate', { vatNumber, shippingCountry: country });
+      const d = res.data || {};
+      if (d.valid && d.reverseCharge) setVat({ status: 'valid', reverseCharge: true, message: `BTW-nummer geldig${d.name ? ` (${d.name})` : ''}: BTW wordt verlegd (0%).` });
+      else if (d.valid) setVat({ status: 'valid', reverseCharge: false, message: 'BTW-nummer geldig, maar voor levering binnen Nederland rekenen we 21% BTW.' });
+      else if (d.unavailable) setVat({ status: 'unavailable', reverseCharge: false, message: 'De BTW-controle is tijdelijk niet beschikbaar. Probeer het zo opnieuw.' });
+      else setVat({ status: 'invalid', reverseCharge: false, message: d.error || 'Dit BTW-nummer is niet geldig.' });
+    } catch {
+      setVat({ status: 'unavailable', reverseCharge: false, message: 'De BTW-controle is tijdelijk niet beschikbaar. Probeer het zo opnieuw.' });
+    }
+  };
+
+  const vatReverse = vat.reverseCharge && country !== 'NL';
+  const vatMultiplier = vatReverse ? 1 : (showInclVat ? (1 + VAT_RATE) : 1);
 
   const applyDiscount = async () => {
     if (!discountCode) return;
@@ -90,13 +115,14 @@ const Checkout = () => {
       const res = await api.post('/orders', {
         items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity })),
         discountCodeId: appliedDiscount?.discountId,
+        vatNumber: country !== 'NL' && vatNumber.trim() ? vatNumber.trim() : undefined,
           shipping: {
             name,
             company,
             address,
             postcode,
             city,
-            country: 'NL',
+            country,
             phone,
             method: String(selectedMethod?.id || 1),
             cost: selectedMethod?.price || 0,
@@ -252,6 +278,30 @@ const Checkout = () => {
                         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none transition-all" placeholder="Amsterdam" />
                     </div>
                   </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Land *</label>
+                    <select value={country} onChange={e => setCountry(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none transition-all">
+                      {EU_COUNTRIES.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+                    </select>
+                  </div>
+                  {country !== 'NL' && (
+                    <div className="space-y-1.5 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">BTW-nummer (zakelijk, optioneel)</label>
+                      <p className="text-xs text-gray-500">Heb je een geldig EU-BTW-nummer? Dan leveren we met BTW verlegd (0%).</p>
+                      <div className="flex gap-2">
+                        <input type="text" value={vatNumber} onChange={e => setVatNumber(e.target.value)} onBlur={checkVat} placeholder={`bv. ${country}123456789`}
+                          className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none transition-all" />
+                        <button type="button" onClick={checkVat} disabled={!vatNumber.trim() || vat.status === 'checking'}
+                          className="px-4 py-3 rounded-xl bg-secondary text-white text-xs font-bold disabled:opacity-50">
+                          {vat.status === 'checking' ? 'Controleren…' : 'Controleer'}
+                        </button>
+                      </div>
+                      {vat.message && (
+                        <p className={`text-xs font-semibold ${vat.status === 'valid' && vat.reverseCharge ? 'text-emerald-600' : vat.status === 'valid' ? 'text-amber-600' : 'text-red-600'}`}>{vat.message}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -379,10 +429,10 @@ const Checkout = () => {
                       <p className="text-2xl font-bold text-gray-900">{formatPrice((finalTotal + (selectedMethod?.price || 0)) * vatMultiplier)}</p>
                       <button
                         type="button"
-                        onClick={() => setShowInclVat(v => !v)}
+                        onClick={() => !vatReverse && setShowInclVat(v => !v)}
                         className="text-xs text-gray-400 hover:text-gray-600 transition-colors mt-0.5"
                       >
-                        {showInclVat ? 'Inclusief BTW' : 'Exclusief BTW'}
+                        {vatReverse ? 'BTW verlegd (0%)' : showInclVat ? 'Inclusief BTW' : 'Exclusief BTW'}
                       </button>
                     </div>
                   </div>
