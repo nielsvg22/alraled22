@@ -9,7 +9,7 @@ import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpe
 import { VAT_RATE } from '../lib/config';
 
 const Checkout = () => {
-  const { cartItems, cartTotal, clearCart, updateQuantity, removeFromCart } = useCart();
+  const { cartItems, cartTotal, clearCart, updateQuantity, removeFromCart, getUnitPrice, getVolume } = useCart();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -175,8 +175,11 @@ const Checkout = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-3">
                           <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">{item.name}</h3>
-                          <p className="font-bold text-gray-900 text-sm shrink-0">{formatPrice(item.price * item.quantity)}</p>
+                          <p className="font-bold text-gray-900 text-sm shrink-0">{formatPrice(getUnitPrice(item) * item.quantity)}</p>
                         </div>
+                        {getVolume(item).percent > 0 && (
+                          <p className="text-[11px] font-bold text-emerald-600 mt-0.5">{getVolume(item).percent}% staffelkorting (vanaf {getVolume(item).minQty} stuks)</p>
+                        )}
                         <div className="flex items-center justify-between mt-2.5">
                           <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
                             <button type="button" onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors text-sm">−</button>
@@ -316,7 +319,7 @@ const Checkout = () => {
                         <p className="text-sm font-medium text-gray-900 truncate leading-tight">{item.name}</p>
                         <p className="text-xs text-gray-400 mt-0.5">Aantal: {item.quantity}</p>
                       </div>
-                      <p className="text-sm font-semibold text-gray-900 shrink-0">{formatPrice(item.price * item.quantity)}</p>
+                      <p className="text-sm font-semibold text-gray-900 shrink-0">{formatPrice(getUnitPrice(item) * item.quantity)}</p>
                     </div>
                   ))}
                 </div>

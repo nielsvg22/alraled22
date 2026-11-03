@@ -7,7 +7,7 @@ import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpe
 
 const CartDrawer = () => {
   const { t } = useTranslation();
-  const { cartItems, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, cartTotal } = useCart();
+  const { cartItems, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, cartTotal, getUnitPrice, getVolume } = useCart();
 
   useEffect(() => {
     if (isCartOpen) {
@@ -61,7 +61,10 @@ const CartDrawer = () => {
                       <h4 className="font-black text-secondary uppercase italic leading-none">{item.name}</h4>
                       <button onClick={() => removeFromCart(item.id)} aria-label={`${item.name} verwijderen`} className="text-gray-300 hover:text-red-500 transition-colors">✕</button>
                     </div>
-                    <p className="text-primary font-black italic">{formatPrice(item.price)}</p>
+                    <p className="text-primary font-black italic">{formatPrice(getUnitPrice(item))}</p>
+                    {getVolume(item).percent > 0 && (
+                      <p className="text-[11px] font-bold text-emerald-600">{getVolume(item).percent}% staffelkorting (vanaf {getVolume(item).minQty} stuks)</p>
+                    )}
                     <div className="flex items-center gap-4">
                       <div className="flex items-center border-2 border-gray-100 rounded-xl overflow-hidden">
                         <button onClick={() => updateQuantity(item.id, -1)} aria-label="Aantal verlagen" className="px-3 py-1 hover:bg-gray-100 font-bold">-</button>

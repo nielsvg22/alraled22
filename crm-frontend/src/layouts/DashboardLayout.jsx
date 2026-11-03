@@ -29,6 +29,7 @@ import {
   ScrollText,
   Newspaper,
   ShieldCheck,
+  Percent,
 } from 'lucide-react';
 
 export default function DashboardLayout() {
@@ -95,6 +96,7 @@ export default function DashboardLayout() {
     navigation.push({ name: 'Email Instellingen', href: '/email', icon: Mail });
     navigation.push({ name: 'Snelstart', href: '/snelstart', icon: Link2 });
     navigation.push({ name: 'Kortingscodes', href: '/discounts', icon: Ticket });
+    navigation.push({ name: 'Staffelkorting', href: '/volume-discount', icon: Percent });
     navigation.push({ name: 'Juridisch', href: '/legal', icon: Scale });
     navigation.push({ name: 'Productgroepen & SEO', href: '/seo', icon: Globe });
     navigation.push({ name: 'Import', href: '/import', icon: Upload });
