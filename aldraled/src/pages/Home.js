@@ -334,9 +334,9 @@ const Home = () => {
                 </h2>
                 <div className="w-12 h-1 bg-primary rounded-full" />
                 <RichText value={is.description} className="text-gray-500 text-sm md:text-base leading-relaxed max-w-lg" />
-                {Array.isArray(is.usps) && is.usps.length > 0 ? (
+                {Array.isArray(is.usps) && is.usps.filter(u => String(u || '').trim()).length > 0 ? (
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {is.usps.map((usp, idx) => (
+                    {is.usps.filter(u => String(u || '').trim()).map((usp, idx) => (
                       <li key={idx} className="flex items-center gap-3">
                         <span className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
                           <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>

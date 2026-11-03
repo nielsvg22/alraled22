@@ -1043,6 +1043,14 @@ const GENERAL_DEFAULTS = {
   webkeurmerkId: '',
 };
 
+// Vinkjes onder de tekst van het "Over ons"-blok op de homepage (zelfde standaard als op de website)
+const DEFAULT_INTRO_USPS = [
+  'Specialist in professionele LED-oplossingen',
+  'Persoonlijk advies en meedenken in oplossingen',
+  'Betrouwbare, gecertificeerde producten',
+  'Voor zakelijke en professionele toepassingen',
+];
+
 const DEFAULT_ABOUT_USPS = [
   { icon: 'truck', title: 'Snel geleverd', text: 'Direct leverbaar' },
   { icon: 'shield', title: 'Professionele kwaliteit', text: 'Geselecteerd voor de praktijk' },
@@ -1598,6 +1606,21 @@ export default function Pages() {
                                 </Field>
                                 <Field label="Afbeelding">
                                   <ImageField value={is.image||''} onChange={v => setIs({ image: v })} height={24} />
+                                </Field>
+                                <Field label="Vinkjes onder de tekst" hint="De korte punten met een vinkje (bv. 'Specialist in professionele LED-oplossingen').">
+                                  <div className="space-y-2">
+                                    {(Array.isArray(is.usps) && is.usps.length ? is.usps : DEFAULT_INTRO_USPS).map((u, i) => {
+                                      const list = Array.isArray(is.usps) && is.usps.length ? is.usps : DEFAULT_INTRO_USPS;
+                                      return (
+                                        <div key={i} className="flex items-center gap-2">
+                                          <input className={`${iCls} ${iBdr}`} value={u} onChange={e => setIs({ usps: list.map((x, j) => j === i ? e.target.value : x) })} />
+                                          <button type="button" aria-label="Verwijderen" onClick={() => setIs({ usps: list.filter((_, j) => j !== i) })} className="text-gray-400 hover:text-red-500 px-2 text-lg leading-none">×</button>
+                                        </div>
+                                      );
+                                    })}
+                                    <AddButton onClick={() => setIs({ usps: [...(Array.isArray(is.usps) && is.usps.length ? is.usps : DEFAULT_INTRO_USPS), ''] })} label="Vinkje toevoegen" />
+                                    <p className="text-xs text-gray-400">Alle vinkjes verwijderd? Dan toont de website weer de standaardpunten.</p>
+                                  </div>
                                 </Field>
                                 <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
                                   <Field label="Levering kaart — titel">
