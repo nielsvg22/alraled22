@@ -4,6 +4,7 @@ import { z } from 'zod';
 import dotenv from 'dotenv';
 import * as usersRepo from '../db/usersRepo';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { isTwoFactorEnabled, verifyCode, isTrustedDevice, issueTrustedDevice, isLocked, registerFailure, clearFailures } from '../lib/twoFactor';
 
 dotenv.config();
 
@@ -18,6 +19,9 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+  code: z.string().optional(),
+  rememberDevice: z.boolean().optional(),
+  deviceToken: z.string().optional(),
 });
 
 function serializeUser(user: { id: string; email: string; name: string | null; role: usersRepo.Role }) {
@@ -70,15 +74,32 @@ export async function register(req: Request, res: Response) {
 
 export async function login(req: Request, res: Response) {
   try {
-    const { email, password } = loginSchema.parse(req.body);
+    const { email, password, code, rememberDevice, deviceToken } = loginSchema.parse(req.body);
     const user = await usersRepo.findUserByEmailWithGroup(email);
     if (!user) return res.status(400).json({ error: 'Invalid credentials' });
 
     const ok = await usersRepo.verifyPassword(user, password);
     if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
 
+    // Twee-staps verificatie voor admins (alleen als die is ingesteld)
+    let newDeviceToken: string | undefined;
+    if (user.role === 'ADMIN' && await isTwoFactorEnabled(user.id)) {
+      const trusted = await isTrustedDevice(user.id, deviceToken);
+      if (!trusted) {
+        if (!code) return res.json({ twoFactorRequired: true });
+        if (isLocked(user.id)) return res.status(429).json({ error: 'Te veel foute codes. Probeer het over 10 minuten opnieuw.' });
+        if (!(await verifyCode(user.id, code))) {
+          registerFailure(user.id);
+          return res.status(400).json({ error: 'Code klopt niet', twoFactorRequired: true });
+        }
+        clearFailures(user.id);
+        if (rememberDevice) newDeviceToken = await issueTrustedDevice(user.id, req.headers['user-agent'] as string | undefined);
+      }
+    }
+
     const token = signToken(user);
-    res.json({ user: serializeUser(user), token });
+    const twoFactorEnabled = user.role === 'ADMIN' ? await isTwoFactorEnabled(user.id) : false;
+    res.json({ user: { ...serializeUser(user), twoFactorEnabled }, token, ...(newDeviceToken ? { deviceToken: newDeviceToken } : {}) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid data', details: error.issues });
@@ -99,7 +120,8 @@ export async function me(req: AuthRequest, res: Response) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    return res.json(serializeUser(user));
+    const twoFactorEnabled = user.role === 'ADMIN' ? await isTwoFactorEnabled(user.id) : false;
+    return res.json({ ...serializeUser(user), twoFactorEnabled });
   } catch (error: any) {
     return res.status(500).json({ error: 'Failed to load profile', message: error?.message || String(error) });
   }

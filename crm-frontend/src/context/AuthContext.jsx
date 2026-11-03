@@ -44,11 +44,25 @@ export const AuthProvider = ({ children }) => {
     bootstrapAuth();
   }, []);
 
-  const login = async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
+  // Twee-staps verificatie: zonder code geeft de server { twoFactorRequired: true } terug (nog geen token)
+  const login = async (email, password, opts = {}) => {
+    const deviceToken = localStorage.getItem('crm_device_token') || undefined;
+    const res = await api.post('/auth/login', {
+      email, password, deviceToken,
+      ...(opts.code ? { code: opts.code, rememberDevice: !!opts.remember } : {}),
+    });
+    if (res.data.twoFactorRequired && !res.data.token) return res.data;
+    if (res.data.deviceToken) localStorage.setItem('crm_device_token', res.data.deviceToken);
     localStorage.setItem('token', res.data.token);
     localStorage.setItem('user', JSON.stringify(res.data.user));
     setUser(res.data.user);
+    return res.data;
+  };
+
+  const refreshUser = async () => {
+    const res = await api.get('/auth/me');
+    localStorage.setItem('user', JSON.stringify(res.data));
+    setUser(res.data);
     return res.data;
   };
 
@@ -67,7 +81,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading, isAdmin: user?.role === 'ADMIN' }}>
+    <AuthContext.Provider value={{ user, login, register, logout, refreshUser, loading, isAdmin: user?.role === 'ADMIN' }}>
       {children}
     </AuthContext.Provider>
   );

@@ -31,6 +31,7 @@ import { users } from './db/schema';
 import { ensureAnalyticsTables } from './db/ensureAnalyticsTables';
 import { ensureProductImageTable } from './db/ensureProductImageTable';
 import { ensureContactTable } from './db/ensureContactTable';
+import { ensureTwoFactorTables } from './db/ensureTwoFactorTables';
 import { runMigrations } from './db/migrate';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
@@ -72,6 +73,7 @@ async function bootstrap() {
   await ensureAnalyticsTables();
   await ensureProductImageTable();
   await ensureContactTable();
+  await ensureTwoFactorTables();
   await ensureAdmin();
 }
 

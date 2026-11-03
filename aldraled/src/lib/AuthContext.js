@@ -23,6 +23,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
+    // Admin-accounts met twee-staps verificatie loggen in via het CRM
+    if (res.data.twoFactorRequired && !res.data.token) {
+      throw new Error('Dit account gebruikt twee-staps verificatie. Log in via het CRM.');
+    }
     const { user: userData, token } = res.data;
     localStorage.setItem('alra_token', token);
     localStorage.setItem('alra_user', JSON.stringify(userData));
