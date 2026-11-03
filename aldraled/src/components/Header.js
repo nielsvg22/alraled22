@@ -136,6 +136,7 @@ const Header = () => {
   const closeTimeoutRef = useRef(null);
   const megaTimeoutRef = useRef(null);
   const megaRef = useRef(null);
+  const intentRef = useRef(null);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -154,10 +155,18 @@ const Header = () => {
     clearTimeout(megaTimeoutRef.current);
   }, [location]);
 
+  // Hover-intent: staat het andere menu al open, dan schakelen we pas na een korte pauze over.
+  // Zo sluit het menu niet als je schuin over een ander menu-item naar het paneel beweegt.
+  const hoverOpen = (open, otherOpen) => {
+    clearTimeout(intentRef.current);
+    if (otherOpen) intentRef.current = setTimeout(open, 300); else open();
+  };
+  const cancelIntent = () => clearTimeout(intentRef.current);
+
   const openMenu = () => { clearTimeout(closeTimeoutRef.current); setShowMega(false); setShowCategories(true); };
   const closeMenuSoon = () => {
     clearTimeout(closeTimeoutRef.current);
-    closeTimeoutRef.current = setTimeout(() => { setShowCategories(false); }, 200);
+    closeTimeoutRef.current = setTimeout(() => { setShowCategories(false); }, 450);
   };
   const closeMenuNow = () => { clearTimeout(closeTimeoutRef.current); setShowCategories(false); };
 
@@ -165,7 +174,7 @@ const Header = () => {
   const openMega = () => { clearTimeout(megaTimeoutRef.current); setShowCategories(false); setShowMega(true); };
   const closeMegaSoon = () => {
     clearTimeout(megaTimeoutRef.current);
-    megaTimeoutRef.current = setTimeout(() => { setShowMega(false); setHoveredCategory(null); }, 200);
+    megaTimeoutRef.current = setTimeout(() => { setShowMega(false); setHoveredCategory(null); }, 450);
   };
   const closeMegaNow = () => { clearTimeout(megaTimeoutRef.current); setShowMega(false); setHoveredCategory(null); };
 
@@ -309,13 +318,13 @@ const Header = () => {
                 {/* Producten: keuzemenu met de productgroepen (de webshop zelf staat apart, achteraan) */}
                 {idx === 1 && (
                   <li className="relative"
-                    onMouseEnter={openMenu}
-                    onMouseLeave={closeMenuSoon}
+                    onMouseEnter={() => hoverOpen(openMenu, showMega)}
+                    onMouseLeave={() => { cancelIntent(); closeMenuSoon(); }}
                     onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget) && !(menuRef.current && menuRef.current.contains(e.relatedTarget))) closeMenuSoon(); }}>
                     <button type="button"
                       aria-haspopup="true"
                       aria-expanded={showCategories}
-                      onClick={() => (showCategories ? closeMenuNow() : openMenu())}
+                      onClick={openMenu}
                       onFocus={openMenu}
                       onKeyDown={(e) => { if (e.key === 'ArrowDown') { e.preventDefault(); openMenu(); setTimeout(() => menuRef.current && menuRef.current.querySelector('[role=menuitem]') && menuRef.current.querySelector('[role=menuitem]').focus(), 30); } }}
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${showCategories ? 'text-primary bg-primary/5' : 'text-gray-600 hover:text-secondary hover:bg-gray-50'}`}>
@@ -360,8 +369,8 @@ const Header = () => {
               </React.Fragment>
             ))}
             <li className="relative"
-              onMouseEnter={openMega}
-              onMouseLeave={closeMegaSoon}
+              onMouseEnter={() => hoverOpen(openMega, showCategories)}
+              onMouseLeave={() => { cancelIntent(); closeMegaSoon(); }}
               onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget) && !(megaRef.current && megaRef.current.contains(e.relatedTarget))) closeMegaSoon(); }}>
               <Link to={ROUTES.shop}
                 aria-haspopup="true"
@@ -374,6 +383,8 @@ const Header = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </Link>
+              {/* Onzichtbare brug naar het paneel eronder, zodat het menu niet sluit tijdens het naar beneden bewegen */}
+              {showMega && <span aria-hidden="true" className="absolute left-0 right-0 top-full h-4" />}
             </li>
           </ul>
 
