@@ -51,6 +51,7 @@ export default function SeoPages({ mode = 'all', embedded = false }) {
           const isEmpty = v == null || v === '' || (Array.isArray(v) && v.length === 0);
           if (!isEmpty) merged[k] = v;
         });
+        if (merged.heroImage === '/uploads/groep-banner.jpg' && defaults.heroImage) merged.heroImage = defaults.heroImage;
         map[r.slug] = merged;
       });
       setPages(map);

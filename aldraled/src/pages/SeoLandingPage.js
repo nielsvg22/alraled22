@@ -20,6 +20,8 @@ const mergeWithDefaults = (slug, data) => {
     const empty = v == null || v === '' || (Array.isArray(v) && v.length === 0);
     if (!empty) merged[k] = v;
   });
+  // De eerste standaardbanner is vervangen door de variant met lijnen; al opgeslagen oude standaard volgt mee
+  if (merged.heroImage === '/uploads/groep-banner.jpg') merged.heroImage = defaults.heroImage;
   return merged;
 };
 
