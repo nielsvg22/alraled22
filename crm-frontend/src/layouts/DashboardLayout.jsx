@@ -28,6 +28,7 @@ import {
   Truck,
   ScrollText,
   Newspaper,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function DashboardLayout() {
@@ -97,6 +98,7 @@ export default function DashboardLayout() {
     navigation.push({ name: 'Juridisch', href: '/legal', icon: Scale });
     navigation.push({ name: 'Productgroepen & SEO', href: '/seo', icon: Globe });
     navigation.push({ name: 'Import', href: '/import', icon: Upload });
+    navigation.push({ name: 'Beveiliging (2FA)', href: '/security', icon: ShieldCheck });
   }
 
   return (
@@ -170,6 +172,11 @@ export default function DashboardLayout() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+        {isAdmin && user && user.twoFactorEnabled === false && (
+          <NavLink to="/security" className="block px-6 py-2.5 text-center text-sm font-bold bg-amber-50 text-amber-800 border-b border-amber-200 hover:bg-amber-100">
+            Beveilig je admin-account met twee-staps verificatie — klik hier om het in te stellen (2 minuten)
+          </NavLink>
+        )}
         {/* Header */}
         <header className="shadow-sm flex items-center justify-between px-6 py-4" style={{ backgroundColor: 'var(--crm-surface)', borderBottom: '1px solid var(--crm-border)' }}>
           <div className="flex items-center space-x-2 md:hidden">

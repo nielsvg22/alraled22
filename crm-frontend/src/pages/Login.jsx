@@ -9,6 +9,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [needCode, setNeedCode] = useState(false);
+  const [code, setCode] = useState('');
+  const [remember, setRemember] = useState(true);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -18,12 +21,14 @@ export default function Login() {
     setSubmitting(true);
     setError('');
     try {
-      const data = await login(email, password);
+      const data = await login(email, password, needCode ? { code, remember } : {});
+      if (data?.twoFactorRequired && !data?.token) { setNeedCode(true); return; }
       const target = data?.user?.role === 'ADMIN' ? '/users' : '/';
       window.location.assign(target);
     } catch (err) {
       console.error('Login error:', err);
       setError(errorText(err, 'Login failed'));
+      if (needCode) setCode('');
     } finally {
       setSubmitting(false);
     }
@@ -38,7 +43,26 @@ export default function Login() {
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && <div className="text-red-500 text-sm text-center">{String(error)}</div>}
-          <div className="rounded-md shadow-sm -space-y-px">
+          {needCode && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600 text-center">Open je authenticator-app en vul de 6-cijferige code in (of een herstelcode).</p>
+              <input
+                autoFocus
+                inputMode="text"
+                autoComplete="one-time-code"
+                className="block w-full px-3 py-3 border border-gray-300 rounded-md text-center text-xl tracking-[0.3em] text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="123456"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+              />
+              <label className="flex items-center gap-2 text-sm text-gray-600">
+                <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+                Onthoud dit apparaat 1 dag
+              </label>
+              <button type="button" className="text-xs text-blue-600 hover:text-blue-500" onClick={() => { setNeedCode(false); setCode(''); setError(''); }}>← Terug naar inloggen</button>
+            </div>
+          )}
+          <div className={`rounded-md shadow-sm -space-y-px ${needCode ? 'hidden' : ''}`}>
             <div>
               <input
                 type="email"
