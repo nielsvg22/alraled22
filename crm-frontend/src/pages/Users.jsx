@@ -45,8 +45,9 @@ function RoleBadge({ role }) {
   );
 }
 
-function UserModal({ user, orders, onClose }) {
+function UserModal({ user, orders, onClose, onReset2fa }) {
   const total = orders.reduce((s, o) => s + o.total, 0);
+  const [resetting, setResetting] = useState(false);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-0 sm:px-4"
@@ -73,6 +74,21 @@ function UserModal({ user, orders, onClose }) {
         </div>
 
         <div className="overflow-y-auto flex-1 p-6 space-y-5">
+          {user.role === 'ADMIN' && (
+            <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-black text-gray-400 uppercase tracking-[0.15em]">Twee-staps verificatie</p>
+                <p className="text-sm font-bold text-gray-900 mt-0.5">{user.twoFactorEnabled ? 'Staat aan' : 'Niet ingesteld'}</p>
+                {user.twoFactorEnabled && <p className="text-xs text-gray-500 mt-0.5">Na resetten scant deze gebruiker bij de volgende login zelf een nieuwe QR-code.</p>}
+              </div>
+              {user.twoFactorEnabled && (
+                <button disabled={resetting} onClick={async () => { if (!window.confirm(`Twee-staps verificatie van ${user.email} resetten?`)) return; setResetting(true); try { await onReset2fa(user); } finally { setResetting(false); } }}
+                  className="px-4 py-2 rounded-xl text-xs font-black text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 shrink-0">
+                  {resetting ? 'Bezig…' : 'Resetten'}
+                </button>
+              )}
+            </div>
+          )}
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3">
             {[
@@ -163,6 +179,14 @@ export default function UsersPage() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  const reset2fa = async (user) => {
+    try {
+      await api.post(`/auth/users/${user.id}/2fa/reset`, {});
+      await fetchData();
+      setSelected(null);
+    } catch (e) { setError(errorText(e, '2FA resetten mislukt')); }
+  };
 
   const userOrders = (userId) => orders.filter(o => o.user?.id === userId || o.userId === userId);
 
@@ -271,7 +295,7 @@ export default function UsersPage() {
                             {user.email}
                           </a>
                         </td>
-                        <td className="px-5 py-4"><RoleBadge role={user.role} /></td>
+                        <td className="px-5 py-4"><div className="flex items-center gap-2"><RoleBadge role={user.role} />{user.role === 'ADMIN' && <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${user.twoFactorEnabled ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>{user.twoFactorEnabled ? '2FA aan' : '2FA uit'}</span>}</div></td>
                         <td className="px-5 py-4">
                           {uOrders.length > 0 ? (
                             <div>
@@ -306,7 +330,7 @@ export default function UsersPage() {
       </div>
 
       {selected && (
-        <UserModal user={selected.user} orders={selected.orders} onClose={() => setSelected(null)} />
+        <UserModal user={selected.user} orders={selected.orders} onClose={() => setSelected(null)} onReset2fa={reset2fa} />
       )}
     </div>
   );
