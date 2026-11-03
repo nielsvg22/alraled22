@@ -75,7 +75,7 @@ function LiveSearch() {
       </div>
 
       {open && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
+        <div className="absolute top-full right-0 mt-2 w-[min(24rem,calc(100vw-1.5rem))] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
           {results.map(product => (
             <Link
               key={product.id}
@@ -83,17 +83,17 @@ function LiveSearch() {
               onClick={() => { setQuery(''); setOpen(false); }}
               className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
             >
-              <div className="w-10 h-10 bg-gray-100 rounded-xl overflow-hidden shrink-0">
+              <div className="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden shrink-0">
                 {getImg(product.imageUrl)
                   ? <img src={getImg(product.imageUrl)} alt={product.name} className="w-full h-full object-contain p-1" loading="lazy" decoding="async" />
                   : <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">📦</div>
                 }
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-secondary truncate">{product.name}</p>
-                {product.category && <p className="text-[10px] text-gray-400">{product.category}</p>}
+                <p className="text-sm font-bold text-secondary leading-snug line-clamp-2 break-words">{product.name}</p>
+                {product.category && <p className="text-[11px] text-gray-400 leading-tight mt-0.5 truncate">{product.category}</p>}
+                <p className="text-sm font-black text-primary mt-1">{formatPrice(product.price)}</p>
               </div>
-              <span className="text-sm font-black text-primary shrink-0">{formatPrice(product.price)}</span>
             </Link>
           ))}
           <Link
@@ -107,7 +107,7 @@ function LiveSearch() {
       )}
 
       {open && query.trim() && results.length === 0 && !loading && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 px-4 py-4 text-center z-50">
+        <div className="absolute top-full right-0 mt-2 w-[min(24rem,calc(100vw-1.5rem))] bg-white rounded-2xl shadow-xl border border-gray-100 px-4 py-4 text-center z-50">
           <p className="text-sm text-gray-400">
             <Trans i18nKey="header.searchNoResults" values={{ query }} components={[<strong />]} />
           </p>
@@ -306,7 +306,7 @@ const Header = () => {
           </Link>
 
           {/* Desktop nav */}
-          <ul className="hidden md:flex items-center gap-0.5">
+          <ul className="hidden lg:flex items-center gap-0.5">
             {navLinks.map(({ to, label }, idx) => (
               <React.Fragment key={to}>
                 <li>
@@ -389,7 +389,7 @@ const Header = () => {
           </ul>
 
           {/* Live search */}
-          <div className="hidden md:block flex-1 max-w-[16rem] min-w-[7.5rem]">
+          <div className="hidden lg:block flex-1 max-w-[16rem] min-w-[5rem]">
             <LiveSearch />
           </div>
 
@@ -415,13 +415,13 @@ const Header = () => {
             {/* Leeg winkelmandje: naar de shop. Met producten: direct afrekenen. */}
             <Link
               to={cartCount > 0 ? ROUTES.checkout : ROUTES.shop}
-              className={`hidden md:flex items-center gap-1.5 text-white text-sm font-black px-4 py-2.5 rounded-full shadow-md shadow-primary/30 hover:shadow-lg hover:brightness-110 active:scale-95 transition-all ml-1 whitespace-nowrap ${cartCount > 0 ? 'bg-green-600' : 'bg-primary'}`}>
+              className={`hidden xl:flex items-center gap-1.5 text-white text-sm font-black px-4 py-2.5 rounded-full shadow-md shadow-primary/30 hover:shadow-lg hover:brightness-110 active:scale-95 transition-all ml-1 whitespace-nowrap ${cartCount > 0 ? 'bg-green-600' : 'bg-primary'}`}>
               {cartCount > 0 ? `${t('nav.buyNow')} (${cartCount})` : t('nav.shopNow')}
               <span aria-hidden="true">→</span>
             </Link>
 
             {/* Mobile hamburger */}
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center" aria-label={mobileOpen ? 'Menu sluiten' : 'Menu openen'} aria-expanded={mobileOpen}>
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center" aria-label={mobileOpen ? 'Menu sluiten' : 'Menu openen'} aria-expanded={mobileOpen}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {mobileOpen
                   ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -543,7 +543,8 @@ const Header = () => {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-1">
+          <div className="lg:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-1">
+            <div className="pb-2"><LiveSearch /></div>
             <Link to={ROUTES.shop}
               className={`block px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive('/producten') ? 'text-primary bg-primary/5' : 'text-gray-600 hover:bg-gray-50'}`}>
               {t('nav.shop')}
