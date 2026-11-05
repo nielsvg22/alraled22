@@ -5,7 +5,7 @@ import { eq, and, inArray, sql } from 'drizzle-orm';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { z } from 'zod';
 import { sendOrderConfirmation, sendAdminNotification, sendStatusUpdate } from '../lib/emailService';
-import PDFDocument from 'pdfkit';
+import { generateQuotePdf, getQuoteDesign } from './quoteController';
 import { getContent } from '../db/contentRepo';
 import { getEffectiveUnitPrice, getPricingContextForUser } from '../lib/pricing';
 import { checkVatNumber, qualifiesForReverseCharge } from '../lib/vat';
@@ -408,149 +408,46 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
     const vatAmount = baseEx * vatRate;
     const total = baseEx + vatAmount;
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    // Zelfde ontwerp als de offerte (logo, kleuren, tabel, voettekst), met factuurtitel en -gegevens
+    const design = await getQuoteDesign();
+    const rate = vatReverse ? 0 : 21;
+    const lines = order.items.map(i => ({
+      name: i.product?.name || 'Onbekend product',
+      qty: Number(i.quantity || 0),
+      unit: 'stuk',
+      unitPrice: Number(i.price || 0),
+      vatRate: rate,
+      total: Number(i.price || 0) * Number(i.quantity || 0),
+    }));
+    if (discountEx > 0) lines.push({ name: 'Korting', qty: 1, unit: '-', unitPrice: -discountEx, vatRate: rate, total: -discountEx });
+    if (shippingEx > 0) lines.push({ name: 'Verzendkosten', qty: 1, unit: '-', unitPrice: shippingEx, vatRate: rate, total: shippingEx });
 
-    const doc = new PDFDocument({ size: 'A4', margin: 50 });
-    doc.pipe(res);
-
-    const pageWidth = doc.page.width;
-    const left = doc.page.margins.left;
-    const right = pageWidth - doc.page.margins.right;
-
-    const ink = '#0f172a';
-    const muted = '#64748b';
-    const text = '#334155';
-    const border = '#e2e8f0';
-    const surface = '#f8fafc';
-    const accent = '#0c4684';
-
-    const drawFooter = (page: number) => {
-      // De voettekst staat in de onderrand: zonder rand-correctie voegt pdfkit daar automatisch een nieuwe pagina toe
-      const savedBottom = doc.page.margins.bottom;
-      doc.page.margins.bottom = 0;
-      const y = doc.page.height - savedBottom + 10;
-      doc.fontSize(9).font('Helvetica').fillColor(muted);
-      const leftText = [companyEmail, companyPhone].filter(Boolean).join(' · ');
-      if (leftText) doc.text(leftText, left, y, { align: 'left' });
-      doc.text(`Pagina ${page}`, left, y, { align: 'right' });
-      doc.page.margins.bottom = savedBottom;
-    };
-
-    const drawHeader = () => {
-      const top = doc.page.margins.top;
-      const headerY = top - 10;
-      doc.roundedRect(left, headerY, right - left, 112, 14).fill(surface);
-      doc.roundedRect(left, headerY, 8, 112, 4).fill(accent);
-
-      doc.fontSize(18).font('Helvetica-Bold').fillColor(ink).text(companyName, left + 18, headerY + 16, { width: 290 });
-      doc.fontSize(10).font('Helvetica').fillColor(text);
-      const companyLines = [companyAddress, companyEmail, companyPhone, [companyKvk ? `KvK: ${companyKvk}` : '', companyVat ? `BTW: ${companyVat}` : ''].filter(Boolean).join('  ·  '), 'IBAN: NL26 RABO 0191 8676 24'].filter(Boolean);
-      doc.text(companyLines.join('\n'), left + 18, headerY + 40, { width: 290, lineGap: 2 });
-
-      const boxW = 220;
-      const boxX = right - boxW;
-      doc.roundedRect(boxX, headerY + 14, boxW, 58, 12).strokeColor(border).lineWidth(1).stroke();
-      doc.fontSize(16).font('Helvetica-Bold').fillColor(ink).text('FACTUUR', boxX + 14, headerY + 20, { width: boxW - 28, align: 'right' });
-      doc.fontSize(9).font('Helvetica').fillColor(muted);
-      doc.text(`Nr: ${invoiceNumber}`, boxX + 14, headerY + 42, { width: boxW - 28, align: 'right' });
-      doc.text(`Datum: ${invoiceDate}`, boxX + 14, headerY + 54, { width: boxW - 28, align: 'right' });
-
-      return headerY + 122;
-    };
-
-    const drawPartyBlocks = (yStart: number) => {
-      const gap = 12;
-      const blockW = (right - left - gap) / 2;
-      const blockH = 70;
-
-      doc.roundedRect(left, yStart, blockW, blockH, 14).strokeColor(border).lineWidth(1).stroke();
-      doc.roundedRect(left + blockW + gap, yStart, blockW, blockH, 14).strokeColor(border).lineWidth(1).stroke();
-
-      doc.fontSize(9).font('Helvetica-Bold').fillColor(muted);
-      doc.text('FACTUUR AAN', left + 14, yStart + 12, { width: blockW - 28 });
-      doc.text('BESTELLING', left + blockW + gap + 14, yStart + 12, { width: blockW - 28 });
-
-      doc.fontSize(10).font('Helvetica-Bold').fillColor(ink);
-      doc.text(order.user?.name || 'Onbekend', left + 14, yStart + 28, { width: blockW - 28 });
-      doc.fontSize(10).font('Helvetica').fillColor(text);
-      if (order.user?.email) doc.text(order.user.email, left + 14, yStart + 44, { width: blockW - 28 });
-
-      const orderMetaX = left + blockW + gap + 14;
-      doc.fontSize(10).font('Helvetica').fillColor(text);
-      doc.text(`Order: #${order.id.slice(0, 8).toUpperCase()}`, orderMetaX, yStart + 28, { width: blockW - 28 });
-      doc.text(`Status: ${order.status}`, orderMetaX, yStart + 44, { width: blockW - 28 });
-
-      return yStart + blockH + 18;
-    };
-
-    let y = drawHeader();
-    drawFooter(1);
-    y = drawPartyBlocks(y);
-
-    const cols = {
-      product: { x: left + 14, w: 280, label: 'Omschrijving', align: 'left' as const },
-      qty: { x: left + 300, w: 60, label: 'Aantal', align: 'center' as const },
-      price: { x: left + 370, w: 80, label: 'Prijs p.s.', align: 'right' as const },
-      total: { x: left + 460, w: 80, label: 'Totaal', align: 'right' as const }
-    };
-
-    doc.fontSize(9).font('Helvetica-Bold').fillColor(muted);
-    Object.values(cols).forEach(c => doc.text(c.label, c.x, y, { width: c.w, align: c.align }));
-    y += 18;
-    doc.moveTo(left + 14, y).lineTo(right - 14, y).strokeColor(border).lineWidth(0.5).stroke();
-    y += 12;
-
-    doc.fontSize(10).font('Helvetica').fillColor(text);
-    order.items.forEach(item => {
-      const itemTotal = (item.price || 0) * (item.quantity || 0);
-      doc.text(item.product?.name || 'Onbekend product', cols.product.x, y, { width: cols.product.w });
-      doc.text(String(item.quantity), cols.qty.x, y, { width: cols.qty.w, align: cols.qty.align });
-      doc.text(formatEuro(item.price), cols.price.x, y, { width: cols.price.w, align: cols.price.align });
-      doc.text(formatEuro(itemTotal), cols.total.x, y, { width: cols.total.w, align: cols.total.align });
-      y += 18;
+    const o: any = order;
+    await generateQuotePdf(res, design, {
+      refNr: invoiceNumber,
+      date: invoiceDate,
+      validUntil: '',
+      customer: {
+        name: o.user?.name || o.shippingName || 'Onbekend',
+        address: o.shippingAddress || undefined,
+        postcode: o.shippingPostcode || undefined,
+        city: o.shippingCity || undefined,
+        email: o.user?.email || undefined,
+      },
+      lines,
+      invoice: {
+        docLabel: 'Factuur',
+        toLabel: 'Factuur aan',
+        filename,
+        metaRows: [
+          ['Factuurnummer', invoiceNumber],
+          ['Factuurdatum', invoiceDate],
+          ['Ordernummer', `#${order.id.slice(0, 8).toUpperCase()}`],
+        ],
+        vatLabel: vatReverse ? 'BTW (verlegd, 0%)' : 'BTW (21%)',
+        vatNote: vatReverse ? `BTW verlegd (intracommunautaire levering)${o.vatNumber ? ` — BTW-nr klant: ${o.vatNumber}` : ''}` : undefined,
+      },
     });
-
-    const totalsBoxW = 250;
-    const extraRows = (discountAmount > 0 ? 1 : 0) + (shippingEx > 0 ? 1 : 0) + (vatReverse ? 1 : 0);
-    const totalsBoxH = 88 + extraRows * 18;
-    const totalsX = right - totalsBoxW;
-    const totalsY = Math.max(y + 12, doc.page.height - doc.page.margins.bottom - totalsBoxH - 10);
-    doc.roundedRect(totalsX, totalsY, totalsBoxW, totalsBoxH, 14).fill(surface).strokeColor(border).lineWidth(1).stroke();
-    doc.fontSize(9).font('Helvetica').fillColor(text);
-    
-    let currentY = totalsY + 14;
-    doc.text('Subtotaal (excl. BTW)', totalsX + 14, currentY, { width: 140 });
-    doc.text(formatEuro(subtotalEx), totalsX + 14, currentY, { width: totalsBoxW - 28, align: 'right' });
-    
-    if (discountAmount > 0) {
-      currentY += 18;
-      doc.text('Korting', totalsX + 14, currentY, { width: 140 });
-      doc.text(`-${formatEuro(discountEx)}`, totalsX + 14, currentY, { width: totalsBoxW - 28, align: 'right' });
-    }
-
-    if (shippingEx > 0) {
-      currentY += 18;
-      doc.text('Verzendkosten', totalsX + 14, currentY, { width: 140 });
-      doc.text(formatEuro(shippingEx), totalsX + 14, currentY, { width: totalsBoxW - 28, align: 'right' });
-    }
-
-    currentY += 18;
-    doc.text(vatReverse ? 'BTW (verlegd, 0%)' : 'BTW (21%)', totalsX + 14, currentY, { width: 140 });
-    doc.text(formatEuro(vatAmount), totalsX + 14, currentY, { width: totalsBoxW - 28, align: 'right' });
-    if (vatReverse) {
-      currentY += 18;
-      doc.fontSize(7.5).fillColor(muted);
-      doc.text(`BTW verlegd (intracommunautaire levering)${(order as any).vatNumber ? ` — BTW-nr klant: ${(order as any).vatNumber}` : ''}`, totalsX + 14, currentY, { width: totalsBoxW - 28 });
-      doc.fontSize(9).fillColor(text);
-    }
-    
-    currentY += 24;
-    doc.fontSize(11).font('Helvetica-Bold').fillColor(ink);
-    doc.text('Totaal (incl. BTW)', totalsX + 14, currentY, { width: 140 });
-    doc.text(formatEuro(total), totalsX + 14, currentY - 2, { width: totalsBoxW - 28, align: 'right' });
-
-    doc.end();
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to generate PDF' });

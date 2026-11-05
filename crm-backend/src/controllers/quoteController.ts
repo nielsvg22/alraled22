@@ -148,16 +148,18 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   validUntil: string;
   customer: { name: string; attention?: string; address?: string; postcode?: string; city?: string; email?: string };
   lines: { name: string; qty: number; unit?: string; unitPrice: number; vatRate: number; total: number; listPrice?: number; volumePercent?: number; volumeMinQty?: number }[];
+  // Factuur: zelfde opmaak als de offerte, met eigen titel, meta-regels en eventuele BTW-verlegd-notitie
+  invoice?: { docLabel: string; toLabel: string; filename: string; metaRows: [string, string][]; vatNote?: string; vatLabel?: string };
 }) {
   const { colors: c, company, texts: t } = design;
-  const { refNr, date, validUntil, customer, lines } = data;
+  const { refNr, date, validUntil, customer, lines, invoice } = data;
 
   const subtotalExcl = lines.reduce((s, l) => s + l.total, 0);
   const vatAmount = lines.reduce((s, l) => s + (l.total * l.vatRate / 100), 0);
   const totalIncl = subtotalExcl + vatAmount;
 
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="offerte-${refNr}.pdf"`);
+  res.setHeader('Content-Disposition', `attachment; filename="${invoice ? invoice.filename : `offerte-${refNr}.pdf`}"`);
 
   const doc = new PDFDocument({ size: 'A4', margin: 0, bufferPages: true });
   doc.pipe(res);
@@ -175,7 +177,7 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
 
   // Title
   doc.fontSize(38).font('Helvetica-Bold').fillColor(c.blue);
-  doc.text(t.docLabel, mx, y);
+  doc.text(invoice ? invoice.docLabel : t.docLabel, mx, y);
 
   // Logo (right side)
   const logoSize = 78;
@@ -245,9 +247,13 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
     metaY += 18;
   };
 
-  drawMetaRow('Offertedatum', date);
-  drawMetaRow('Offertenummer', refNr);
-  drawMetaRow('VERVALDATUM:', validUntil, true);
+  if (invoice) {
+    invoice.metaRows.forEach(([label, value], i) => drawMetaRow(label, value, i === 0));
+  } else {
+    drawMetaRow('Offertedatum', date);
+    drawMetaRow('Offertenummer', refNr);
+    drawMetaRow('VERVALDATUM:', validUntil, true);
+  }
 
   y += 30;
 
@@ -256,7 +262,7 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   // ═══════════════════════════════════════════════════════════════
   y += 24;
   doc.fontSize(13).font('Helvetica-Bold').fillColor(c.ink);
-  doc.text('Naar', mx, y);
+  doc.text(invoice ? invoice.toLabel : 'Naar', mx, y);
   y += 18;
   doc.fontSize(10).font('Helvetica').fillColor(c.ink);
   const custLines = [
@@ -264,6 +270,7 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
     customer.attention ? `t.a.v. ${customer.attention}` : null,
     customer.address || null,
     [customer.postcode, customer.city].filter(Boolean).join(' ') || null,
+    invoice && customer.email ? customer.email : null,
   ].filter((l): l is string => l !== null && l !== '');
   for (const cl of custLines) {
     doc.text(cl, mx, y, { width: contentW });
@@ -355,9 +362,14 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   }
 
   // BTW
-  doc.text('BTW', totX, y, { width: 180 });
+  doc.text(invoice?.vatLabel || 'BTW', totX, y, { width: 180 });
   doc.text(formatEuro(vatAmount), totX, y, { width: totW, align: 'right' });
-  y += 28;
+  y += invoice?.vatNote ? 18 : 28;
+  if (invoice?.vatNote) {
+    doc.fontSize(8).font('Helvetica').fillColor(c.muted);
+    doc.text(invoice.vatNote, totX, y, { width: totW });
+    y += 22;
+  }
 
   // Grand total (blue background, white text)
   doc.rect(totX, y, totW, 34).fill(c.blue);
