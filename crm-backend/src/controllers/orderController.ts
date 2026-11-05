@@ -96,11 +96,17 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     // gecontroleerd) bij levering aan een ander EU-land dan Nederland. `total` = het bedrag dat de klant betaalt, incl. BTW.
     let vatReverse = !!pricing.vatReverseCharge;
     let storedVatNumber: string | null = null;
+    let storedVatCheck: string | null = null;
     if (vatNumber && vatNumber.trim()) {
-      const vat = await checkVatNumber(vatNumber, shipping?.country || 'NL');
+      const vat = await checkVatNumber(vatNumber, shipping?.country || 'NL', {
+        name: shipping?.company || '', street: shipping?.address || '', postcode: shipping?.postcode || '', city: shipping?.city || '',
+      });
       if (qualifiesForReverseCharge(vat, shipping?.country || 'NL')) {
         vatReverse = true;
         storedVatNumber = `${vat.country}${vat.number}`;
+        storedVatCheck = `${vat.addressCheck === 'match' ? 'MATCH' : 'UNVERIFIED'}${vat.consultationNumber ? ` ${vat.consultationNumber}` : ''}`;
+      } else if (vat.valid && vat.addressCheck === 'mismatch') {
+        return res.status(400).json({ error: 'De bedrijfsnaam of het adres komt niet overeen met dit BTW-nummer. Controleer de gegevens of reken af met BTW.' });
       } else if (!vat.valid && vat.unavailable) {
         return res.status(503).json({ error: 'De BTW-controle is tijdelijk niet beschikbaar. Probeer het over een paar minuten opnieuw of reken af met BTW.' });
       } else if (!vat.valid) {
@@ -129,6 +135,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         shippingCost: shipping?.cost || 0,
         vatNumber: storedVatNumber,
         vatReverse,
+        vatCheck: storedVatCheck,
       });
       
       await tx.insert(orderItems).values(

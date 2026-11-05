@@ -2579,19 +2579,8 @@ export default function Pages() {
                   <input className={`${iCls} ${iBdr}`} value={general.contactTitle||''} onChange={e => setGeneral({ ...general, contactTitle:e.target.value })} />
                 </Field>
               </div>
-              <Field label="Product links">
-                <div className="space-y-2">
-                  {(general.productLinks||[]).map((p, i) => (
-                    <div key={i} className="flex gap-2">
-                      <input className={`${iCls} ${iBdr} flex-1`} value={p||''} onChange={e => { const a=[...(general.productLinks||[])]; a[i]=e.target.value; setGeneral({ ...general, productLinks:a }); }} />
-                      <button type="button" onClick={() => setGeneral({ ...general, productLinks:(general.productLinks||[]).filter((_,j)=>j!==i) })}
-                        className="px-3 rounded-xl border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors">
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                  <AddButton onClick={() => setGeneral({ ...general, productLinks:[...(general.productLinks||[]), ''] })} label="Product link toevoegen" />
-                </div>
+              <Field label="Product links (voettekst)">
+                <p className="text-xs text-gray-500">De links onder "Producten" in de voettekst volgen automatisch de vijf productpagina's (Bouwlichtslangen, Bouwlampen, Veiligheidsverlichting, Bedrijfswagenverlichting, Hefbrugverlichting). Die pagina's pas je aan onder Pagina's → Producten.</p>
               </Field>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Label: Privacy">
