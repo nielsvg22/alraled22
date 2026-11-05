@@ -122,6 +122,7 @@ const Checkout = () => {
         items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity })),
         discountCodeId: appliedDiscount?.discountId,
         vatNumber: country !== 'NL' && vatNumber.trim() ? vatNumber.trim() : undefined,
+        customer: { email: emailValue, name, phone },
           shipping: {
             name,
             company,
