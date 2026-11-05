@@ -149,7 +149,7 @@ export async function me(req: AuthRequest, res: Response) {
 
 export async function listUsers(req: AuthRequest, res: Response) {
   try {
-    const users = await usersRepo.listUsers();
+    const users = (await usersRepo.listUsers()).filter((u: any) => !String(u.email || '').endsWith('@gast.alra-led.invalid'));
     // Per admin tonen of twee-staps verificatie aan staat (om te kunnen resetten)
     const [rows] = await pool.execute('SELECT userId FROM `UserTwoFactor` WHERE enabled = 1');
     const enabled = new Set((rows as any[]).map(r => r.userId));

@@ -1,4 +1,5 @@
 import { db } from '../lib/db';
+import { withCustomer } from './orderController';
 import { orders } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { Response } from 'express';
@@ -64,7 +65,7 @@ export async function getDashboardStats(req: AuthRequest, res: Response) {
       lowStockProducts: inventory.lowStockProducts,
       outOfStockProducts: inventory.outOfStockProducts,
       healthyInventoryProducts: inventory.healthyInventoryProducts,
-      recentOrders: latestOrders,
+      recentOrders: latestOrders.map((o) => withCustomer(o as any)),
       revenueSeries,
       scope: role === 'ADMIN' ? 'global' : 'personal',
     });

@@ -9,6 +9,8 @@ import PDFDocument from 'pdfkit';
 import { getContent } from '../db/contentRepo';
 import { getEffectiveUnitPrice, getPricingContextForUser } from '../lib/pricing';
 import { checkVatNumber, qualifiesForReverseCharge } from '../lib/vat';
+import * as usersRepo from '../db/usersRepo';
+import nodeCrypto from 'node:crypto';
 import createMollieClient, { Payment } from '@mollie/api-client';
 import { createShipment, getSendcloudSettings } from '../lib/sendcloud';
 
@@ -19,6 +21,11 @@ const orderSchema = z.object({
   })).min(1),
   discountCodeId: z.string().uuid().optional(),
   vatNumber: z.string().max(40).optional(),
+  customer: z.object({
+    email: z.string().email().max(255),
+    name: z.string().max(255).optional(),
+    phone: z.string().max(50).optional(),
+  }).optional(),
   shipping: z.object({
     name: z.string().optional(),
     company: z.string().optional(),
@@ -36,14 +43,24 @@ const updateStatusSchema = z.object({
   status: z.enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
 });
 
+// Gastbestellingen hangen aan een technisch gastaccount; mails en weergave gebruiken het echte contactadres van de bestelling.
+export const GUEST_EMAIL_DOMAIN = '@gast.alra-led.invalid';
+export function withCustomer<T extends { customerEmail?: string | null; shippingName?: string | null; user?: any }>(order: T): T {
+  if (!order) return order;
+  const guest = String(order.user?.email || '').endsWith(GUEST_EMAIL_DOMAIN);
+  if (!order.customerEmail && !guest) return order;
+  return { ...order, user: { ...(order.user || {}), email: order.customerEmail || order.user?.email, name: guest ? (order.shippingName || order.user?.name) : order.user?.name } };
+}
+
 async function getOrderWithRelations(orderId: string) {
-  return await db.query.orders.findFirst({
+  const order = await db.query.orders.findFirst({
     where: eq(orders.id, orderId),
     with: {
       user: { columns: { id: true, name: true, email: true } },
       items: { with: { product: true } },
     },
   });
+  return order ? withCustomer(order as any) as typeof order : order;
 }
 
 function formatEuro(value: number): string {
@@ -56,10 +73,21 @@ function safeText(input: unknown): string {
 
 export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.userId;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const { items, discountCodeId, shipping, vatNumber, customer } = orderSchema.parse(req.body);
 
-    const { items, discountCodeId, shipping, vatNumber } = orderSchema.parse(req.body);
+    // Zonder account: bestellen als gast. We maken een los gastaccount (zonder inlogmogelijkheid en zonder klantgroep-korting).
+    let userId = req.user?.userId;
+    if (!userId) {
+      if (!customer?.email) return res.status(400).json({ error: 'Vul een e-mailadres in om te kunnen bestellen.' });
+      const guest = await usersRepo.createUser({
+        email: `gast-${crypto.randomUUID()}${GUEST_EMAIL_DOMAIN}`,
+        name: customer.name || shipping?.name || 'Gast',
+        password: nodeCrypto.randomBytes(24).toString('hex'),
+        role: 'USER',
+      });
+      if (!guest) return res.status(500).json({ error: 'Bestelling aanmaken mislukt' });
+      userId = guest.id;
+    }
 
     const productIds = items.map((item) => item.productId);
     const foundProducts = await db.select().from(products).where(inArray(products.id, productIds));
@@ -136,6 +164,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         vatNumber: storedVatNumber,
         vatReverse,
         vatCheck: storedVatCheck,
+        customerEmail: customer?.email || null,
       });
       
       await tx.insert(orderItems).values(
@@ -270,7 +299,7 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
       orderBy: (o, { desc }) => [desc(o.createdAt)],
     });
 
-    res.json(result);
+    res.json(result.map((o) => withCustomer(o as any)));
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }

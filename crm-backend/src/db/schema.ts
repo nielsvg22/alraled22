@@ -91,6 +91,8 @@ export const orders = mysqlTable('Order', {
   vatReverse: boolean('vatReverse').notNull().default(false),
   // Resultaat van de BTW-controle (VIES): MATCH / UNVERIFIED + raadpleegnummer, voor de administratie
   vatCheck: varchar('vatCheck', { length: 120 }),
+  // Contact-e-mail van de klant (bij gastbestellingen het enige e-mailadres)
+  customerEmail: varchar('customerEmail', { length: 255 }),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
