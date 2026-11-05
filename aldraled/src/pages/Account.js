@@ -85,14 +85,6 @@ const Account = () => {
               </div>
             </div>
 
-            <div className="bg-primary p-10 rounded-[3rem] text-white space-y-4 shadow-2xl">
-              <h4 className="text-2xl font-black uppercase italic leading-none">VIP SUPPORT</h4>
-              <p className="font-medium opacity-80">Als geregistreerde klant geniet u van voorrang bij technische vragen.</p>
-              <button className="w-full bg-white text-primary py-4 rounded-xl font-black uppercase italic hover:bg-secondary hover:text-white transition-all shadow-xl">
-                OPEN TICKET
-              </button>
-            </div>
-
             <div className="bg-gray-50 rounded-[3rem] p-10 space-y-4">
               <h4 className="text-2xl font-black text-secondary uppercase italic tracking-tighter">Retour</h4>
               <p className="text-gray-500 font-medium">Vraag eenvoudig een retour aan voor een bestelling.</p>
@@ -124,7 +116,9 @@ const Account = () => {
             ) : (
               <div className="space-y-6">
                 {orders.map((order) => (
-                  <div key={order.id} className="bg-white border-2 border-gray-50 rounded-[2.5rem] p-8 md:p-10 hover:border-primary/20 transition-all group shadow-sm hover:shadow-xl">
+                  <div key={order.id} onClick={() => navigate(`/account/bestelling/${order.id}`)} role="link" tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/account/bestelling/${order.id}`); }}
+                    className="bg-white border-2 border-gray-50 rounded-[2.5rem] p-8 md:p-10 hover:border-primary/20 transition-all group shadow-sm hover:shadow-xl cursor-pointer">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                       <div className="flex gap-6 items-center">
                         <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-primary font-black italic text-lg shrink-0">
@@ -161,6 +155,14 @@ const Account = () => {
 
                     <div className="mt-6 flex flex-col sm:flex-row gap-3">
                       <Link
+                        to={`/account/bestelling/${order.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center justify-center bg-secondary text-white px-6 py-3 rounded-full font-black uppercase italic hover:bg-primary transition-all"
+                      >
+                        Bekijk bestelling →
+                      </Link>
+                      <Link
+                        onClick={(e) => e.stopPropagation()}
                         to={`${ROUTES.returns}?orderId=${order.id}`}
                         className="inline-flex items-center justify-center bg-gray-50 border border-gray-100 text-secondary px-6 py-3 rounded-full font-black uppercase italic hover:border-primary/30 hover:bg-primary/5 transition-all"
                       >
