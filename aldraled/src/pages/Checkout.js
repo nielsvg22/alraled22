@@ -7,6 +7,7 @@ import api, { getMediaUrl } from '../lib/api';
 import analytics from '../lib/analytics';
 import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { VAT_RATE } from '../lib/config';
+import i18n from '../i18n';
 
 // EU-landen waarnaar we leveren; buiten Nederland kan een geldig BTW-nummer BTW verleggen (0%)
 const EU_COUNTRIES = [['NL', 'Nederland'], ['BE', 'België'], ['DE', 'Duitsland'], ['FR', 'Frankrijk'], ['LU', 'Luxemburg'], ['AT', 'Oostenrijk'], ['BG', 'Bulgarije'], ['HR', 'Kroatië'], ['CY', 'Cyprus'], ['CZ', 'Tsjechië'], ['DK', 'Denemarken'], ['EE', 'Estland'], ['FI', 'Finland'], ['GR', 'Griekenland'], ['HU', 'Hongarije'], ['IE', 'Ierland'], ['IT', 'Italië'], ['LV', 'Letland'], ['LT', 'Litouwen'], ['MT', 'Malta'], ['PL', 'Polen'], ['PT', 'Portugal'], ['RO', 'Roemenië'], ['SK', 'Slowakije'], ['SI', 'Slovenië'], ['ES', 'Spanje'], ['SE', 'Zweden']];
@@ -130,6 +131,7 @@ const Checkout = () => {
         items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity })),
         discountCodeId: appliedDiscount?.discountId,
         vatNumber: country !== 'NL' && vatNumber.trim() ? vatNumber.trim() : undefined,
+        language: (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0],
         customer: { email: emailValue, name, phone },
           shipping: {
             name,

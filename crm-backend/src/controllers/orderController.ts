@@ -21,6 +21,7 @@ const orderSchema = z.object({
   })).min(1),
   discountCodeId: z.string().uuid().optional(),
   vatNumber: z.string().max(40).optional(),
+  language: z.enum(['nl', 'en', 'de']).optional(),
   customer: z.object({
     email: z.string().email().max(255),
     name: z.string().max(255).optional(),
@@ -73,7 +74,7 @@ function safeText(input: unknown): string {
 
 export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
-    const { items, discountCodeId, shipping, vatNumber, customer } = orderSchema.parse(req.body);
+    const { items, discountCodeId, shipping, vatNumber, customer, language } = orderSchema.parse(req.body);
 
     // Zonder account: bestellen als gast. We maken een los gastaccount (zonder inlogmogelijkheid en zonder klantgroep-korting).
     let userId = req.user?.userId;
@@ -152,6 +153,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         total, 
         discountCodeId: discountCodeId || null, 
         discountAmount,
+        language: language || 'nl',
         shippingName: shipping?.name || null,
         shippingCompany: shipping?.company || null,
         shippingAddress: shipping?.address || null,
@@ -410,17 +412,23 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
 
     // Zelfde ontwerp als de offerte (logo, kleuren, tabel, voettekst), met factuurtitel en -gegevens
     const design = await getQuoteDesign();
+    const lang = ((order as any).language === 'en' || (order as any).language === 'de') ? (order as any).language as 'en' | 'de' : 'nl';
+    const T = {
+      nl: { disc: 'Korting', ship: 'Verzendkosten', unit: 'stuk', doc: 'Factuur', to: 'Factuur aan', no: 'Factuurnummer', date: 'Factuurdatum', ord: 'Ordernummer', vat: 'BTW (21%)', rev: 'BTW (verlegd, 0%)', note: 'BTW verlegd (intracommunautaire levering)', vnr: 'BTW-nr klant', unk: 'Onbekend' },
+      en: { disc: 'Discount', ship: 'Shipping costs', unit: 'pc', doc: 'Invoice', to: 'Invoice to', no: 'Invoice number', date: 'Invoice date', ord: 'Order number', vat: 'VAT (21%)', rev: 'VAT (reverse-charged, 0%)', note: 'VAT reverse-charged (intra-community supply)', vnr: 'Customer VAT no.', unk: 'Unknown' },
+      de: { disc: 'Rabatt', ship: 'Versandkosten', unit: 'Stk.', doc: 'Rechnung', to: 'Rechnung an', no: 'Rechnungsnummer', date: 'Rechnungsdatum', ord: 'Bestellnummer', vat: 'MwSt. (21 %)', rev: 'MwSt. (Steuerschuldumkehr, 0 %)', note: 'Steuerschuldumkehr (innergemeinschaftliche Lieferung)', vnr: 'USt-IdNr. des Kunden', unk: 'Unbekannt' },
+    }[lang];
     const rate = vatReverse ? 0 : 21;
     const lines = order.items.map(i => ({
       name: i.product?.name || 'Onbekend product',
       qty: Number(i.quantity || 0),
-      unit: 'stuk',
+      unit: T.unit,
       unitPrice: Number(i.price || 0),
       vatRate: rate,
       total: Number(i.price || 0) * Number(i.quantity || 0),
     }));
-    if (discountEx > 0) lines.push({ name: 'Korting', qty: 1, unit: '-', unitPrice: -discountEx, vatRate: rate, total: -discountEx });
-    if (shippingEx > 0) lines.push({ name: 'Verzendkosten', qty: 1, unit: '-', unitPrice: shippingEx, vatRate: rate, total: shippingEx });
+    if (discountEx > 0) lines.push({ name: T.disc, qty: 1, unit: '-', unitPrice: -discountEx, vatRate: rate, total: -discountEx });
+    if (shippingEx > 0) lines.push({ name: T.ship, qty: 1, unit: '-', unitPrice: shippingEx, vatRate: rate, total: shippingEx });
 
     const o: any = order;
     await generateQuotePdf(res, design, {
@@ -428,7 +436,7 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
       date: invoiceDate,
       validUntil: '',
       customer: {
-        name: o.user?.name || o.shippingName || 'Onbekend',
+        name: o.user?.name || o.shippingName || T.unk,
         address: o.shippingAddress || undefined,
         postcode: o.shippingPostcode || undefined,
         city: o.shippingCity || undefined,
@@ -436,16 +444,17 @@ export const getOrderInvoicePdf = async (req: AuthRequest, res: Response) => {
       },
       lines,
       invoice: {
-        docLabel: 'Factuur',
-        toLabel: 'Factuur aan',
+        docLabel: T.doc,
+        toLabel: T.to,
+        lang,
         filename,
         metaRows: [
-          ['Factuurnummer', invoiceNumber],
-          ['Factuurdatum', invoiceDate],
-          ['Ordernummer', `#${order.id.slice(0, 8).toUpperCase()}`],
+          [T.no, invoiceNumber],
+          [T.date, invoiceDate],
+          [T.ord, `#${order.id.slice(0, 8).toUpperCase()}`],
         ],
-        vatLabel: vatReverse ? 'BTW (verlegd, 0%)' : 'BTW (21%)',
-        vatNote: vatReverse ? `BTW verlegd (intracommunautaire levering)${o.vatNumber ? ` — BTW-nr klant: ${o.vatNumber}` : ''}` : undefined,
+        vatLabel: vatReverse ? T.rev : T.vat,
+        vatNote: vatReverse ? `${T.note}${o.vatNumber ? ` — ${T.vnr}: ${o.vatNumber}` : ''}` : undefined,
       },
     });
   } catch (error) {
