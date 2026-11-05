@@ -34,8 +34,8 @@
     "searchPlaceholder": "Produkte suchen...",
     "searchNoResults": "Keine Produkte gefunden für \"<0>{{query}}</0>\"",
     "searchViewAll": "Alle Ergebnisse anzeigen →",
-    "themeOn": "Lights on",
-    "themeOff": "Lights off",
+    "themeOn": "Licht an",
+    "themeOff": "Licht aus",
     "cart": "Warenkorb",
     "menu": "Menü"
   },

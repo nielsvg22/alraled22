@@ -6,7 +6,7 @@ import dict from '../locales/dict.json';
 
 const LANG_INDEX = { en: 0, de: 1 };
 const ATTRS = ['placeholder', 'title', 'alt', 'aria-label'];
-const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'CODE', 'PRE']);
+const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE']);
 
 const norm = (s) => s.replace(/\s+/g, ' ').trim();
 const lower = new Map();
@@ -40,6 +40,8 @@ const RULES = [
   [/^Bijna op\s*[–-]\s*(\d+)\s+op voorraad$/i, ['Almost sold out – $1 in stock', 'Fast ausverkauft – $1 auf Lager']],
   [/^(\d+)\s+op voorraad$/i, ['$1 in stock', '$1 auf Lager']],
   [/^(\d+(?:[.,]\d+)?)\s*km$/i, ['$1 km', '$1 km']],
+  [/^vanaf (\d+) stuks ([\d.,]+)% korting$/i, ['from $1 pcs $2% discount', 'ab $1 Stück $2 % Rabatt']],
+  [/^(.+) verwijderen$/i, ['Remove $1', '$1 entfernen']],
   [/^Toon alle (\d+) verkooppunten$/i, ['Show all $1 points of sale', 'Alle $1 Verkaufsstellen anzeigen']],
   [/^(\d+) verkooppunten$/i, ['$1 points of sale', '$1 Verkaufsstellen']],
 ];
@@ -67,6 +69,18 @@ function lookup(text, lang) {
     const l = pick(m[2], idx);
     const v = pick(m[3], idx);
     if (l || v) return (m[1] || '') + (l || m[2]) + ': ' + (v || m[3]);
+  }
+  // Productnamen met "(N stuks)"
+  if (/\(\d+ stuks\)/i.test(key)) {
+    const head = key.replace(/\s*\(\d+ stuks\)\s*$/i, '');
+    const n = key.match(/\((\d+) stuks\)/i)[1];
+    const h = pick(head, idx) || head;
+    return `${h} (${n} ${idx === 0 ? 'pieces' : 'Stück'})`;
+  }
+  // Opsomming met ' · '
+  if (key.includes(' · ')) {
+    const out = key.split(' · ').map((x) => lookup(x, lang));
+    if (out.every(Boolean)) return out.join(' · ');
   }
   // Meerdere zinnen: vertaal zin voor zin (bv. alinea's die door <br> in stukken zijn gesplitst)
   const parts = key.split(/(?<=[.!?])\s+(?=[A-ZÀ-Ý•→])/);
