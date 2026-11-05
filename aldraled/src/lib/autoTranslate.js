@@ -68,7 +68,18 @@ function lookup(text, lang) {
     const v = pick(m[3], idx);
     if (l || v) return (m[1] || '') + (l || m[2]) + ': ' + (v || m[3]);
   }
+  // Meerdere zinnen: vertaal zin voor zin (bv. alinea's die door <br> in stukken zijn gesplitst)
+  const parts = key.split(/(?<=[.!?])\s+(?=[A-ZÀ-Ý•→])/);
+  if (parts.length > 1) {
+    const out = parts.map((x) => pick(x, idx));
+    if (out.every(Boolean)) return out.join(' ');
+  }
   return null;
+}
+
+export function translateText(text, lang) {
+  const code = (lang || 'nl').split('-')[0];
+  return lookup(text, code) || text;
 }
 
 // Behoud de witruimte vóór/na de tekst van de originele knoop.
