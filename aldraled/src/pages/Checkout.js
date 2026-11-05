@@ -58,15 +58,21 @@ const Checkout = () => {
   }, [country]);
 
   // Land of nummer gewijzigd: eerdere controle vervalt
-  useEffect(() => { setVat({ status: 'idle', reverseCharge: false, message: '' }); }, [country, vatNumber]);
+  useEffect(() => { setVat({ status: 'idle', reverseCharge: false, message: '' }); }, [country, vatNumber, company, address, postcode, city]);
 
   const checkVat = async () => {
     if (!vatNumber.trim()) return;
+    if (!company.trim() || !address.trim() || !postcode.trim() || !city.trim()) {
+      setVat({ status: 'invalid', reverseCharge: false, message: 'Vul eerst de bedrijfsnaam en het volledige adres in; die vergelijken we met het BTW-nummer.' });
+      return;
+    }
     setVat({ status: 'checking', reverseCharge: false, message: '' });
     try {
-      const res = await api.post('/vat/validate', { vatNumber, shippingCountry: country });
+      const res = await api.post('/vat/validate', { vatNumber, shippingCountry: country, trader: { name: company, street: address, postcode, city } });
       const d = res.data || {};
-      if (d.valid && d.reverseCharge) setVat({ status: 'valid', reverseCharge: true, message: `BTW-nummer geldig${d.name ? ` (${d.name})` : ''}: BTW wordt verlegd (0%).` });
+      if (d.valid && d.addressCheck === 'mismatch') setVat({ status: 'invalid', reverseCharge: false, message: 'Het BTW-nummer is geldig, maar de bedrijfsnaam of het adres komt niet overeen met wat bij dit nummer bekend is. Controleer de gegevens.' });
+      else if (d.valid && d.reverseCharge && d.addressCheck === 'match') setVat({ status: 'valid', reverseCharge: true, message: 'BTW-nummer en bedrijfsgegevens kloppen: BTW wordt verlegd (0%).' });
+      else if (d.valid && d.reverseCharge) setVat({ status: 'valid', reverseCharge: true, message: 'BTW-nummer geldig: BTW wordt verlegd (0%). Naam en adres kunnen voor dit land niet automatisch worden gecontroleerd; wij controleren ze bij de verwerking.' });
       else if (d.valid) setVat({ status: 'valid', reverseCharge: false, message: 'BTW-nummer geldig, maar voor levering binnen Nederland rekenen we 21% BTW.' });
       else if (d.unavailable) setVat({ status: 'unavailable', reverseCharge: false, message: 'De BTW-controle is tijdelijk niet beschikbaar. Probeer het zo opnieuw.' });
       else setVat({ status: 'invalid', reverseCharge: false, message: d.error || 'Dit BTW-nummer is niet geldig.' });
@@ -288,9 +294,9 @@ const Checkout = () => {
                   {country !== 'NL' && (
                     <div className="space-y-1.5 rounded-xl border border-gray-100 bg-gray-50 p-4">
                       <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">BTW-nummer (zakelijk, optioneel)</label>
-                      <p className="text-xs text-gray-500">Heb je een geldig EU-BTW-nummer? Dan leveren we met BTW verlegd (0%).</p>
+                      <p className="text-xs text-gray-500">Heb je een geldig EU-BTW-nummer? Dan leveren we met BTW verlegd (0%). Vul hierboven de bedrijfsnaam en het adres in zoals bij het BTW-nummer bekend.</p>
                       <div className="flex gap-2">
-                        <input type="text" value={vatNumber} onChange={e => setVatNumber(e.target.value)} onBlur={checkVat} placeholder={`bv. ${country}123456789`}
+                        <input type="text" value={vatNumber} onChange={e => setVatNumber(e.target.value)} placeholder={`bv. ${country}123456789`}
                           className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none transition-all" />
                         <button type="button" onClick={checkVat} disabled={!vatNumber.trim() || vat.status === 'checking'}
                           className="px-4 py-3 rounded-xl bg-secondary text-white text-xs font-bold disabled:opacity-50">

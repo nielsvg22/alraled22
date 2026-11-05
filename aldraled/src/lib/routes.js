@@ -68,6 +68,15 @@ export function sortMenuCategories(list) {
   return [...(list || [])].sort((a, b) => rank(a) - rank(b));
 }
 
+// De vijf productpagina's (menu "Producten" en voettekst): naam + adres
+export const PRODUCT_GROUP_LINKS = [
+  { label: 'Bouwlichtslangen', to: '/lichtslangen' },
+  { label: 'Bouwlampen', to: '/bouwverlichting' },
+  { label: 'Veiligheidsverlichting', to: '/veiligheidsverlichting' },
+  { label: 'Bedrijfswagenverlichting', to: '/bedrijfswagenverlichting' },
+  { label: 'Hefbrugverlichting', to: '/hefbrugverlichting' },
+];
+
 export const NAV_LINKS = [
   { to: ROUTES.home, labelKey: 'nav.home' },
   { to: ROUTES.about, labelKey: 'nav.about' },

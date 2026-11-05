@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { API_URL, getMediaUrl } from '../lib/api';
-import { ROUTES, FOOTER_NAV_LINKS } from '../lib/routes';
+import { ROUTES, FOOTER_NAV_LINKS, PRODUCT_GROUP_LINKS } from '../lib/routes';
 import RichText from './RichText';
 
 const DEFAULTS = {
@@ -106,11 +106,14 @@ const Footer = () => {
           <div>
             <h4 className="text-xs font-bold uppercase tracking-widest text-white/40 mb-4">{general.productsTitle}</h4>
             <ul className="space-y-2.5">
-              {(Array.isArray(general.productLinks) ? general.productLinks : []).map((label, index) => (
-                <li key={`${label}-${index}`}>
-                  <Link to={ROUTES.shop} className="text-sm text-white/60 hover:text-white transition-colors">{label}</Link>
+              {PRODUCT_GROUP_LINKS.map(({ label, to }) => (
+                <li key={to}>
+                  <Link to={to} className="text-sm text-white/60 hover:text-white transition-colors">{label}</Link>
                 </li>
               ))}
+              <li>
+                <Link to={ROUTES.shop} className="text-sm font-semibold text-white/80 hover:text-white transition-colors">Alle producten in de webshop →</Link>
+              </li>
             </ul>
           </div>
 
