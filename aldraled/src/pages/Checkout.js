@@ -81,6 +81,14 @@ const Checkout = () => {
     }
   };
 
+  // Zodra nummer, bedrijfsnaam en adres ingevuld zijn, controleren we automatisch (geen klik op "Controleer" nodig)
+  useEffect(() => {
+    if (country === 'NL' || !vatNumber.trim() || !company.trim() || !address.trim() || !postcode.trim() || !city.trim()) return undefined;
+    const t = setTimeout(() => { checkVat(); }, 900);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [country, vatNumber, company, address, postcode, city]);
+
   const vatReverse = vat.reverseCharge && country !== 'NL';
   const vatMultiplier = vatReverse ? 1 : (showInclVat ? (1 + VAT_RATE) : 1);
 
