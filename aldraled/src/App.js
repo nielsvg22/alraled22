@@ -20,6 +20,7 @@ const ProductDetail = lazy(() => import('./pages/ProductDetail'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Account = lazy(() => import('./pages/Account'));
+const OrderDetail = lazy(() => import('./pages/OrderDetail'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const OrderSuccess = lazy(() => import('./pages/OrderSuccess'));
 const Blog = lazy(() => import('./pages/Blog'));
@@ -140,6 +141,7 @@ function App() {
                       <Route path="/login" element={<Login />} />
                       <Route path="/registreren" element={<Register />} />
                       <Route path="/account" element={<Account />} />
+                      <Route path="/account/bestelling/:id" element={<OrderDetail />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/bestelling-geplaatst/:orderId?" element={<OrderSuccess />} />
                       <Route path="/contact" element={<Contact />} />
