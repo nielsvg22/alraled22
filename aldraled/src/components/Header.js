@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Flag from './Flag';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import { useCart } from '../lib/CartContext';
@@ -228,9 +229,9 @@ const Header = () => {
 
   const languageCode = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
   const languages = [
-    { code: 'nl', flag: '🇳🇱', label: t('languages.nl') },
-    { code: 'en', flag: '🇬🇧', label: t('languages.en') },
-    { code: 'de', flag: '🇩🇪', label: t('languages.de') },
+    { code: 'nl', label: t('languages.nl') },
+    { code: 'en', label: t('languages.en') },
+    { code: 'de', label: t('languages.de') },
   ];
   const activeLanguage = languages.find(l => l.code === languageCode) || languages[0];
 
@@ -255,7 +256,7 @@ const Header = () => {
               aria-expanded={languageOpen}
               title={t('header.language')}
             >
-              <span className="text-sm leading-none">{activeLanguage.flag}</span>
+              <Flag code={activeLanguage.code} />
               <svg className={`w-3 h-3 text-white/70 transition-transform ${languageOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
@@ -274,7 +275,7 @@ const Header = () => {
                       lang.code === activeLanguage.code ? 'bg-primary/5 text-secondary' : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
-                    <span className="text-base leading-none">{lang.flag}</span>
+                    <Flag code={lang.code} className="w-6 h-[18px]" />
                     <span className="font-semibold">{lang.label}</span>
                   </button>
                 ))}
