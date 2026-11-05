@@ -180,6 +180,8 @@ function connect() {
     childList: true, subtree: true, characterData: true,
     attributes: true, attributeFilter: ATTRS.concat(['value']),
   });
+  const title = document.querySelector('title');
+  if (title) observer.observe(title, { childList: true, characterData: true, subtree: true });
 }
 
 function setDocumentLang(lang) {
@@ -213,6 +215,8 @@ export function setAutoTranslateLanguage(lang) {
   if (observer) observer.disconnect();
   if (document.body) {
     walk(document.body);
+    const title = document.querySelector('title');
+    if (title) walk(title);
     connect();
   }
 }
