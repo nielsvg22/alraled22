@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Counter from '../components/Counter';
 import CustomBlocks from '../components/CustomBlocks';
 import LogoCarousel from '../components/LogoCarousel';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { translateText } from '../lib/autoTranslate';
 import { getImageSrc, formatPrice, PLACEHOLDER_IMAGE } from '../lib/productHelpers';
 import { getMediaUrl, readCache, writeCache, preloadImage } from '../lib/api';
 import { ROUTES, categoryLink } from '../lib/routes';
@@ -211,7 +212,9 @@ const Home = () => {
   }, [i18n.resolvedLanguage, i18n.language]);
 
   const { hero, introduction: intro, specializations, stats, process, cta, dealersCta = DEFAULTS.dealersCta, introSection: is = DEFAULTS.introSection, highlights = DEFAULTS.highlights } = content;
-  const typeword = useTypewriter(hero.typewriterWords || []);
+  const twLang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
+  const twWords = useMemo(() => (hero.typewriterWords || []).map((w) => translateText(w, twLang)), [hero.typewriterWords, twLang]);
+  const typeword = useTypewriter(twWords);
 
   const fixed = DEFAULT_SECTION_ORDER;
   const fixedSet = new Set(fixed);
@@ -258,7 +261,7 @@ const Home = () => {
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">
                 <span className="block">{hero.titlePrefix || 'Verlichting voor'}</span>
                 <span className="flex items-center gap-1" style={{ minHeight: '1.2em', color: ACCENT_ON_DARK }}>
-                  <span style={{ display: 'inline-block', minWidth: '14ch' }}>{typeword}</span>
+                  <span data-no-translate style={{ display: 'inline-block', minWidth: '14ch' }}>{typeword}</span>
                   <span className="inline-block w-0.5 h-[0.8em] align-middle animate-pulse flex-shrink-0" style={{ background: ACCENT_ON_DARK }} />
                 </span>
               </h1>
