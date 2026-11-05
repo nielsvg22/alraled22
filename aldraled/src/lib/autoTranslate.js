@@ -40,7 +40,15 @@ const RULES = [
   [/^Bijna op\s*[–-]\s*(\d+)\s+op voorraad$/i, ['Almost sold out – $1 in stock', 'Fast ausverkauft – $1 auf Lager']],
   [/^(\d+)\s+op voorraad$/i, ['$1 in stock', '$1 auf Lager']],
   [/^(\d+(?:[.,]\d+)?)\s*km$/i, ['$1 km', '$1 km']],
+  [/^Toon alle (\d+) verkooppunten$/i, ['Show all $1 points of sale', 'Alle $1 Verkaufsstellen anzeigen']],
+  [/^(\d+) verkooppunten$/i, ['$1 points of sale', '$1 Verkaufsstellen']],
 ];
+
+function pick(part, idx) {
+  const k = norm(part);
+  const h = exact.get(k) || (extra && extra.exact.get(k)) || lower.get(k.toLowerCase()) || (extra && extra.lower.get(k.toLowerCase()));
+  return h && h[idx] ? h[idx] : null;
+}
 
 function lookup(text, lang) {
   const idx = LANG_INDEX[lang];
@@ -52,6 +60,13 @@ function lookup(text, lang) {
   if (hit && hit[idx]) return hit[idx];
   for (const [re, tpl] of RULES) {
     if (re.test(key)) return key.replace(re, tpl[idx]);
+  }
+  // "Label: waarde" (specificaties, opsommingen): vertaal beide delen apart.
+  const m = key.match(/^([•\-\u2022]\s*)?([^:]{2,60}):\s+(.+)$/);
+  if (m) {
+    const l = pick(m[2], idx);
+    const v = pick(m[3], idx);
+    if (l || v) return (m[1] || '') + (l || m[2]) + ': ' + (v || m[3]);
   }
   return null;
 }
