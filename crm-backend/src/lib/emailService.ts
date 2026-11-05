@@ -30,6 +30,24 @@ const DEFAULT_TEMPLATES: EmailTemplates = {
   adminNotifyBody: `Nieuwe bestelling van {{customerName}} ({{customerEmail}}). Totaal: €{{total}}.`,
 };
 
+// ── Vertalingen voor klantmails (nl = standaard, aanpasbaar via templates in het CRM) ──
+type Lang = 'nl' | 'en' | 'de';
+export function normLang(l?: string | null): Lang { return l === 'en' || l === 'de' ? l : 'nl'; }
+const EM = {
+  nl: { thanks: 'Bedankt voor uw bestelling!', dear: 'Beste', received: 'uw bestelling is succesvol ontvangen.', orderNo: 'Ordernummer', total: 'Totaal', items: 'Bestelde producten', what: 'Wat gebeurt er nu?', whatText: 'Wij verwerken uw bestelling en nemen indien nodig contact met u op. U ontvangt een email zodra uw bestelling wordt verzonden.', myOrders: 'Mijn bestellingen bekijken →', statusTitle: 'Statusupdate bestelling', statusIntro: 'er is een update voor uw bestelling.', newStatus: 'Nieuwe status', questions: 'Heeft u vragen over uw bestelling? Neem gerust contact op via', myOrders2: 'Mijn bestellingen →', customer: 'Klant', product: 'Product', qty: 'Aantal', amount: 'Bedrag' },
+  en: { thanks: 'Thank you for your order!', dear: 'Dear', received: 'your order has been received successfully.', orderNo: 'Order number', total: 'Total', items: 'Ordered products', what: 'What happens now?', whatText: 'We are processing your order and will contact you if necessary. You will receive an email as soon as your order is shipped.', myOrders: 'View my orders →', statusTitle: 'Order status update', statusIntro: 'there is an update on your order.', newStatus: 'New status', questions: 'Do you have questions about your order? Feel free to contact us at', myOrders2: 'My orders →', customer: 'Customer', product: 'Product', qty: 'Quantity', amount: 'Amount' },
+  de: { thanks: 'Vielen Dank für Ihre Bestellung!', dear: 'Guten Tag', received: 'Ihre Bestellung ist erfolgreich eingegangen.', orderNo: 'Bestellnummer', total: 'Gesamt', items: 'Bestellte Produkte', what: 'Wie geht es weiter?', whatText: 'Wir bearbeiten Ihre Bestellung und melden uns bei Bedarf bei Ihnen. Sie erhalten eine E-Mail, sobald Ihre Bestellung versendet wird.', myOrders: 'Meine Bestellungen ansehen →', statusTitle: 'Statusupdate zur Bestellung', statusIntro: 'es gibt ein Update zu Ihrer Bestellung.', newStatus: 'Neuer Status', questions: 'Haben Sie Fragen zu Ihrer Bestellung? Kontaktieren Sie uns gerne unter', myOrders2: 'Meine Bestellungen →', customer: 'Kunde', product: 'Produkt', qty: 'Anzahl', amount: 'Betrag' },
+} as const;
+const STATUS_LABELS: Record<Lang, Record<string, string>> = {
+  nl: { PENDING: 'In afwachting', PROCESSING: 'In behandeling', SHIPPED: 'Verzonden', DELIVERED: 'Afgeleverd', CANCELLED: 'Geannuleerd' },
+  en: { PENDING: 'Pending', PROCESSING: 'Processing', SHIPPED: 'Shipped', DELIVERED: 'Delivered', CANCELLED: 'Cancelled' },
+  de: { PENDING: 'Ausstehend', PROCESSING: 'In Bearbeitung', SHIPPED: 'Versendet', DELIVERED: 'Zugestellt', CANCELLED: 'Storniert' },
+};
+const BASE_TEMPLATES: Record<'en' | 'de', EmailTemplates> = {
+  en: { orderConfirmSubject: 'Confirmation of your order #{{orderId}}', orderConfirmBody: 'Dear {{customerName}}, thank you for your order #{{orderId}}. Total: €{{total}}.\n\n{{itemsList}}', statusUpdateSubject: 'Update on your order #{{orderId}}', statusUpdateBody: 'Dear {{customerName}}, your order #{{orderId}} now has status: {{status}}.', adminNotifySubject: '', adminNotifyBody: '' },
+  de: { orderConfirmSubject: 'Bestätigung Ihrer Bestellung #{{orderId}}', orderConfirmBody: 'Guten Tag {{customerName}}, vielen Dank für Ihre Bestellung #{{orderId}}. Gesamt: €{{total}}.\n\n{{itemsList}}', statusUpdateSubject: 'Update zu Ihrer Bestellung #{{orderId}}', statusUpdateBody: 'Guten Tag {{customerName}}, Ihre Bestellung #{{orderId}} hat jetzt den Status: {{status}}.', adminNotifySubject: '', adminNotifyBody: '' },
+};
+
 // ── HTML wrapper ─────────────────────────────────────────────────
 function htmlWrapper(content: string): string {
   return `<!DOCTYPE html>
@@ -80,17 +98,19 @@ function htmlWrapper(content: string): string {
 
 // ── Order confirmation HTML ──────────────────────────────────────
 function orderConfirmHtml(vars: {
+  lang?: Lang;
   orderId: string;
   customerName: string;
   total: string;
   itemsHtml: string;
 }): string {
+  const e = EM[vars.lang || 'nl'];
   return htmlWrapper(`
     <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#0c2d5e;letter-spacing:-0.5px;">
-      Bedankt voor uw bestelling!
+      ${e.thanks}
     </h1>
     <p style="margin:0 0 28px;color:#6b7280;font-size:15px;">
-      Beste <strong style="color:#1f2937;">${vars.customerName}</strong>, uw bestelling is succesvol ontvangen.
+      ${e.dear} <strong style="color:#1f2937;">${vars.customerName}</strong>, ${e.received}
     </p>
 
     <!-- Order badge -->
@@ -98,11 +118,11 @@ function orderConfirmHtml(vars: {
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td>
-            <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:0.1em;text-transform:uppercase;">Ordernummer</p>
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:0.1em;text-transform:uppercase;">${e.orderNo}</p>
             <p style="margin:0;font-size:22px;font-weight:800;color:#0c2d5e;font-family:monospace;">#${vars.orderId}</p>
           </td>
           <td align="right">
-            <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:0.1em;text-transform:uppercase;">Totaal</p>
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:0.1em;text-transform:uppercase;">${e.total}</p>
             <p style="margin:0;font-size:22px;font-weight:800;color:#f59e0b;">€${vars.total}</p>
           </td>
         </tr>
@@ -110,13 +130,13 @@ function orderConfirmHtml(vars: {
     </div>
 
     <!-- Items -->
-    <h2 style="margin:0 0 14px;font-size:13px;font-weight:700;color:#6b7280;letter-spacing:0.1em;text-transform:uppercase;">Bestelde producten</h2>
+    <h2 style="margin:0 0 14px;font-size:13px;font-weight:700;color:#6b7280;letter-spacing:0.1em;text-transform:uppercase;">${e.items}</h2>
     <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:28px;">
       <thead>
         <tr style="background:#f9fafb;">
-          <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em;border-bottom:2px solid #f3f4f6;">Product</th>
-          <th style="padding:10px 14px;text-align:center;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em;border-bottom:2px solid #f3f4f6;">Aantal</th>
-          <th style="padding:10px 14px;text-align:right;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em;border-bottom:2px solid #f3f4f6;">Bedrag</th>
+          <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em;border-bottom:2px solid #f3f4f6;">${e.product}</th>
+          <th style="padding:10px 14px;text-align:center;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em;border-bottom:2px solid #f3f4f6;">${e.qty}</th>
+          <th style="padding:10px 14px;text-align:right;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em;border-bottom:2px solid #f3f4f6;">${e.amount}</th>
         </tr>
       </thead>
       <tbody>
@@ -127,14 +147,13 @@ function orderConfirmHtml(vars: {
     <!-- Next steps -->
     <div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:28px;">
       <p style="margin:0;font-size:14px;color:#92400e;">
-        <strong>Wat gebeurt er nu?</strong> Wij verwerken uw bestelling en nemen indien nodig contact met u op.
-        U ontvangt een email zodra uw bestelling wordt verzonden.
+        <strong>${e.what}</strong> ${e.whatText}
       </p>
     </div>
 
     <a href="http://localhost:3000/account"
        style="display:inline-block;background:#0c2d5e;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:700;font-size:14px;letter-spacing:0.02em;">
-      Mijn bestellingen bekijken →
+      ${e.myOrders}
     </a>
   `);
 }
@@ -149,38 +168,40 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: string; l
 };
 
 function statusUpdateHtml(vars: {
+  lang?: Lang;
   orderId: string;
   customerName: string;
   status: string;
 }): string {
-  const cfg = STATUS_CONFIG[vars.status] || { color: '#1f2937', bg: '#f9fafb', icon: '📦', label: vars.status };
+  const e = EM[vars.lang || 'nl'];
+  const cfg0 = STATUS_CONFIG[vars.status] || { color: '#1f2937', bg: '#f9fafb', icon: '📦', label: vars.status };
+  const cfg = { ...cfg0, label: STATUS_LABELS[vars.lang || 'nl'][vars.status] || cfg0.label };
   return htmlWrapper(`
     <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#0c2d5e;">
-      Statusupdate bestelling
+      ${e.statusTitle}
     </h1>
     <p style="margin:0 0 28px;color:#6b7280;font-size:15px;">
-      Beste <strong style="color:#1f2937;">${vars.customerName}</strong>, er is een update voor uw bestelling.
+      ${e.dear} <strong style="color:#1f2937;">${vars.customerName}</strong>, ${e.statusIntro}
     </p>
 
     <div style="background:#f9fafb;border-radius:12px;padding:20px 24px;margin-bottom:28px;">
-      <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">Ordernummer</p>
+      <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">${e.orderNo}</p>
       <p style="margin:0;font-size:20px;font-weight:800;color:#0c2d5e;font-family:monospace;">#${vars.orderId}</p>
     </div>
 
-    <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.1em;">Nieuwe status</p>
+    <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.1em;">${e.newStatus}</p>
     <div style="background:${cfg.bg};border-radius:12px;padding:24px;text-align:center;margin-bottom:28px;">
       <div style="font-size:36px;margin-bottom:10px;">${cfg.icon}</div>
       <p style="margin:0;font-size:20px;font-weight:800;color:${cfg.color};">${cfg.label}</p>
     </div>
 
     <p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.6;">
-      Heeft u vragen over uw bestelling?
-      Neem gerust contact op via <a href="mailto:contact@alraled.nl" style="color:#0c2d5e;font-weight:700;">contact@alraled.nl</a>.
+      ${e.questions} <a href="mailto:contact@alraled.nl" style="color:#0c2d5e;font-weight:700;">contact@alraled.nl</a>.
     </p>
 
     <a href="http://localhost:3000/account"
        style="display:inline-block;background:#0c2d5e;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:700;font-size:14px;">
-      Mijn bestellingen →
+      ${e.myOrders2}
     </a>
   `);
 }
@@ -313,6 +334,7 @@ function buildItemsHtml(items: { product: { name: string } | null; quantity: num
 // ── Public send functions ─────────────────────────────────────────
 export async function sendOrderConfirmation(order: {
   id: string;
+  language?: string | null;
   total: number;
   user: { name: string; email: string } | null;
   items: { product: { name: string } | null; quantity: number; price: number }[];
@@ -323,9 +345,10 @@ export async function sendOrderConfirmation(order: {
   const customerEmail = order.user?.email;
   if (!customerEmail) return;
 
-  const templates = await getTemplates();
+  const lang = normLang(order.language);
+  const templates = lang === 'nl' ? await getTemplates() : { ...(await getTemplates()), ...BASE_TEMPLATES[lang] };
   const orderId = order.id.slice(0, 8).toUpperCase();
-  const customerName = order.user?.name || 'Klant';
+  const customerName = order.user?.name || EM[lang].customer;
   const total = order.total.toFixed(2);
 
   const textVars = {
@@ -339,7 +362,7 @@ export async function sendOrderConfirmation(order: {
     to: customerEmail,
     subject: fillTemplate(templates.orderConfirmSubject, textVars),
     text: fillTemplate(templates.orderConfirmBody, textVars),
-    html: orderConfirmHtml({ orderId, customerName, total, itemsHtml: buildItemsHtml(order.items) }),
+    html: orderConfirmHtml({ lang, orderId, customerName, total, itemsHtml: buildItemsHtml(order.items) }),
   });
 }
 
@@ -436,6 +459,7 @@ export async function sendContactAdminNotification(submission: {
 
 export async function sendStatusUpdate(order: {
   id: string;
+  language?: string | null;
   status: string;
   user: { name: string; email: string } | null;
 }) {
@@ -445,10 +469,11 @@ export async function sendStatusUpdate(order: {
   const customerEmail = order.user?.email;
   if (!customerEmail) return;
 
-  const templates = await getTemplates();
+  const lang = normLang(order.language);
+  const templates = lang === 'nl' ? await getTemplates() : { ...(await getTemplates()), ...BASE_TEMPLATES[lang] };
   const orderId = order.id.slice(0, 8).toUpperCase();
-  const customerName = order.user?.name || 'Klant';
-  const statusText = STATUS_CONFIG[order.status]?.label || order.status;
+  const customerName = order.user?.name || EM[lang].customer;
+  const statusText = STATUS_LABELS[lang][order.status] || STATUS_CONFIG[order.status]?.label || order.status;
 
   const textVars = { orderId, customerName, status: statusText };
 
@@ -458,6 +483,6 @@ export async function sendStatusUpdate(order: {
     to: customerEmail,
     subject: fillTemplate(templates.statusUpdateSubject, textVars),
     text: fillTemplate(templates.statusUpdateBody, textVars),
-    html: statusUpdateHtml({ orderId, customerName, status: order.status }),
+    html: statusUpdateHtml({ lang, orderId, customerName, status: order.status }),
   });
 }

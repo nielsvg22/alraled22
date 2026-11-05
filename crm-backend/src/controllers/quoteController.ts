@@ -149,9 +149,15 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   customer: { name: string; attention?: string; address?: string; postcode?: string; city?: string; email?: string };
   lines: { name: string; qty: number; unit?: string; unitPrice: number; vatRate: number; total: number; listPrice?: number; volumePercent?: number; volumeMinQty?: number }[];
   // Factuur: zelfde opmaak als de offerte, met eigen titel, meta-regels en eventuele BTW-verlegd-notitie
-  invoice?: { docLabel: string; toLabel: string; filename: string; metaRows: [string, string][]; vatNote?: string; vatLabel?: string };
+  invoice?: { docLabel: string; toLabel: string; filename: string; metaRows: [string, string][]; vatNote?: string; vatLabel?: string; lang?: 'nl' | 'en' | 'de' };
 }) {
   const { colors: c, company, texts: t } = design;
+  const LBL: Record<string, Record<string, string>> = {
+    nl: { desc: 'Beschrijving', qty: 'Aantal', size: 'Grootte', rate: 'Tarief', vat: 'BTW%', total: 'Totaal', exl: 'Bedrag excl. BTW', grand: 'Totaalbedrag', volume: 'Hierin verwerkt: staffelkorting', phone: 'Telefoon', email: 'E-mail', company: t.footerCompanyLabel, contact: t.footerContactLabel, payment: t.footerPaymentLabel, bank: 'Bank', bic: 'BIC', btw: 'BTW', kvk: 'KvK' },
+    en: { desc: 'Description', qty: 'Quantity', size: 'Unit', rate: 'Rate', vat: 'VAT%', total: 'Total', exl: 'Amount excl. VAT', grand: 'Total amount', volume: 'Includes: volume discount', phone: 'Phone', email: 'Email', company: 'Company details', contact: 'Contact information', payment: 'Payment details', bank: 'Bank', bic: 'BIC', btw: 'VAT', kvk: 'Chamber of Commerce' },
+    de: { desc: 'Beschreibung', qty: 'Anzahl', size: 'Einheit', rate: 'Preis', vat: 'MwSt.%', total: 'Gesamt', exl: 'Betrag exkl. MwSt.', grand: 'Gesamtbetrag', volume: 'Darin enthalten: Mengenrabatt', phone: 'Telefon', email: 'E-Mail', company: 'Unternehmensdaten', contact: 'Kontaktinformationen', payment: 'Zahlungsdaten', bank: 'Bank', bic: 'BIC', btw: 'USt-IdNr.', kvk: 'Handelsregister' },
+  };
+  const L = (LBL[(data.invoice?.lang) || 'nl'] ?? LBL['nl']) as unknown as Record<'desc' | 'qty' | 'size' | 'rate' | 'vat' | 'total' | 'exl' | 'grand' | 'volume' | 'phone' | 'email' | 'company' | 'contact' | 'payment' | 'bank' | 'bic' | 'btw' | 'kvk', string>;
   const { refNr, date, validUntil, customer, lines, invoice } = data;
 
   const subtotalExcl = lines.reduce((s, l) => s + l.total, 0);
@@ -229,7 +235,7 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   y += 14;
   doc.text(company.postcode, mx, y, { width: fromW });
   y += 14;
-  doc.text(`Telefoon: ${company.phone}`, mx, y, { width: fromW });
+  doc.text(`${L.phone}: ${company.phone}`, mx, y, { width: fromW });
 
   // Meta (right)
   const metaX = pageW - mx - metaW;
@@ -300,12 +306,12 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   // Header row
   doc.rect(mx, y, colW, 26).fill(c.blue);
   doc.fontSize(9).font('Helvetica-Bold').fillColor('#FFFFFF');
-  doc.text('Beschrijving', c1 + 10, y + 8, { width: w1 - 14, align: 'left' });
-  doc.text('Aantal', c2, y + 8, { width: w2, align: 'center' });
-  doc.text('Grootte', c3, y + 8, { width: w3, align: 'center' });
-  doc.text('Tarief', c4, y + 8, { width: w4, align: 'right' });
-  doc.text('BTW%', c5, y + 8, { width: w5, align: 'right' });
-  doc.text('Totaal', c6, y + 8, { width: w6, align: 'right' });
+  doc.text(L.desc, c1 + 10, y + 8, { width: w1 - 14, align: 'left' });
+  doc.text(L.qty, c2, y + 8, { width: w2, align: 'center' });
+  doc.text(L.size, c3, y + 8, { width: w3, align: 'center' });
+  doc.text(L.rate, c4, y + 8, { width: w4, align: 'right' });
+  doc.text(L.vat, c5, y + 8, { width: w5, align: 'right' });
+  doc.text(L.total, c6, y + 8, { width: w6, align: 'right' });
   y += 30;
 
   // Rows
@@ -348,14 +354,14 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
 
   // Excl BTW
   doc.fontSize(10).font('Helvetica').fillColor(c.ink);
-  doc.text('Bedrag excl. BTW', totX, y, { width: 180 });
+  doc.text(L.exl, totX, y, { width: 180 });
   doc.text(formatEuro(subtotalExcl), totX, y, { width: totW, align: 'right' });
   y += 22;
 
   const volumeSaving = lines.reduce((sum, l) => sum + (Number(l.volumePercent) > 0 && Number(l.listPrice) > l.unitPrice ? (Number(l.listPrice) - l.unitPrice) * l.qty : 0), 0);
   if (volumeSaving > 0.004) {
     doc.fontSize(9).font('Helvetica').fillColor('#047857');
-    doc.text('Hierin verwerkt: staffelkorting', totX, y, { width: 180 });
+    doc.text(L.volume, totX, y, { width: 180 });
     doc.text(`- ${formatEuro(volumeSaving)}`, totX, y, { width: totW, align: 'right' });
     doc.fontSize(10).font('Helvetica').fillColor(c.ink);
     y += 22;
@@ -374,7 +380,7 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   // Grand total (blue background, white text)
   doc.rect(totX, y, totW, 34).fill(c.blue);
   doc.fontSize(13).font('Helvetica-Bold').fillColor('#FFFFFF');
-  doc.text('Totaalbedrag', totX + 14, y + 10, { width: 180 });
+  doc.text(L.grand, totX + 14, y + 10, { width: 180 });
   doc.text(formatEuro(totalIncl), totX + 14, y + 10, { width: totW - 28, align: 'right' });
 
   // ═══════════════════════════════════════════════════════════════
@@ -390,7 +396,7 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   // Col 1: Ondernemingsgegevens
   let fy = footerY + 14;
   doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blue);
-  doc.text(t.footerCompanyLabel, mx, fy, { width: footColW });
+  doc.text(L.company, mx, fy, { width: footColW });
   fy += 16;
   doc.fontSize(9).font('Helvetica-Bold').fillColor(c.ink);
   doc.text(company.name, mx, fy, { width: footColW });
@@ -401,33 +407,33 @@ export async function generateQuotePdf(res: Response, design: typeof DEFAULT_DES
   doc.text(company.postcode, mx, fy, { width: footColW });
   if (company.kvk) {
     fy += 12;
-    doc.text(`KvK: ${company.kvk}`, mx, fy, { width: footColW });
+    doc.text(`${L.kvk}: ${company.kvk}`, mx, fy, { width: footColW });
   }
 
   // Col 2: Contact informatie
   fy = footerY + 14;
   const col2X = mx + footColW + 20;
   doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blue);
-  doc.text(t.footerContactLabel, col2X, fy, { width: footColW });
+  doc.text(L.contact, col2X, fy, { width: footColW });
   fy += 16;
   doc.fontSize(8).font('Helvetica').fillColor(c.muted);
-  doc.text(`Telefoon: ${company.phone}`, col2X, fy, { width: footColW });
+  doc.text(`${L.phone}: ${company.phone}`, col2X, fy, { width: footColW });
   fy += 12;
-  doc.text(`E-mail: ${company.email}`, col2X, fy, { width: footColW });
+  doc.text(`${L.email}: ${company.email}`, col2X, fy, { width: footColW });
   fy += 12;
   doc.text(company.website, col2X, fy, { width: footColW });
 
   // Col 3: Betalingsgegevens (aanpasbaar via admin; leeg = regel/blok verborgen)
   const paymentLines = [
-    company.bank ? `Bank: ${company.bank}` : '',
+    company.bank ? `${L.bank}: ${company.bank}` : '',
     company.bic ? `BIC: ${company.bic}` : '',
-    company.vatNumber ? `BTW: ${company.vatNumber}` : '',
+    company.vatNumber ? `${L.btw}: ${company.vatNumber}` : '',
   ].filter(Boolean);
   if (paymentLines.length > 0) {
     fy = footerY + 14;
     const col3X = mx + (footColW + 20) * 2;
     doc.fontSize(9).font('Helvetica-Bold').fillColor(c.blue);
-    doc.text(t.footerPaymentLabel, col3X, fy, { width: footColW });
+    doc.text(L.payment, col3X, fy, { width: footColW });
     fy += 16;
     doc.fontSize(8).font('Helvetica').fillColor(c.muted);
     for (const line of paymentLines) {

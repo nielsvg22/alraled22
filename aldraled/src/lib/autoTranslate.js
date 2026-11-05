@@ -32,7 +32,7 @@ const RULES = [
   [/^(\d+)\s+dagen retour$/i, ['$1-day returns', '$1 Tage Rückgabe']],
   [/^(\d+)\s+jaar garantie$/i, ['$1 year warranty', '$1 Jahre Garantie']],
   [/^(\d+)\s+vestigingen?$/i, ['$1 branches', '$1 Filialen']],
-  [/^Gekocht:\s*(\d+)x?$/i, ['Bought: $1x', 'Gekauft: $1x']],
+  [/^Gekocht:\s*x?(\d+)x?$/i, ['Bought: $1x', 'Gekauft: $1x']],
   [/^Vergelijk\s+(\d+)\s*(?:→|->)?$/i, ['Compare $1 →', '$1 vergleichen →']],
   [/^(\d+)\/3 geselecteerd voor vergelijking$/i, ['$1/3 selected for comparison', '$1/3 zum Vergleich ausgewählt']],
   [/^Bekijk\s+(\d+)\s+resultaten?$/i, ['View $1 results', '$1 Ergebnisse ansehen']],
@@ -52,6 +52,12 @@ function pick(part, idx) {
   return h && h[idx] ? h[idx] : null;
 }
 
+const MONTHS = {
+  januari: ['January', 'Januar'], februari: ['February', 'Februar'], maart: ['March', 'März'], april: ['April', 'April'],
+  mei: ['May', 'Mai'], juni: ['June', 'Juni'], juli: ['July', 'Juli'], augustus: ['August', 'August'],
+  september: ['September', 'September'], oktober: ['October', 'Oktober'], november: ['November', 'November'], december: ['December', 'Dezember'],
+};
+
 function lookup(text, lang) {
   const idx = LANG_INDEX[lang];
   if (idx === undefined) return null;
@@ -69,6 +75,12 @@ function lookup(text, lang) {
     const l = pick(m[2], idx);
     const v = pick(m[3], idx);
     if (l || v) return (m[1] || '') + (l || m[2]) + ': ' + (v || m[3]);
+  }
+  // Datum: "5 november 2026"
+  const dm = key.match(/^(\d{1,2}) (januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december) (\d{4})$/i);
+  if (dm) {
+    const mo = MONTHS[dm[2].toLowerCase()][idx];
+    return idx === 0 ? `${dm[1]} ${mo} ${dm[3]}` : `${dm[1]}. ${mo} ${dm[3]}`;
   }
   // Productnamen met "(N stuks)"
   if (/\(\d+ stuks\)/i.test(key)) {

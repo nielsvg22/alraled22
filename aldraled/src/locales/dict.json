@@ -7982,5 +7982,93 @@
 "DPD Pakket": [
 "DPD Parcel",
 "DPD Paket"
+],
+"RET": [
+"RET",
+"RÜCK"
+],
+"OUR": [
+"URNS",
+"SENDUNGEN"
+],
+"BTW-controle tijdelijk niet beschikbaar": [
+"VAT check temporarily unavailable",
+"USt-Prüfung vorübergehend nicht verfügbar"
+],
+"Bestelling aanmaken mislukt": [
+"Creating the order failed",
+"Bestellung konnte nicht erstellt werden"
+],
+"De BTW-controle is tijdelijk niet beschikbaar. Probeer het over een paar minuten opnieuw of reken af met BTW.": [
+"The VAT check is temporarily unavailable. Try again in a few minutes or check out with VAT.",
+"Die USt-Prüfung ist vorübergehend nicht verfügbar. Versuchen Sie es in einigen Minuten erneut oder bestellen Sie mit MwSt."
+],
+"De bedrijfsnaam of het adres komt niet overeen met dit BTW-nummer. Controleer de gegevens of reken af met BTW.": [
+"The company name or address does not match this VAT number. Check the details or check out with VAT.",
+"Firmenname oder Adresse stimmen nicht mit dieser USt-IdNr. überein. Prüfen Sie die Angaben oder bestellen Sie mit MwSt."
+],
+"Dit BTW-nummer is niet geldig. Controleer het nummer of laat het leeg om met BTW af te rekenen.": [
+"This VAT number is not valid. Check the number or leave it empty to check out with VAT.",
+"Diese USt-IdNr. ist nicht gültig. Prüfen Sie die Nummer oder lassen Sie das Feld leer, um mit MwSt. zu bestellen."
+],
+"Er is iets misgegaan. Probeer het opnieuw.": [
+"Something went wrong. Please try again.",
+"Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+],
+"Ongeldig BTW-nummer (begin met de landcode, bv. DE123456789)": [
+"Invalid VAT number (start with the country code, e.g. DE123456789)",
+"Ungültige USt-IdNr. (mit dem Ländercode beginnen, z. B. DE123456789)"
+],
+"Validatie mislukt": [
+"Validation failed",
+"Validierung fehlgeschlagen"
+],
+"Vul een e-mailadres in om te kunnen bestellen.": [
+"Enter an email address to be able to order.",
+"Geben Sie eine E-Mail-Adresse ein, um bestellen zu können."
+],
+"Invalid credentials": [
+"Invalid credentials",
+"Ungültige Anmeldedaten"
+],
+"User already exists": [
+"User already exists",
+"Benutzer existiert bereits"
+],
+"Registration failed": [
+"Registration failed",
+"Registrierung fehlgeschlagen"
+],
+"Email and password are required": [
+"Email and password are required",
+"E-Mail und Passwort sind erforderlich"
+],
+"Internal server error": [
+"Internal server error",
+"Interner Serverfehler"
+],
+"Some products not found": [
+"Some products not found",
+"Einige Produkte wurden nicht gefunden"
+],
+"Order not found": [
+"Order not found",
+"Bestellung nicht gefunden"
+],
+"Unauthorized": [
+"Unauthorized",
+"Nicht autorisiert"
+],
+"Invalid data": [
+"Invalid data",
+"Ungültige Daten"
+],
+"Invalid items": [
+"Invalid items",
+"Ungültige Artikel"
+],
+"Failed to generate PDF": [
+"Failed to generate PDF",
+"PDF konnte nicht erstellt werden"
 ]
 }
