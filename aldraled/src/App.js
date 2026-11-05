@@ -1,6 +1,8 @@
 import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
+import { setAutoTranslateLanguage } from './lib/autoTranslate';
 import { AuthProvider } from './lib/AuthContext';
 import { CartProvider } from './lib/CartContext';
 import { ThemeProvider } from './lib/ThemeContext';
@@ -45,6 +47,14 @@ function hexToRgbVars(hex) {
   const g = parseInt(clean.substring(2, 4), 16);
   const b = parseInt(clean.substring(4, 6), 16);
   return `${r} ${g} ${b}`;
+}
+
+// Vertaalt alle zichtbare tekst (ook CMS-teksten) naar de gekozen taal; NL = origineel.
+function AutoTranslate() {
+  const { i18n } = useTranslation();
+  const lang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
+  useEffect(() => { setAutoTranslateLanguage(lang); }, [lang]);
+  return null;
 }
 
 // Bij elke nieuwe pagina bovenaan beginnen (anders blijft de scrollstand van de vorige pagina staan,
@@ -128,6 +138,7 @@ function App() {
             <Router>
               <ThemeLoader />
               <ScrollToTop />
+              <AutoTranslate />
               <RouteTracker />
               <GlobalImageFallback />
               <PasswordWall>
