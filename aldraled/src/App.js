@@ -1,5 +1,5 @@
 import React, { useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { setAutoTranslateLanguage } from './lib/autoTranslate';
@@ -8,6 +8,9 @@ import { CartProvider } from './lib/CartContext';
 import { ThemeProvider } from './lib/ThemeContext';
 import Layout from './components/Layout';
 import ChatBubble from './components/ChatBubble';
+import CookieBanner from './components/CookieBanner';
+import { LEGACY_PAGES } from './lib/legacyUrls';
+import { normalizeUploadUrl } from './lib/api';
 import PasswordWall from './components/PasswordWall';
 import analytics from './lib/analytics';
 import { PLACEHOLDER_IMAGE } from './lib/api';
@@ -54,6 +57,46 @@ function AutoTranslate() {
   const { i18n } = useTranslation();
   const lang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
   useEffect(() => { setAutoTranslateLanguage(lang); }, [lang]);
+  return null;
+}
+
+// Canonical-adres, og:url en taal volgen altijd het huidige domein en de huidige pagina (geen vast domein in index.html)
+function SeoMeta() {
+  const { pathname } = useLocation();
+  const { i18n } = useTranslation();
+  const lang = (i18n.resolvedLanguage || i18n.language || 'nl').split('-')[0];
+  useEffect(() => {
+    const url = `${window.location.origin}${pathname === '/' ? '' : pathname.replace(/\/+$/, '')}`;
+    const set = (selector, create, attr, value) => {
+      let el = document.head.querySelector(selector);
+      if (!el) { el = create(); document.head.appendChild(el); }
+      el.setAttribute(attr, value);
+    };
+    set('link[rel="canonical"]', () => { const l = document.createElement('link'); l.rel = 'canonical'; return l; }, 'href', url || window.location.origin);
+    set('meta[property="og:url"]', () => { const m = document.createElement('meta'); m.setAttribute('property', 'og:url'); return m; }, 'content', url || window.location.origin);
+    set('meta[property="og:locale"]', () => { const m = document.createElement('meta'); m.setAttribute('property', 'og:locale'); return m; }, 'content', { nl: 'nl_NL', en: 'en_GB', de: 'de_DE' }[lang] || 'nl_NL');
+  }, [pathname, lang]);
+  return null;
+}
+
+// Afbeeldingen in CMS-teksten (HTML) met een vast adres laden via de huidige API
+function UploadUrlRewriter() {
+  useEffect(() => {
+    const fix = (root) => {
+      if (!root || !root.querySelectorAll) return;
+      const imgs = root.tagName === 'IMG' ? [root] : root.querySelectorAll('img[src*="/uploads/"], source[srcset*="/uploads/"]');
+      imgs.forEach((el) => {
+        const src = el.getAttribute('src');
+        if (src) { const n = normalizeUploadUrl(src); if (n !== src) el.setAttribute('src', n); }
+        const ss = el.getAttribute('srcset');
+        if (ss) { const n = ss.split(',').map((x) => { const [u, ...r] = x.trim().split(' '); return [normalizeUploadUrl(u), ...r].join(' '); }).join(', '); if (n !== ss) el.setAttribute('srcset', n); }
+      });
+    };
+    fix(document.body);
+    const mo = new MutationObserver((muts) => muts.forEach((m) => m.addedNodes.forEach((n) => n.nodeType === 1 && fix(n))));
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => mo.disconnect();
+  }, []);
   return null;
 }
 
@@ -139,6 +182,8 @@ function App() {
               <ThemeLoader />
               <ScrollToTop />
               <AutoTranslate />
+              <SeoMeta />
+              <UploadUrlRewriter />
               <RouteTracker />
               <GlobalImageFallback />
               <PasswordWall>
@@ -168,12 +213,16 @@ function App() {
                       {[...SEO_SLUGS, ...GROUP_SLUGS].map((seoSlug) => (
                         <Route key={seoSlug} path={`/${seoSlug}`} element={<SeoLandingPage slug={seoSlug} />} />
                       ))}
+                      {Object.entries(LEGACY_PAGES).map(([from, to]) => (
+                        <Route key={from} path={from} element={<Navigate to={to} replace />} />
+                      ))}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
                 </Layout>
               </PasswordWall>
               {process.env.NODE_ENV !== 'test' && <ChatBubble />}
+              {process.env.NODE_ENV !== 'test' && <CookieBanner />}
             </Router>
           </CartProvider>
         </AuthProvider>

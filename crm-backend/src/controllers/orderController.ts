@@ -6,6 +6,7 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { z } from 'zod';
 import { sendOrderConfirmation, sendAdminNotification, sendStatusUpdate } from '../lib/emailService';
 import { generateQuotePdf, getQuoteDesign } from './quoteController';
+import { apiBaseUrl, frontendUrl, knownOrigin } from '../lib/siteUrls';
 import { getContent } from '../db/contentRepo';
 import { getEffectiveUnitPrice, getPricingContextForUser } from '../lib/pricing';
 import { checkVatNumber, qualifiesForReverseCharge } from '../lib/vat';
@@ -154,6 +155,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         discountCodeId: discountCodeId || null, 
         discountAmount,
         language: language || 'nl',
+        siteUrl: knownOrigin(req),
         shippingName: shipping?.name || null,
         shippingCompany: shipping?.company || null,
         shippingAddress: shipping?.address || null,
@@ -201,13 +203,8 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       if (apiKey) {
         const orderId = newOrder.id;
         const mollieClient = createMollieClient({ apiKey });
-        const apiBase = process.env.API_BASE_URL || `${req.protocol}://${req.get('host') || 'localhost:5000'}`;
-        const origin = req.get('origin') || req.get('referer') || '';
-        let frontendBase = process.env.FRONTEND_URL;
-        if (!frontendBase && origin) {
-          try { frontendBase = new URL(origin).origin; } catch {}
-        }
-        frontendBase = frontendBase || 'https://alraled22-production.up.railway.app';
+        const apiBase = apiBaseUrl(req);
+        const frontendBase = frontendUrl(req);
         const webhookUrl = `${apiBase}/api/payments/webhook`;
         const redirectUrl = `${frontendBase}/bestelling-geplaatst/${orderId}`;
         const molliePayment = await mollieClient.payments.create({

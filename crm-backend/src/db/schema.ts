@@ -73,6 +73,7 @@ export const orders = mysqlTable('Order', {
   discountCodeId: varchar('discountCodeId', { length: 36 }).references(() => discountCodes.id),
   discountAmount: double('discountAmount').notNull().default(0),
   language: varchar('language', { length: 5 }).default('nl'),
+  siteUrl: varchar('siteUrl', { length: 255 }),
   status: mysqlEnum('status', ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']).notNull().default('PENDING'),
   // Shipping fields
   shippingName: varchar('shippingName', { length: 255 }),

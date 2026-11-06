@@ -14,8 +14,17 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Afbeeldingen die met een vast (tijdelijk) adres zijn opgeslagen, bv. https://crm-api.….nip.io/uploads/x.jpg,
+// worden altijd via de huidige API geladen. Zo blijft alles werken als het adres of domein verandert.
+const OWN_UPLOAD = /^https?:\/\/(?:[a-z0-9-]+\.)*(?:85\.190\.105\.138\.nip\.io|alra-led\.com|up\.railway\.app)(?::\d+)?(\/uploads\/[^\s"'<>)]*)/i;
+export const normalizeUploadUrl = (url) => {
+  const m = typeof url === 'string' ? url.match(OWN_UPLOAD) : null;
+  return m ? `${(API_URL || '').replace(/\/+$/, '')}${m[1]}` : url;
+};
+
 export const getMediaUrl = (url) => {
   if (!url) return null;
+  url = normalizeUploadUrl(url);
   if (url.startsWith('http') || url.startsWith('//') || url.startsWith('data:')) {
     return url;
   }

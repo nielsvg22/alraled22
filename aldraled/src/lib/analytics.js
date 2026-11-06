@@ -1,15 +1,29 @@
 import { API_URL } from './api';
+import { getConsent, CONSENT_EVENT } from './consent';
 
 const ANALYTICS_API = `${API_URL}/api/analytics`;
 
 class Analytics {
   constructor() {
-    this.sessionId = this.getSessionId();
+    this.sessionId = null;
+    this.started = false;
     this.visitId = null;
     this.pageStartTime = Date.now();
     this.hasTrackedPage = false;
     this.trackingEnabled = true;
     this.deviceInfo = this.getDeviceInfo();
+    // Alleen meten met toestemming (cookiebanner); intrekken stopt de meting direct
+    window.addEventListener(CONSENT_EVENT, (e) => {
+      if (e.detail && e.detail.analytics) { this.trackingEnabled = true; this.start(); } else { this.trackingEnabled = false; }
+    });
+    if (getConsent().analytics) this.start();
+    else this.trackingEnabled = false;
+  }
+
+  start() {
+    if (this.started) return;
+    this.started = true;
+    this.sessionId = this.getSessionId();
     this.init();
   }
 
