@@ -221,7 +221,7 @@ function App() {
                   </Suspense>
                 </Layout>
               </PasswordWall>
-              {process.env.NODE_ENV !== 'test' && <ChatBubble />}
+              {process.env.NODE_ENV !== 'test' && process.env.REACT_APP_ENABLE_CHAT === 'true' && <ChatBubble />}
               {process.env.NODE_ENV !== 'test' && <CookieBanner />}
             </Router>
           </CartProvider>
