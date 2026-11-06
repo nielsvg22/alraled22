@@ -47,7 +47,7 @@ export const DEFAULT_DESIGN = {
   company: {
     name: 'ALRA LED Solutions',
     address: 'Dijkgraafweg 4a',
-    postcode: '7327 AT Apeldoorn',
+    postcode: '7336 AT Apeldoorn',
     phone: '085-0021 606',
     email: 'info@alra-led.nl',
     website: 'www.alra-led.com',
@@ -86,6 +86,8 @@ function withCompanyDefaults(company: any): typeof DEFAULT_DESIGN.company {
   for (const key of ['kvk', 'vatNumber', 'bank'] as const) {
     if (!String(merged[key] || '').trim()) merged[key] = (DEFAULT_DESIGN.company as any)[key];
   }
+  // Verouderde postcode uit eerder opgeslagen ontwerpen corrigeren (Dijkgraafweg 4a is 7336 AT)
+  if (/7327\s*AT/i.test(String(merged.postcode || ''))) merged.postcode = DEFAULT_DESIGN.company.postcode;
   const logo = String(merged.logo || '').trim();
   if (!logo || /alra-led-logo\.png$/i.test(logo) || /diap/i.test(logo)) merged.logo = DEFAULT_DESIGN.company.logo;
   return merged;

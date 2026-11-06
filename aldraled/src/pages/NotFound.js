@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from "../lib/routes";
 
 const NotFound = () => {
+  // Een niet-bestaande pagina hoort niet in Google
+  useEffect(() => {
+    const m = document.createElement('meta');
+    m.name = 'robots'; m.content = 'noindex';
+    document.head.appendChild(m);
+    return () => { document.head.removeChild(m); };
+  }, []);
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center px-6 text-center">
       <p className="text-8xl font-black text-primary/10 mb-4">404</p>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { resolveLegacyProduct } from '../lib/legacyUrls';
 import { ROUTES } from "../lib/routes";
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
@@ -28,6 +29,7 @@ const TABS = ['Productinformatie', 'Specificaties', 'Beoordelingen', 'Alternatie
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct]           = useState(null);
   const [related, setRelated]           = useState([]);
   const [fbt, setFbt]                   = useState([]);
@@ -46,6 +48,17 @@ const ProductDetail = () => {
 
   useEffect(() => {
     setLoading(true);
+    // Oude adressen met een naam i.p.v. id (bv. /product/werklamp/): zoek het juiste product en stuur door
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(id || '')) {
+      axios.get(`${API_URL}/api/products`)
+        .then((r) => {
+          const p = resolveLegacyProduct(id, r.data);
+          if (p) navigate(`/product/${p.id}`, { replace: true });
+          else setLoading(false);
+        })
+        .catch(() => setLoading(false));
+      return;
+    }
     axios.get(`${API_URL}/api/products/${id}`)
       .then(res => {
         setProduct(res.data);
@@ -61,7 +74,7 @@ const ProductDetail = () => {
           .catch(() => {});
       })
       .catch(() => setLoading(false));
-  }, [id]);
+  }, [id, navigate]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(

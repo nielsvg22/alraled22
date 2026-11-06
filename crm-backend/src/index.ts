@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import seoRoutes from './routes/seoRoutes';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
@@ -164,6 +165,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.use('/', seoRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/vat', rateLimit({ windowMs: 15 * 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many requests, please try again later' } }), vatRoutes);
 app.use('/api/products', productRoutes);

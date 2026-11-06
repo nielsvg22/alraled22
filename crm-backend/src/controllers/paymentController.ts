@@ -1,4 +1,5 @@
 import { Response, Request } from 'express';
+import { apiBaseUrl } from '../lib/siteUrls';
 import { db } from '../lib/db';
 import { orders, payments } from '../db/schema';
 import { eq } from 'drizzle-orm';
@@ -47,7 +48,7 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Order already paid' });
     }
 
-    const webhookUrl = `${process.env.API_BASE_URL || `${req.protocol}://${req.get('host') || 'localhost:5000'}`}/api/payments/webhook`;
+    const webhookUrl = `${apiBaseUrl(req)}/api/payments/webhook`;
 
     const mollieClient = await getMollieClient();
     const molliePayment = await mollieClient.payments.create({

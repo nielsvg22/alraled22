@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { getContent } from '../db/contentRepo';
+import { crmUrl, frontendUrl } from './siteUrls';
 
 type EmailSettings = {
   host: string;
@@ -48,6 +49,15 @@ const BASE_TEMPLATES: Record<'en' | 'de', EmailTemplates> = {
   de: { orderConfirmSubject: 'Bestätigung Ihrer Bestellung #{{orderId}}', orderConfirmBody: 'Guten Tag {{customerName}}, vielen Dank für Ihre Bestellung #{{orderId}}. Gesamt: €{{total}}.\n\n{{itemsList}}', statusUpdateSubject: 'Update zu Ihrer Bestellung #{{orderId}}', statusUpdateBody: 'Guten Tag {{customerName}}, Ihre Bestellung #{{orderId}} hat jetzt den Status: {{status}}.', adminNotifySubject: '', adminNotifyBody: '' },
 };
 
+// Contactadres komt uit de contactpagina in het CRM (geen vast adres in de code)
+let contactEmail = 'info@alra-led.nl';
+async function refreshContact() {
+  try {
+    const c = (await getContent('contact')) as { email?: string } | null;
+    if (c?.email && /@/.test(String(c.email))) contactEmail = String(c.email).trim();
+  } catch { /* standaard blijft staan */ }
+}
+
 // ── HTML wrapper ─────────────────────────────────────────────────
 function htmlWrapper(content: string): string {
   return `<!DOCTYPE html>
@@ -84,7 +94,7 @@ function htmlWrapper(content: string): string {
           <td style="background:#0c2d5e;border-radius:0 0 16px 16px;padding:24px 40px;text-align:center;">
             <p style="margin:0 0 6px;color:rgba(255,255,255,0.5);font-size:12px;">ALRA LED Solutions</p>
             <p style="margin:0;color:rgba(255,255,255,0.3);font-size:11px;">
-              Heeft u vragen? <a href="mailto:contact@alraled.nl" style="color:#f59e0b;text-decoration:none;">contact@alraled.nl</a>
+              Heeft u vragen? <a href="mailto:${contactEmail}" style="color:#f59e0b;text-decoration:none;">${contactEmail}</a>
             </p>
           </td>
         </tr>
@@ -99,6 +109,7 @@ function htmlWrapper(content: string): string {
 // ── Order confirmation HTML ──────────────────────────────────────
 function orderConfirmHtml(vars: {
   lang?: Lang;
+  siteUrl: string;
   orderId: string;
   customerName: string;
   total: string;
@@ -151,7 +162,7 @@ function orderConfirmHtml(vars: {
       </p>
     </div>
 
-    <a href="http://localhost:3000/account"
+    <a href="${vars.siteUrl}/account"
        style="display:inline-block;background:#0c2d5e;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:700;font-size:14px;letter-spacing:0.02em;">
       ${e.myOrders}
     </a>
@@ -169,6 +180,7 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: string; l
 
 function statusUpdateHtml(vars: {
   lang?: Lang;
+  siteUrl: string;
   orderId: string;
   customerName: string;
   status: string;
@@ -196,10 +208,10 @@ function statusUpdateHtml(vars: {
     </div>
 
     <p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.6;">
-      ${e.questions} <a href="mailto:contact@alraled.nl" style="color:#0c2d5e;font-weight:700;">contact@alraled.nl</a>.
+      ${e.questions} <a href="mailto:${contactEmail}" style="color:#0c2d5e;font-weight:700;">${contactEmail}</a>.
     </p>
 
-    <a href="http://localhost:3000/account"
+    <a href="${vars.siteUrl}/account"
        style="display:inline-block;background:#0c2d5e;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:700;font-size:14px;">
       ${e.myOrders2}
     </a>
@@ -264,7 +276,7 @@ function adminNotifyHtml(vars: {
       </tbody>
     </table>
 
-    <a href="http://localhost:5174/orders"
+    <a href="${crmUrl()}/orders"
        style="display:inline-block;background:#0c2d5e;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:700;font-size:14px;">
       Bekijk in CRM →
     </a>
@@ -339,6 +351,7 @@ export async function sendOrderConfirmation(order: {
   user: { name: string; email: string } | null;
   items: { product: { name: string } | null; quantity: number; price: number }[];
 }) {
+  await refreshContact();
   const settings = await getSettings();
   if (!settings) return;
 
@@ -362,7 +375,7 @@ export async function sendOrderConfirmation(order: {
     to: customerEmail,
     subject: fillTemplate(templates.orderConfirmSubject, textVars),
     text: fillTemplate(templates.orderConfirmBody, textVars),
-    html: orderConfirmHtml({ lang, orderId, customerName, total, itemsHtml: buildItemsHtml(order.items) }),
+    html: orderConfirmHtml({ lang, siteUrl: frontendUrl(undefined, (order as any).siteUrl), orderId, customerName, total, itemsHtml: buildItemsHtml(order.items) }),
   });
 }
 
@@ -372,6 +385,7 @@ export async function sendAdminNotification(order: {
   user: { name: string; email: string } | null;
   items: { product: { name: string } | null; quantity: number; price: number }[];
 }) {
+  await refreshContact();
   const settings = await getSettings();
   if (!settings?.adminEmail) return;
 
@@ -463,6 +477,7 @@ export async function sendStatusUpdate(order: {
   status: string;
   user: { name: string; email: string } | null;
 }) {
+  await refreshContact();
   const settings = await getSettings();
   if (!settings) return;
 
@@ -483,6 +498,6 @@ export async function sendStatusUpdate(order: {
     to: customerEmail,
     subject: fillTemplate(templates.statusUpdateSubject, textVars),
     text: fillTemplate(templates.statusUpdateBody, textVars),
-    html: statusUpdateHtml({ lang, orderId, customerName, status: order.status }),
+    html: statusUpdateHtml({ lang, siteUrl: frontendUrl(undefined, (order as any).siteUrl), orderId, customerName, status: order.status }),
   });
 }

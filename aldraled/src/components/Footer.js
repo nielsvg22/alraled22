@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { API_URL, getMediaUrl } from '../lib/api';
 import { ROUTES, FOOTER_NAV_LINKS, PRODUCT_GROUP_LINKS } from '../lib/routes';
 import RichText from './RichText';
+import { resetConsent } from '../lib/consent';
 
 const DEFAULTS = {
   tagline: '',
@@ -147,6 +148,7 @@ const Footer = () => {
           <div className="flex gap-5 items-center">
             <Link to={ROUTES.terms} className="hover:text-white/60 transition-colors">{general.termsLabel || 'Algemene Voorwaarden'}</Link>
             <Link to={ROUTES.privacy} className="hover:text-white/60 transition-colors">{general.privacyLabel || 'Privacy Policy'}</Link>
+            <button type="button" onClick={resetConsent} className="hover:text-white/60 transition-colors">Cookie-instellingen</button>
             <Link to={ROUTES.returnsPolicy} className="hover:text-white/60 transition-colors">{general.retourbeleidLabel || 'Retourbeleid'}</Link>
             {general.webkeurmerkId && (
               <a href={`https://www.webkeurmerk.nl/keurmerk/${general.webkeurmerkId}`} target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors">
