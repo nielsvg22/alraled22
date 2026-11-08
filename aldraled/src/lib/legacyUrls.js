@@ -22,9 +22,10 @@ const slugify = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[
 const ALIASES = {
   'verkeersveiligheidsverlichting': 'verkeersveiligheid',
   'auto-interieurverlichting': 'binnenverlichting',
-  't-kabel': 'stekker set',
+  't-kabel': 'hefbrugverlichting',
   'stekkerset': 'stekker set',
   'clips': 'clips',
+  'flashguard-cone-1-3-4-stuks': 'amber (4 stuks)',
   'werklamp': 'verstelbare werklamp',
   'projector': 'projector',
 };
