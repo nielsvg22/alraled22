@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import { seedExtraBlogs } from './db/seedBlogs';
 import seoRoutes from './routes/seoRoutes';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -78,6 +79,7 @@ async function bootstrap() {
   await ensureTwoFactorTables();
   await resetTwoFactorFromEnv();
   await ensureAdmin();
+  await seedExtraBlogs();
 }
 
 bootstrap();

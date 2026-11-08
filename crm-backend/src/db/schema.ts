@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, double, int, text, timestamp, mysqlEnum, index, boolean } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, double, int, text, longtext, timestamp, mysqlEnum, index, boolean } from 'drizzle-orm/mysql-core';
 import { relations, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 
@@ -233,7 +233,7 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 
 export const siteContent = mysqlTable('SiteContent', {
   key: varchar('key', { length: 255 }).primaryKey(),
-  value: text('value').notNull(),
+  value: longtext('value').notNull(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
 
