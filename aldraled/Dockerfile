@@ -9,9 +9,9 @@ RUN npm run build
 
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
-# robots.txt verwijst naar de sitemap van de API waarmee gebouwd is (geen vast adres in de code)
-ARG REACT_APP_API_URL
-RUN if [ -n "$REACT_APP_API_URL" ]; then printf '\nSitemap: %s/sitemap.xml\n' "$REACT_APP_API_URL" >> /usr/share/nginx/html/robots.txt; fi
+# robots.txt verwijst naar de sitemap van de API. Standaard de productie-API; te overschrijven met build-argument SITEMAP_URL.
+ARG SITEMAP_URL=https://api.alra-led.com/sitemap.xml
+RUN printf '\nSitemap: %s\n' "$SITEMAP_URL" >> /usr/share/nginx/html/robots.txt
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
