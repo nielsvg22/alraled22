@@ -9,6 +9,7 @@ import {
   Users, 
   LogOut,
   Menu,
+  Trash2,
   X,
   FileText,
   Palette,
@@ -101,6 +102,7 @@ export default function DashboardLayout() {
     navigation.push({ name: 'Productgroepen & SEO', href: '/seo', icon: Globe });
     navigation.push({ name: 'Import', href: '/import', icon: Upload });
     navigation.push({ name: 'Beveiliging (2FA)', href: '/security', icon: ShieldCheck });
+    navigation.push({ name: 'Testdata opruimen', href: '/test-data', icon: Trash2 });
   }
 
   return (
