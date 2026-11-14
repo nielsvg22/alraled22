@@ -1,21 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { IS_PRODUCTION_DOMAIN } from '../lib/api';
+
+// Op het echte domein (crm.alra-led.com) is er geen wachtwoordscherm; de controle gebeurt vóór het eerste tekenen
+// zodat het scherm niet even kort zichtbaar is. Alleen de tijdelijke testadressen blijven afgeschermd.
+function initiallyAuthorized() {
+  if (IS_PRODUCTION_DOMAIN || import.meta.env.DEV) return true;
+  try { return localStorage.getItem('crm_staging_authorized') === 'true'; } catch (e) { return false; }
+}
 
 const PasswordWall = ({ children }) => {
   const [password, setPassword] = useState('');
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(initiallyAuthorized);
   const [error, setError] = useState(false);
 
   // In Vite env vars must start with VITE_
   const STAGING_PASSWORD = import.meta.env.VITE_STAGING_PASSWORD || 'admin1234';
-
-  useEffect(() => {
-    const auth = localStorage.getItem('crm_staging_authorized');
-    if (IS_PRODUCTION_DOMAIN) { setIsAuthorized(true); return; }
-    if (auth === 'true' || import.meta.env.DEV) {
-      setIsAuthorized(true);
-    }
-  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();

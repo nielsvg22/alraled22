@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { IS_PRODUCTION_DOMAIN } from '../lib/config';
+
+// Op het echte domein (alra-led.com) is er geen wachtwoordscherm. De controle gebeurt vóór het eerste tekenen,
+// zodat het scherm ook niet even kort zichtbaar is. Alleen de tijdelijke testadressen blijven afgeschermd.
+function initiallyAuthorized() {
+  if (IS_PRODUCTION_DOMAIN || process.env.NODE_ENV === 'development') return true;
+  try { return localStorage.getItem('staging_authorized') === 'true'; } catch (e) { return false; }
+}
 
 const PasswordWall = ({ children }) => {
   const [password, setPassword] = useState('');
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(initiallyAuthorized);
   const [error, setError] = useState(false);
 
   const STAGING_PASSWORD = process.env.REACT_APP_STAGING_PASSWORD || 'test1234';
-
-  useEffect(() => {
-    const auth = localStorage.getItem('staging_authorized');
-    if (auth === 'true' || process.env.NODE_ENV === 'development' || IS_PRODUCTION_DOMAIN) {
-      setIsAuthorized(true);
-    }
-  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
