@@ -501,3 +501,35 @@ export async function sendStatusUpdate(order: {
     html: statusUpdateHtml({ lang, siteUrl: frontendUrl(undefined, (order as any).siteUrl), orderId, customerName, status: order.status }),
   });
 }
+
+// ── Herroeping (online herroepingsfunctie): bevestiging aan de klant + melding aan ALRA ──
+const escHtml = (s: string) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/\n/g, '<br>');
+const WD = {
+  nl: { subject: 'Bevestiging van uw herroeping', title: 'Wij hebben uw herroeping ontvangen', intro: 'Hierbij bevestigen wij dat u via onze website heeft laten weten dat u van uw aankoop afziet.', received: 'Ontvangen op', name: 'Naam', order: 'Ordernummer', products: 'Product(en)', orderedOn: 'Besteld op', receivedOn: 'Ontvangen op (product)', msg: 'Toelichting', next: 'Wat gebeurt er nu?', nextText: 'Stuur het product uiterlijk 14 dagen na deze melding terug naar ALRA LED Solutions, Dijkgraafweg 4a, 7336 AT Apeldoorn, Nederland, en bewaar het verzendbewijs. Wij betalen u binnen 14 dagen na deze melding terug, zodra wij het product hebben ontvangen of u hebt aangetoond dat u het heeft verzonden.' },
+  en: { subject: 'Confirmation of your withdrawal', title: 'We have received your withdrawal', intro: 'We confirm that you have informed us via our website that you withdraw from your purchase.', received: 'Received on', name: 'Name', order: 'Order number', products: 'Product(s)', orderedOn: 'Ordered on', receivedOn: 'Received on (product)', msg: 'Remarks', next: 'What happens now?', nextText: 'Please return the product no later than 14 days after this notification to ALRA LED Solutions, Dijkgraafweg 4a, 7336 AT Apeldoorn, the Netherlands, and keep the proof of shipment. We will refund you within 14 days of this notification, as soon as we have received the product or you have shown that you have sent it.' },
+  de: { subject: 'Bestätigung Ihres Widerrufs', title: 'Wir haben Ihren Widerruf erhalten', intro: 'Hiermit bestätigen wir, dass Sie uns über unsere Website mitgeteilt haben, dass Sie von Ihrem Kauf zurücktreten.', received: 'Eingegangen am', name: 'Name', order: 'Bestellnummer', products: 'Produkt(e)', orderedOn: 'Bestellt am', receivedOn: 'Erhalten am (Produkt)', msg: 'Anmerkungen', next: 'Wie geht es weiter?', nextText: 'Senden Sie das Produkt spätestens 14 Tage nach dieser Mitteilung an ALRA LED Solutions, Dijkgraafweg 4a, 7336 AT Apeldoorn, Niederlande, zurück und bewahren Sie den Versandbeleg auf. Wir erstatten Ihnen den Betrag innerhalb von 14 Tagen nach dieser Mitteilung, sobald wir das Produkt erhalten haben oder Sie nachgewiesen haben, dass Sie es versandt haben.' },
+} as const;
+
+export async function sendWithdrawalEmails(d: { name: string; email: string; orderNumber?: string; products: string; orderedOn?: string; receivedOn?: string; message?: string; receivedAtText: string; language?: string }): Promise<boolean> {
+  const settings = await getSettings();
+  if (!settings) return false;
+  await refreshContact();
+  const lang = normLang(d.language);
+  const t = WD[lang];
+  const row = (label: string, value?: string) => value ? `<tr><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px;color:#6b7280;width:38%;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:14px;color:#1f2937;">${escHtml(value)}</td></tr>` : '';
+  const details = `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">${row(t.received, d.receivedAtText)}${row(t.name, d.name)}${row(t.order, d.orderNumber)}${row(t.products, d.products)}${row(t.orderedOn, d.orderedOn)}${row(t.receivedOn, d.receivedOn)}${row(t.msg, d.message)}</table>`;
+  const textBody = `${t.title}\n\n${t.intro}\n\n${t.received}: ${d.receivedAtText}\n${t.name}: ${d.name}\n${t.order}: ${d.orderNumber || '-'}\n${t.products}: ${d.products}\n${d.orderedOn ? `${t.orderedOn}: ${d.orderedOn}\n` : ''}${d.receivedOn ? `${t.receivedOn}: ${d.receivedOn}\n` : ''}${d.message ? `${t.msg}: ${d.message}\n` : ''}\n${t.next}\n${t.nextText}`;
+  const from = `"${settings.fromName || 'ALRA LED Solutions'}" <${settings.fromEmail || settings.user}>`;
+  const transport = createTransport(settings);
+  await transport.sendMail({
+    from, to: d.email, subject: t.subject, text: textBody,
+    html: htmlWrapper(`<h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#0c2d5e;">${t.title}</h1><p style="margin:0 0 24px;color:#6b7280;font-size:15px;">${t.intro}</p>${details}<div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:16px 20px;"><p style="margin:0;font-size:14px;color:#92400e;"><strong>${t.next}</strong> ${t.nextText}</p></div>`),
+  });
+  // Melding aan ALRA (Nederlands)
+  await transport.sendMail({
+    from, to: settings.adminEmail || settings.user, replyTo: d.email,
+    subject: `Herroeping ontvangen${d.orderNumber ? ` — order ${d.orderNumber}` : ''} — ${d.name}`,
+    text: `Herroeping ontvangen op ${d.receivedAtText}\nNaam: ${d.name}\nE-mail: ${d.email}\nOrdernummer: ${d.orderNumber || '-'}\nProducten: ${d.products}\nBesteld op: ${d.orderedOn || '-'}\nOntvangen op: ${d.receivedOn || '-'}\nToelichting: ${d.message || '-'}`,
+  });
+  return true;
+}

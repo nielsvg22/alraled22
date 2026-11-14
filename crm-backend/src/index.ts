@@ -1,8 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import { seedExtraBlogs } from './db/seedBlogs';
+import { seedLegalReturns } from './db/seedLegal';
 import seoRoutes from './routes/seoRoutes';
 import maintenanceRoutes from './routes/maintenanceRoutes';
+import withdrawalRoutes from './routes/withdrawalRoutes';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
@@ -81,6 +83,7 @@ async function bootstrap() {
   await resetTwoFactorFromEnv();
   await ensureAdmin();
   await seedExtraBlogs();
+  await seedLegalReturns();
 }
 
 bootstrap();
@@ -178,6 +181,7 @@ app.use('/api/quotes', quoteRoutes);
 app.use('/api/customer-groups', customerGroupRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
+app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/ai',      aiRoutes);

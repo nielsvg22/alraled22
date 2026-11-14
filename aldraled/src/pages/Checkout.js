@@ -43,6 +43,10 @@ const Checkout = () => {
   // Shipping
   const [shippingMethods, setShippingMethods] = useState([]);
   const [selectedMethod, setSelectedMethod] = useState(null);
+  const [freeThreshold, setFreeThreshold] = useState(250);
+  useEffect(() => {
+    api.get('/shipping/free-threshold').then((r) => { if (Number(r.data?.threshold) >= 0) setFreeThreshold(Number(r.data.threshold)); }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch(`${api.defaults?.baseURL?.replace('/api', '') || 'http://localhost:5000'}/api/shipping/methods/public?country=${country}`)
@@ -109,9 +113,12 @@ const Checkout = () => {
     }
   };
 
-  const finalTotal = (appliedDiscount
-    ? Math.max(0, cartTotal - appliedDiscount.discountAmount)
-    : cartTotal) + (selectedMethod?.price || 0);
+  // Goederenwaarde (excl. BTW, na korting); vanaf de drempel is verzenden gratis (de server rekent hetzelfde na)
+  const goodsAfterDiscount = appliedDiscount ? Math.max(0, cartTotal - appliedDiscount.discountAmount) : cartTotal;
+  const freeShipping = freeThreshold > 0 && goodsAfterDiscount >= freeThreshold;
+  const shippingPrice = freeShipping ? 0 : (selectedMethod?.price || 0);
+  const remainingForFree = Math.max(0, freeThreshold - goodsAfterDiscount);
+  const finalTotal = goodsAfterDiscount + shippingPrice;
 
   const formRef = useRef(null);
 
@@ -142,7 +149,7 @@ const Checkout = () => {
             country,
             phone,
             method: String(selectedMethod?.id || 1),
-            cost: selectedMethod?.price || 0,
+            cost: shippingPrice,
           },
       });
       analytics.trackCheckoutComplete(res.data.id, cartTotal);
@@ -354,10 +361,15 @@ const Checkout = () => {
                           <p className="text-sm font-semibold text-gray-900 truncate">{m.name}</p>
                           <p className="text-xs text-gray-400">{m.delivery_time || ''}</p>
                         </div>
-                        <span className="text-xs font-bold text-gray-900 shrink-0">{m.price > 0 ? formatPrice(m.price) : 'Gratis'}</span>
+                        <span className="text-xs font-bold text-gray-900 shrink-0">{(freeShipping ? 0 : m.price) > 0 ? formatPrice(m.price) : 'Gratis'}</span>
                       </label>
                     );
                   })}
+                  {freeThreshold > 0 && shippingMethods.length > 0 && (
+                    <p className={`text-xs col-span-2 ${freeShipping ? 'text-emerald-600 font-semibold' : 'text-gray-500'}`}>
+                      {freeShipping ? 'Gratis verzending toegepast.' : `Nog ${formatPrice(remainingForFree)} (excl. BTW) tot gratis verzending.`}
+                    </p>
+                  )}
                   {shippingMethods.length === 0 && (
                     <p className="text-sm text-gray-400 col-span-2">Laden...</p>
                   )}
@@ -436,14 +448,14 @@ const Checkout = () => {
                   )}
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Verzending</span>
-                    <span className={`font-semibold ${(selectedMethod?.price || 0) === 0 ? 'text-emerald-600' : 'text-gray-900'}`}>
-                      {(selectedMethod?.price || 0) === 0 ? 'Gratis' : formatPrice(selectedMethod.price * vatMultiplier)}
+                    <span className={`font-semibold ${shippingPrice === 0 ? 'text-emerald-600' : 'text-gray-900'}`}>
+                      {shippingPrice === 0 ? 'Gratis' : formatPrice(shippingPrice * vatMultiplier)}
                     </span>
                   </div>
                   <div className="flex justify-between items-end pt-2.5 border-t border-gray-200">
                     <span className="font-bold text-gray-900">Totaal</span>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-gray-900">{formatPrice((finalTotal + (selectedMethod?.price || 0)) * vatMultiplier)}</p>
+                      <p className="text-2xl font-bold text-gray-900">{formatPrice(finalTotal * vatMultiplier)}</p>
                       <button
                         type="button"
                         onClick={() => !vatReverse && setShowInclVat(v => !v)}
@@ -457,6 +469,7 @@ const Checkout = () => {
 
                 {/* Pay button */}
                 <div className="px-6 py-4 border-t border-gray-100">
+                  <p className="text-xs text-gray-500 mb-3">Na het plaatsen van uw bestelling kiest u uw betaalmethode (zoals iDEAL, creditcard of Bancontact) op de beveiligde betaalpagina van Mollie.</p>
                   <button
                     type="submit"
                     disabled={loading}

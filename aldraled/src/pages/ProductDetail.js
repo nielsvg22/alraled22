@@ -25,7 +25,7 @@ const parseSpecs = (specsStr) => {
   }
 };
 
-const TABS = ['Productinformatie', 'Specificaties', 'Beoordelingen', 'Alternatieven', 'Vaak samen gekocht'];
+const TABS = ['Productinformatie', 'Specificaties', 'Alternatieven', 'Vaak samen gekocht'];
 
 const ProductDetail = () => {
   const { id } = useParams();

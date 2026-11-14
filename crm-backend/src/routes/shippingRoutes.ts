@@ -52,6 +52,17 @@ router.post('/carrier-logo/:carrierCode', authMiddleware, logoUpload.single('log
 router.delete('/carrier-logo/:carrierCode', authMiddleware, deleteCarrierLogo);
 
 // Public endpoint for checkout
+// Drempel voor gratis verzending (excl. BTW), voor de checkout
+router.get('/free-threshold', async (_req, res) => {
+  try {
+    const { getSendcloudSettings } = await import('../lib/sendcloud');
+    const s = await getSendcloudSettings();
+    res.json({ threshold: Number(s.freeShippingThreshold ?? 250) });
+  } catch (err: any) {
+    res.json({ threshold: 250 });
+  }
+});
+
 router.get('/methods/public', async (req, res) => {
   try {
     const { getShippingMethods } = await import('../lib/sendcloud');
