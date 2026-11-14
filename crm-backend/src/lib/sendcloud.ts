@@ -241,6 +241,21 @@ function getCarrierLogo(carrierCode: string, settings: Record<string, string>): 
   return '';
 }
 
+// Verzendkosten worden altijd op de server bepaald (nooit uit de aanvraag van de klant overgenomen).
+// Vanaf de gratis-verzenddrempel (goederenwaarde excl. BTW, na korting) zijn de verzendkosten € 0.
+export async function computeShippingCost(opts: { country?: string; methodId?: string | number | null; goodsExVat: number }): Promise<{ cost: number; free: boolean; threshold: number }> {
+  const settings = await getSendcloudSettings();
+  const threshold = Number(settings.freeShippingThreshold ?? 250);
+  if (threshold > 0 && opts.goodsExVat >= threshold) return { cost: 0, free: true, threshold };
+  let cost = Number(settings.standardShippingCost ?? 6.95);
+  try {
+    const methods = await getShippingMethods(opts.country || 'NL');
+    const m = methods.find((x: any) => String(x.id) === String(opts.methodId));
+    if (m && Number.isFinite(Number(m.price))) cost = Number(m.price);
+  } catch { /* standaardtarief blijft staan */ }
+  return { cost: Math.max(0, cost), free: false, threshold };
+}
+
 export async function getShippingMethods(country: string = 'NL'): Promise<any[]> {
   try {
     const settings = await getSendcloudSettings();

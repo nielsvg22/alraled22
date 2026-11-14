@@ -4,6 +4,7 @@ import { ROUTES } from "../lib/routes";
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import RichContent from '../components/RichContent';
+import WithdrawalSection from '../components/WithdrawalSection';
 
 import { API_URL } from '../lib/config';
 
@@ -79,6 +80,7 @@ const LegalPage = () => {
             ))}
           />
         </div>
+        {slug === 'retourbeleid' && <WithdrawalSection />}
       </div>
     </div>
   );

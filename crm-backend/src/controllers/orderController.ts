@@ -13,7 +13,7 @@ import { checkVatNumber, qualifiesForReverseCharge } from '../lib/vat';
 import * as usersRepo from '../db/usersRepo';
 import nodeCrypto from 'node:crypto';
 import createMollieClient, { Payment } from '@mollie/api-client';
-import { createShipment, getSendcloudSettings } from '../lib/sendcloud';
+import { createShipment, getSendcloudSettings, computeShippingCost } from '../lib/sendcloud';
 
 const orderSchema = z.object({
   items: z.array(z.object({
@@ -143,7 +143,9 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ error: 'Dit BTW-nummer is niet geldig. Controleer het nummer of laat het leeg om met BTW af te rekenen.' });
       }
     }
-    const exVat = Math.max(0, subtotal - discountAmount + (shipping?.cost || 0));
+    const shippingQuote = await computeShippingCost({ country: shipping?.country || 'NL', methodId: shipping?.method, goodsExVat: Math.max(0, subtotal - discountAmount) });
+    const shippingCostEx = shippingQuote.cost;
+    const exVat = Math.max(0, subtotal - discountAmount + shippingCostEx);
     const total = Math.round((exVat * (vatReverse ? 1 : 1.21) + Number.EPSILON) * 100) / 100;
 
     const newOrder = await db.transaction(async (tx) => {
@@ -164,7 +166,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         shippingCountry: shipping?.country || 'NL',
         shippingPhone: shipping?.phone || null,
         shippingMethod: shipping?.method || null,
-        shippingCost: shipping?.cost || 0,
+        shippingCost: shippingCostEx,
         vatNumber: storedVatNumber,
         vatReverse,
         vatCheck: storedVatCheck,
