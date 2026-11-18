@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer';
+import { randomUUID } from 'node:crypto';
+import { pool } from './db';
 import { getContent } from '../db/contentRepo';
 import { crmUrl, frontendUrl } from './siteUrls';
 
@@ -311,13 +313,35 @@ async function getTemplates(): Promise<EmailTemplates> {
   } catch { return DEFAULT_TEMPLATES; }
 }
 
-function createTransport(settings: EmailSettings) {
-  return nodemailer.createTransport({
+// Elke e-mail wordt ook in de database bewaard (EmailLog), zodat de beheerder nooit een bestelling of melding mist,
+// ook als er (nog) geen SMTP is gekoppeld of het versturen mislukt.
+function createTransport(settings: EmailSettings | null) {
+  const real = settings ? nodemailer.createTransport({
     host: settings.host,
     port: settings.port || 587,
     secure: settings.secure || false,
     auth: { user: settings.user, pass: settings.pass },
-  });
+  }) : null;
+  return {
+    async sendMail(mail: { from?: string; to: string; subject: string; text?: string; html?: string; replyTo?: string }) {
+      let status: 'SENT' | 'FAILED' | 'NOT_SENT' = 'NOT_SENT';
+      let error = 'SMTP is niet ingesteld: e-mail is alleen bewaard.';
+      try {
+        if (real) { await real.sendMail(mail as any); status = 'SENT'; error = ''; }
+      } catch (e: any) { status = 'FAILED'; error = String(e?.message || e).slice(0, 500); throw e; }
+      finally { await logEmail({ ...mail, status, error }); }
+      return status === 'SENT';
+    },
+  };
+}
+
+export async function logEmail(m: { from?: string; to: string; subject: string; text?: string; html?: string; replyTo?: string; status: string; error?: string }): Promise<void> {
+  try {
+    await pool.execute(
+      'INSERT INTO `EmailLog` (`id`, `toEmail`, `fromEmail`, `replyTo`, `subject`, `bodyText`, `bodyHtml`, `status`, `error`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [randomUUID(), String(m.to || '').slice(0, 255), String(m.from || '').slice(0, 255), m.replyTo ? String(m.replyTo).slice(0, 255) : null, String(m.subject || '').slice(0, 500), m.text || null, m.html || null, m.status, m.error || null],
+    );
+  } catch (e: any) { console.error('[emaillog] opslaan mislukt:', e?.message); }
 }
 
 function fillTemplate(template: string, vars: Record<string, string>): string {
@@ -353,7 +377,6 @@ export async function sendOrderConfirmation(order: {
 }) {
   await refreshContact();
   const settings = await getSettings();
-  if (!settings) return;
 
   const customerEmail = order.user?.email;
   if (!customerEmail) return;
@@ -371,7 +394,7 @@ export async function sendOrderConfirmation(order: {
 
   const transport = createTransport(settings);
   await transport.sendMail({
-    from: `"${settings.fromName || 'ALRA LED Solutions'}" <${settings.fromEmail || settings.user}>`,
+    from: `"${settings?.fromName || 'ALRA LED Solutions'}" <${settings?.fromEmail || settings?.user || 'info@alra-led.nl'}>`,
     to: customerEmail,
     subject: fillTemplate(templates.orderConfirmSubject, textVars),
     text: fillTemplate(templates.orderConfirmBody, textVars),
@@ -387,7 +410,6 @@ export async function sendAdminNotification(order: {
 }) {
   await refreshContact();
   const settings = await getSettings();
-  if (!settings?.adminEmail) return;
 
   const templates = await getTemplates();
   const orderId = order.id.slice(0, 8).toUpperCase();
@@ -402,8 +424,8 @@ export async function sendAdminNotification(order: {
 
   const transport = createTransport(settings);
   await transport.sendMail({
-    from: `"${settings.fromName || 'ALRA LED Solutions'}" <${settings.fromEmail || settings.user}>`,
-    to: settings.adminEmail,
+    from: `"${settings?.fromName || 'ALRA LED Solutions'}" <${settings?.fromEmail || settings?.user || 'info@alra-led.nl'}>`,
+    to: settings?.adminEmail || settings?.user || 'info@alra-led.nl',
     subject: fillTemplate(templates.adminNotifySubject, textVars),
     text: fillTemplate(templates.adminNotifyBody, textVars),
     html: adminNotifyHtml({ orderId, customerName, customerEmail, total, itemsHtml: buildItemsHtml(order.items) }),
@@ -418,12 +440,11 @@ export async function sendContactAdminNotification(submission: {
   message: string;
 }) {
   const settings = await getSettings();
-  if (!settings) return;
 
   const transport = createTransport(settings);
   await transport.sendMail({
-    from: `"${settings.fromName || 'ALRA LED Solutions'}" <${settings.fromEmail || settings.user}>`,
-    to: settings.adminEmail || settings.user,
+    from: `"${settings?.fromName || 'ALRA LED Solutions'}" <${settings?.fromEmail || settings?.user || 'info@alra-led.nl'}>`,
+    to: settings?.adminEmail || settings?.user || 'info@alra-led.nl',
     subject: `Nieuw contactformulier — ${submission.name}`,
     text: `Naam: ${submission.name}\nE-mail: ${submission.email}\nOnderwerp: ${submission.subject || '-'}\n\nBericht:\n${submission.message}`,
     html: htmlWrapper(`
@@ -479,7 +500,6 @@ export async function sendStatusUpdate(order: {
 }) {
   await refreshContact();
   const settings = await getSettings();
-  if (!settings) return;
 
   const customerEmail = order.user?.email;
   if (!customerEmail) return;
@@ -494,7 +514,7 @@ export async function sendStatusUpdate(order: {
 
   const transport = createTransport(settings);
   await transport.sendMail({
-    from: `"${settings.fromName || 'ALRA LED Solutions'}" <${settings.fromEmail || settings.user}>`,
+    from: `"${settings?.fromName || 'ALRA LED Solutions'}" <${settings?.fromEmail || settings?.user || 'info@alra-led.nl'}>`,
     to: customerEmail,
     subject: fillTemplate(templates.statusUpdateSubject, textVars),
     text: fillTemplate(templates.statusUpdateBody, textVars),
@@ -512,24 +532,36 @@ const WD = {
 
 export async function sendWithdrawalEmails(d: { name: string; email: string; orderNumber?: string; products: string; orderedOn?: string; receivedOn?: string; message?: string; receivedAtText: string; language?: string }): Promise<boolean> {
   const settings = await getSettings();
-  if (!settings) return false;
   await refreshContact();
   const lang = normLang(d.language);
   const t = WD[lang];
   const row = (label: string, value?: string) => value ? `<tr><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px;color:#6b7280;width:38%;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:14px;color:#1f2937;">${escHtml(value)}</td></tr>` : '';
   const details = `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">${row(t.received, d.receivedAtText)}${row(t.name, d.name)}${row(t.order, d.orderNumber)}${row(t.products, d.products)}${row(t.orderedOn, d.orderedOn)}${row(t.receivedOn, d.receivedOn)}${row(t.msg, d.message)}</table>`;
   const textBody = `${t.title}\n\n${t.intro}\n\n${t.received}: ${d.receivedAtText}\n${t.name}: ${d.name}\n${t.order}: ${d.orderNumber || '-'}\n${t.products}: ${d.products}\n${d.orderedOn ? `${t.orderedOn}: ${d.orderedOn}\n` : ''}${d.receivedOn ? `${t.receivedOn}: ${d.receivedOn}\n` : ''}${d.message ? `${t.msg}: ${d.message}\n` : ''}\n${t.next}\n${t.nextText}`;
-  const from = `"${settings.fromName || 'ALRA LED Solutions'}" <${settings.fromEmail || settings.user}>`;
+  const from = `"${settings?.fromName || 'ALRA LED Solutions'}" <${settings?.fromEmail || settings?.user || 'info@alra-led.nl'}>`;
   const transport = createTransport(settings);
-  await transport.sendMail({
+  const sentCustomer = await transport.sendMail({
     from, to: d.email, subject: t.subject, text: textBody,
     html: htmlWrapper(`<h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#0c2d5e;">${t.title}</h1><p style="margin:0 0 24px;color:#6b7280;font-size:15px;">${t.intro}</p>${details}<div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:16px 20px;"><p style="margin:0;font-size:14px;color:#92400e;"><strong>${t.next}</strong> ${t.nextText}</p></div>`),
   });
   // Melding aan ALRA (Nederlands)
   await transport.sendMail({
-    from, to: settings.adminEmail || settings.user, replyTo: d.email,
+    from, to: settings?.adminEmail || settings?.user || 'info@alra-led.nl', replyTo: d.email,
     subject: `Herroeping ontvangen${d.orderNumber ? ` — order ${d.orderNumber}` : ''} — ${d.name}`,
     text: `Herroeping ontvangen op ${d.receivedAtText}\nNaam: ${d.name}\nE-mail: ${d.email}\nOrdernummer: ${d.orderNumber || '-'}\nProducten: ${d.products}\nBesteld op: ${d.orderedOn || '-'}\nOntvangen op: ${d.receivedOn || '-'}\nToelichting: ${d.message || '-'}`,
   });
-  return true;
+  return sentCustomer;
+}
+
+// Opnieuw versturen van een bewaarde e-mail (bijv. nadat SMTP is gekoppeld). Het verzenden wordt zelf ook gelogd.
+export async function resendLoggedEmail(id: string): Promise<{ ok: boolean; error?: string }> {
+  const [rows] = (await pool.query('SELECT * FROM `EmailLog` WHERE id = ?', [id])) as any;
+  const m = rows?.[0];
+  if (!m) return { ok: false, error: 'Niet gevonden' };
+  const settings = await getSettings();
+  if (!settings) return { ok: false, error: 'SMTP is nog niet ingesteld.' };
+  try {
+    await createTransport(settings).sendMail({ from: m.fromEmail || undefined, to: m.toEmail, subject: m.subject, text: m.bodyText || undefined, html: m.bodyHtml || undefined, replyTo: m.replyTo || undefined });
+    return { ok: true };
+  } catch (e: any) { return { ok: false, error: String(e?.message || e) }; }
 }
