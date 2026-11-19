@@ -68,7 +68,14 @@ router.get('/methods/public', async (req, res) => {
   try {
     const { getShippingMethods } = await import('../lib/sendcloud');
     const country = (req.query.country as string) || 'NL';
-    const methods = await getShippingMethods(country);
+    const all = await getShippingMethods(country);
+    // Alleen gewone pakketdiensten voor de klant: geen brief, geen expres met tijdvak, geen leeftijdscontrole
+    const hidden = /agecheck|timeslot|dhl_express|sendcloud:letter|letter/i;
+    let methods = all.filter((m: any) => !hidden.test(String(m.shipping_option_code || '')) && !hidden.test(String(m.name || '')));
+    if (methods.length === 0) methods = all; // nooit een lege lijst tonen
+    // PostNL Standard eerst (voorgeselecteerd), daarna de rest in de bestaande volgorde
+    const rank = (m: any) => (/^postnl:standard/i.test(String(m.shipping_option_code || '')) ? 0 : 1);
+    methods = [...methods].sort((a: any, b: any) => rank(a) - rank(b));
     res.json(methods);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
