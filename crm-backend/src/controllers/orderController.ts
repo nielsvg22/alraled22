@@ -54,7 +54,7 @@ export function withCustomer<T extends { customerEmail?: string | null; shipping
   return { ...order, user: { ...(order.user || {}), email: order.customerEmail || order.user?.email, name: guest ? (order.shippingName || order.user?.name) : order.user?.name } };
 }
 
-async function getOrderWithRelations(orderId: string) {
+export async function getOrderWithRelations(orderId: string) {
   const order = await db.query.orders.findFirst({
     where: eq(orders.id, orderId),
     with: {
