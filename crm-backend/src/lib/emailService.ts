@@ -367,6 +367,30 @@ function buildItemsHtml(items: { product: { name: string } | null; quantity: num
   `).join('');
 }
 
+
+// Onderaan de orderregels: subtotaal (excl. btw), korting, verzending, btw en het totaal dat de klant betaalt (incl. btw).
+const TOT = {
+  nl: { sub: 'Subtotaal (excl. btw)', disc: 'Korting', ship: 'Verzending (excl. btw)', free: 'Gratis', vat: 'BTW', reverse: 'BTW verlegd (0%)', total: 'Totaal (incl. btw)' },
+  en: { sub: 'Subtotal (excl. VAT)', disc: 'Discount', ship: 'Shipping (excl. VAT)', free: 'Free', vat: 'VAT', reverse: 'VAT reverse charged (0%)', total: 'Total (incl. VAT)' },
+  de: { sub: 'Zwischensumme (netto)', disc: 'Rabatt', ship: 'Versand (netto)', free: 'Kostenlos', vat: 'MwSt.', reverse: 'MwSt. verlagert (0%)', total: 'Gesamt (brutto)' },
+} as const;
+function buildTotalsHtml(order: any, lang: Lang): string {
+  const t = TOT[lang];
+  const items = (order.items || []) as { quantity: number; price: number }[];
+  const itemsEx = items.reduce((a, i) => a + Number(i.price || 0) * Number(i.quantity || 0), 0);
+  const disc = Number(order.discountAmount || 0);
+  const ship = Number(order.shippingCost || 0);
+  const total = Number(order.total || 0);
+  const vat = Math.max(0, total - (itemsEx - disc + ship));
+  const eur = (n: number) => `€${n.toFixed(2)}`;
+  const row = (label: string, value: string, bold = false) => `<tr><td colspan="2" style="padding:6px 14px;font-size:${bold ? 15 : 13}px;color:${bold ? '#0c2d5e' : '#6b7280'};font-weight:${bold ? 800 : 500};text-align:right;${bold ? 'border-top:2px solid #f3f4f6;' : ''}">${label}</td><td style="padding:6px 14px;font-size:${bold ? 15 : 13}px;color:#0c2d5e;font-weight:${bold ? 800 : 600};text-align:right;${bold ? 'border-top:2px solid #f3f4f6;' : ''}">${value}</td></tr>`;
+  return row(t.sub, eur(itemsEx))
+    + (disc > 0 ? row(t.disc, `-${eur(disc)}`) : '')
+    + row(t.ship, ship > 0 ? eur(ship) : t.free)
+    + (order.vatReverse || vat < 0.005 ? row(t.reverse, eur(0)) : row(`${t.vat} (21%)`, eur(vat)))
+    + row(t.total, eur(total), true);
+}
+
 // ── Public send functions ─────────────────────────────────────────
 export async function sendOrderConfirmation(order: {
   id: string;
@@ -398,7 +422,7 @@ export async function sendOrderConfirmation(order: {
     to: customerEmail,
     subject: fillTemplate(templates.orderConfirmSubject, textVars),
     text: fillTemplate(templates.orderConfirmBody, textVars),
-    html: orderConfirmHtml({ lang, siteUrl: frontendUrl(undefined, (order as any).siteUrl), orderId, customerName, total, itemsHtml: buildItemsHtml(order.items) }),
+    html: orderConfirmHtml({ lang, siteUrl: frontendUrl(undefined, (order as any).siteUrl), orderId, customerName, total, itemsHtml: buildItemsHtml(order.items) + buildTotalsHtml(order, lang) }),
   });
 }
 
@@ -428,7 +452,7 @@ export async function sendAdminNotification(order: {
     to: settings?.adminEmail || settings?.user || 'info@alra-led.nl',
     subject: fillTemplate(templates.adminNotifySubject, textVars),
     text: fillTemplate(templates.adminNotifyBody, textVars),
-    html: adminNotifyHtml({ orderId, customerName, customerEmail, total, itemsHtml: buildItemsHtml(order.items) }),
+    html: adminNotifyHtml({ orderId, customerName, customerEmail, total, itemsHtml: buildItemsHtml(order.items) + buildTotalsHtml(order, 'nl') }),
   });
 }
 
