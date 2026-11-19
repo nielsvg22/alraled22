@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, double, int, text, longtext, timestamp, mysqlEnum, index, boolean } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, double, int, text, longtext, mediumtext, timestamp, mysqlEnum, index, boolean } from 'drizzle-orm/mysql-core';
 import { relations, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 
@@ -396,6 +396,24 @@ export const contactSubmissions = mysqlTable('ContactSubmission', {
 ]);
 
 // Twee-staps verificatie (admins). Staan in het schema zodat `drizzle-kit push` bij het opstarten ze niet als "onbekende" tabellen verwijdert.
+// Uitgaande e-mails (zie lib/emailService). In het schema, zodat `drizzle-kit push` de tabel niet als "onbekend" verwijdert.
+export const emailLogs = mysqlTable('EmailLog', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  toEmail: varchar('toEmail', { length: 255 }).notNull(),
+  fromEmail: varchar('fromEmail', { length: 255 }),
+  replyTo: varchar('replyTo', { length: 255 }),
+  subject: varchar('subject', { length: 500 }).notNull(),
+  bodyText: mediumtext('bodyText'),
+  bodyHtml: mediumtext('bodyHtml'),
+  status: varchar('status', { length: 12 }).notNull(),
+  error: varchar('error', { length: 600 }),
+  seen: boolean('seen').notNull().default(false),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+}, (t) => [
+  index('EmailLog_createdAt_idx').on(t.createdAt),
+  index('EmailLog_seen_idx').on(t.seen),
+]);
+
 export const userTwoFactor = mysqlTable('UserTwoFactor', {
   userId: varchar('userId', { length: 36 }).primaryKey(),
   secret: varchar('secret', { length: 64 }).notNull(),
