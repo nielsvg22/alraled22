@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { pool } from './db';
 import { getContent } from '../db/contentRepo';
 import { crmUrl, frontendUrl } from './siteUrls';
+import { getGraphConfig, sendViaGraph, GraphConfig } from './graphMail';
 
 type EmailSettings = {
   host: string;
@@ -13,6 +14,7 @@ type EmailSettings = {
   fromName: string;
   fromEmail: string;
   adminEmail: string;
+  graph?: GraphConfig; // gezet als Microsoft Graph is geconfigureerd (heeft voorrang op SMTP)
 };
 
 type EmailTemplates = {
@@ -287,22 +289,33 @@ function adminNotifyHtml(vars: {
 
 // ── Helpers ──────────────────────────────────────────────────────
 async function getSettings(): Promise<EmailSettings | null> {
+  let cms: Partial<EmailSettings> = {};
   try {
     const raw = await getContent('email_settings');
-    if (!raw || typeof raw !== 'object') return null;
-    const s = raw as Partial<EmailSettings>;
-    if (!s.host || !s.user || !s.pass) return null;
+    if (raw && typeof raw === 'object') cms = raw as Partial<EmailSettings>;
+  } catch { /* geen CMS-instellingen */ }
+  const graph = getGraphConfig();
+  if (graph) {
     return {
-      host: String(s.host),
-      port: Number(s.port ?? 587),
-      secure: Boolean(s.secure ?? false),
-      user: String(s.user),
-      pass: String(s.pass),
-      fromName: String(s.fromName ?? ''),
-      fromEmail: String(s.fromEmail ?? ''),
-      adminEmail: String(s.adminEmail ?? ''),
+      host: '', port: 0, secure: false, user: graph.sender, pass: '',
+      fromName: String(cms.fromName ?? '') || 'ALRA LED Solutions',
+      fromEmail: graph.sender,
+      adminEmail: String(cms.adminEmail ?? '') || graph.sender,
+      graph,
     };
-  } catch { return null; }
+  }
+  const s = cms;
+  if (!s.host || !s.user || !s.pass) return null;
+  return {
+    host: String(s.host),
+    port: Number(s.port ?? 587),
+    secure: Boolean(s.secure ?? false),
+    user: String(s.user),
+    pass: String(s.pass),
+    fromName: String(s.fromName ?? ''),
+    fromEmail: String(s.fromEmail ?? ''),
+    adminEmail: String(s.adminEmail ?? ''),
+  };
 }
 
 async function getTemplates(): Promise<EmailTemplates> {
@@ -316,7 +329,8 @@ async function getTemplates(): Promise<EmailTemplates> {
 // Elke e-mail wordt ook in de database bewaard (EmailLog), zodat de beheerder nooit een bestelling of melding mist,
 // ook als er (nog) geen SMTP is gekoppeld of het versturen mislukt.
 function createTransport(settings: EmailSettings | null) {
-  const real = settings ? nodemailer.createTransport({
+  const graph = settings?.graph || null;
+  const real = settings && !graph ? nodemailer.createTransport({
     host: settings.host,
     port: settings.port || 587,
     secure: settings.secure || false,
@@ -327,7 +341,8 @@ function createTransport(settings: EmailSettings | null) {
       let status: 'SENT' | 'FAILED' | 'NOT_SENT' = 'NOT_SENT';
       let error = 'SMTP is niet ingesteld: e-mail is alleen bewaard.';
       try {
-        if (real) { await real.sendMail(mail as any); status = 'SENT'; error = ''; }
+        if (graph) { await sendViaGraph(graph, mail); status = 'SENT'; error = ''; }
+        else if (real) { await real.sendMail(mail as any); status = 'SENT'; error = ''; }
       } catch (e: any) { status = 'FAILED'; error = String(e?.message || e).slice(0, 500); throw e; }
       finally { await logEmail({ ...mail, status, error }); }
       return status === 'SENT';
@@ -586,6 +601,26 @@ export async function resendLoggedEmail(id: string): Promise<{ ok: boolean; erro
   if (!settings) return { ok: false, error: 'SMTP is nog niet ingesteld.' };
   try {
     await createTransport(settings).sendMail({ from: m.fromEmail || undefined, to: m.toEmail, subject: m.subject, text: m.bodyText || undefined, html: m.bodyHtml || undefined, replyTo: m.replyTo || undefined });
+    return { ok: true };
+  } catch (e: any) { return { ok: false, error: String(e?.message || e) }; }
+}
+
+// Status van de mailkoppeling en een testmail (voor het CRM).
+export async function mailProviderStatus(): Promise<{ provider: 'graph' | 'smtp' | 'none'; sender?: string }> {
+  const settings = await getSettings();
+  if (!settings) return { provider: 'none' };
+  return settings.graph ? { provider: 'graph', sender: settings.graph.sender } : { provider: 'smtp', sender: settings.fromEmail || settings.user };
+}
+
+export async function sendTestEmail(to: string): Promise<{ ok: boolean; error?: string }> {
+  const settings = await getSettings();
+  if (!settings) return { ok: false, error: 'Er is nog geen mailkoppeling ingesteld (Microsoft Graph of SMTP). De testmail is wel bewaard.' };
+  try {
+    await createTransport(settings).sendMail({
+      from: `"${settings.fromName || 'ALRA LED Solutions'}" <${settings.fromEmail || settings.user}>`,
+      to, subject: 'Testmail — ALRA LED Solutions',
+      text: 'Dit is een testmail vanuit het ALRA LED CRM. Als u dit ontvangt, werkt de mailkoppeling.',
+    });
     return { ok: true };
   } catch (e: any) { return { ok: false, error: String(e?.message || e) }; }
 }

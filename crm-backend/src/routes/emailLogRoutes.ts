@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { pool } from '../lib/db';
 import { authMiddleware, adminMiddleware, AuthRequest } from '../middleware/authMiddleware';
-import { resendLoggedEmail } from '../lib/emailService';
+import { resendLoggedEmail, mailProviderStatus, sendTestEmail } from '../lib/emailService';
 
 // Overzicht van alle uitgaande e-mails voor de beheerder (ook als SMTP niet is gekoppeld).
 const router = Router();
@@ -38,6 +38,17 @@ router.get('/unseen-count', async (_req: AuthRequest, res: Response) => {
 router.post('/mark-all-seen', async (_req: AuthRequest, res: Response) => {
   try { await pool.execute('UPDATE EmailLog SET seen = 1 WHERE seen = 0'); res.json({ ok: true }); }
   catch (e: any) { res.status(500).json({ error: e?.message || 'Fout' }); }
+});
+
+router.get('/provider', async (_req: AuthRequest, res: Response) => {
+  try { res.json(await mailProviderStatus()); } catch { res.json({ provider: 'none' }); }
+});
+
+router.post('/test', async (req: AuthRequest, res: Response) => {
+  const to = String(req.body?.to || '').trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return res.status(400).json({ ok: false, error: 'Vul een geldig e-mailadres in.' });
+  const r = await sendTestEmail(to);
+  res.status(r.ok ? 200 : 400).json(r);
 });
 
 router.get('/:id', async (req: AuthRequest, res: Response) => {

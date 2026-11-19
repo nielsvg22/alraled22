@@ -20,6 +20,9 @@ export default function EmailLog() {
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [provider, setProvider] = useState(null);
+  const [testTo, setTestTo] = useState('');
+  const [testing, setTesting] = useState(false);
 
   const load = useCallback(async () => {
     setBusy(true); setError('');
@@ -31,6 +34,14 @@ export default function EmailLog() {
   }, [status, search]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { api.get('/email-log/provider').then((r) => setProvider(r.data)).catch(() => {}); }, []);
+
+  const sendTest = async () => {
+    setMsg(''); setError(''); setTesting(true);
+    try { const r = await api.post('/email-log/test', { to: testTo.trim() }); setMsg(r.data.ok ? 'Testmail verstuurd.' : r.data.error); }
+    catch (e) { setError(e?.response?.data?.error || errorText(e, 'Testmail mislukt')); }
+    setTesting(false); load();
+  };
 
   const show = async (id) => {
     setMsg(''); 
@@ -55,6 +66,14 @@ export default function EmailLog() {
           <button onClick={load} className="px-3 py-2 rounded-lg border text-sm flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${busy ? 'animate-spin' : ''}`} /> Vernieuwen</button>
           <button onClick={markAll} className="px-3 py-2 rounded-lg border text-sm flex items-center gap-1"><CheckCircle className="w-4 h-4" /> Alles gelezen</button>
         </div>
+      </div>
+
+      <div className="rounded-xl border bg-white p-4 flex flex-wrap items-center gap-3">
+        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${provider?.provider && provider.provider !== 'none' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+          {provider?.provider === 'graph' ? `Microsoft Graph gekoppeld (${provider.sender})` : provider?.provider === 'smtp' ? `SMTP gekoppeld (${provider.sender})` : 'Nog geen mailkoppeling: mails worden alleen bewaard'}
+        </span>
+        <input value={testTo} onChange={(e) => setTestTo(e.target.value)} placeholder="E-mailadres voor testmail" className="px-3 py-2 rounded-lg border text-sm flex-1 min-w-[200px]" />
+        <button onClick={sendTest} disabled={testing || !testTo.trim()} className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm disabled:opacity-50 flex items-center gap-1"><Send className="w-4 h-4" /> {testing ? 'Versturen…' : 'Testmail sturen'}</button>
       </div>
 
       <div className="flex flex-wrap gap-3">
