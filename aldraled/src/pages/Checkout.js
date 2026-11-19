@@ -34,6 +34,7 @@ const Checkout = () => {
   const [vatNumber, setVatNumber] = useState('');
   const [vat, setVat] = useState({ status: 'idle', reverseCharge: false, message: '' });
 
+  const [standardCost, setStandardCost] = useState(6.95);
   const [discountCode, setDiscountCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(null);
   const [discountError, setDiscountError] = useState('');
@@ -45,7 +46,7 @@ const Checkout = () => {
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [freeThreshold, setFreeThreshold] = useState(250);
   useEffect(() => {
-    api.get('/shipping/free-threshold').then((r) => { if (Number(r.data?.threshold) >= 0) setFreeThreshold(Number(r.data.threshold)); }).catch(() => {});
+    api.get('/shipping/free-threshold').then((r) => { if (Number(r.data?.threshold) >= 0) setFreeThreshold(Number(r.data.threshold)); if (Number(r.data?.standardCost) > 0) setStandardCost(Number(r.data.standardCost)); }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -116,7 +117,7 @@ const Checkout = () => {
   // Goederenwaarde (excl. BTW, na korting); vanaf de drempel is verzenden gratis (de server rekent hetzelfde na)
   const goodsAfterDiscount = appliedDiscount ? Math.max(0, cartTotal - appliedDiscount.discountAmount) : cartTotal;
   const freeShipping = freeThreshold > 0 && goodsAfterDiscount >= freeThreshold;
-  const shippingPrice = freeShipping ? 0 : (selectedMethod?.price || 0);
+  const shippingPrice = freeShipping ? 0 : (Number(selectedMethod?.price) > 0 ? Number(selectedMethod.price) : (selectedMethod ? standardCost : 0));
   const remainingForFree = Math.max(0, freeThreshold - goodsAfterDiscount);
   const finalTotal = goodsAfterDiscount + shippingPrice;
 
@@ -361,7 +362,7 @@ const Checkout = () => {
                           <p className="text-sm font-semibold text-gray-900 truncate">{m.name}</p>
                           <p className="text-xs text-gray-400">{m.delivery_time || ''}</p>
                         </div>
-                        <span className="text-xs font-bold text-gray-900 shrink-0">{(freeShipping ? 0 : m.price) > 0 ? formatPrice(m.price) : 'Gratis'}</span>
+                        <span className="text-xs font-bold text-gray-900 shrink-0">{freeShipping ? 'Gratis' : formatPrice((Number(m.price) > 0 ? Number(m.price) : standardCost) * vatMultiplier)}</span>
                       </label>
                     );
                   })}

@@ -247,11 +247,12 @@ export async function computeShippingCost(opts: { country?: string; methodId?: s
   const settings = await getSendcloudSettings();
   const threshold = Number(settings.freeShippingThreshold ?? 250);
   if (threshold > 0 && opts.goodsExVat >= threshold) return { cost: 0, free: true, threshold };
-  let cost = Number(settings.standardShippingCost ?? 6.95);
+  const std = Number(settings.standardShippingCost);
+  let cost = Number.isFinite(std) && std > 0 ? std : 6.95;
   try {
     const methods = await getShippingMethods(opts.country || 'NL');
     const m = methods.find((x: any) => String(x.id) === String(opts.methodId));
-    if (m && Number.isFinite(Number(m.price))) cost = Number(m.price);
+    if (m && Number.isFinite(Number(m.price)) && Number(m.price) > 0) cost = Number(m.price); // prijs 0 = onbekend (geen quote / terugvallijst): dan geldt het standaardtarief
   } catch { /* standaardtarief blijft staan */ }
   return { cost: Math.max(0, cost), free: false, threshold };
 }
