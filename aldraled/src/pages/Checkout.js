@@ -347,15 +347,15 @@ const Checkout = () => {
                     return (
                       <label key={m.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${selectedMethod?.id === m.id ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-gray-100 hover:border-gray-200'}`}>
                         <input type="radio" name="shipping" checked={selectedMethod?.id === m.id} onChange={() => setSelectedMethod(m)} className="w-4 h-4 text-primary" />
-                        {(m.carrier?.logo || ['dhl', 'dpd', 'ups'].includes(m.carrier?.code)) ? (
+                        {(m.carrier?.logo || ['dhl', 'dpd', 'ups', 'postnl'].includes(m.carrier?.code)) ? (
                           <img
-                            src={m.carrier?.logo ? getMediaUrl(m.carrier.logo) : `/carriers/${m.carrier.code}.svg`}
+                            src={m.carrier?.logo ? getMediaUrl(m.carrier.logo) : `/carriers/${m.carrier.code}.${m.carrier.code === 'postnl' ? 'png' : 'svg'}`}
                             alt={m.carrier?.name || ''}
                             className="w-10 h-10 object-contain shrink-0"
                             onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                           />
                         ) : null}
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 ${(m.carrier?.logo || ['dhl', 'dpd', 'ups'].includes(m.carrier?.code)) ? 'hidden' : 'flex'} ${bgColor}`}>
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 ${(m.carrier?.logo || ['dhl', 'dpd', 'ups', 'postnl'].includes(m.carrier?.code)) ? 'hidden' : 'flex'} ${bgColor}`}>
                           {(m.carrier?.name || '?').length <= 6 ? m.carrier.name : (m.carrier?.name || '?').slice(0, 3).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
