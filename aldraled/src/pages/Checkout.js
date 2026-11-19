@@ -359,7 +359,7 @@ const Checkout = () => {
                           {(m.carrier?.name || '?').slice(0, 3).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{m.name}</p>
+                          <p className="text-sm font-semibold text-gray-900 leading-tight">{m.name}</p>
                           <p className="text-xs text-gray-400">{m.delivery_time || ''}</p>
                         </div>
                         <span className="text-xs font-bold text-gray-900 shrink-0">{freeShipping ? 'Gratis' : formatPrice((Number(m.price) > 0 ? Number(m.price) : standardCost) * vatMultiplier)}</span>
@@ -367,12 +367,12 @@ const Checkout = () => {
                     );
                   })}
                   {freeThreshold > 0 && shippingMethods.length > 0 && (
-                    <p className={`text-xs col-span-2 ${freeShipping ? 'text-emerald-600 font-semibold' : 'text-gray-500'}`}>
+                    <p className={`text-xs col-span-full ${freeShipping ? 'text-emerald-600 font-semibold' : 'text-gray-500'}`}>
                       {freeShipping ? 'Gratis verzending toegepast.' : `Nog ${formatPrice(remainingForFree)} (excl. BTW) tot gratis verzending.`}
                     </p>
                   )}
                   {shippingMethods.length === 0 && (
-                    <p className="text-sm text-gray-400 col-span-2">Laden...</p>
+                    <p className="text-sm text-gray-400 col-span-full">Laden...</p>
                   )}
                 </div>
               </div>
