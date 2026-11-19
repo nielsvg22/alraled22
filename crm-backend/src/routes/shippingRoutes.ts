@@ -57,9 +57,10 @@ router.get('/free-threshold', async (_req, res) => {
   try {
     const { getSendcloudSettings } = await import('../lib/sendcloud');
     const s = await getSendcloudSettings();
-    res.json({ threshold: Number(s.freeShippingThreshold ?? 250) });
+    const std = Number(s.standardShippingCost);
+    res.json({ threshold: Number(s.freeShippingThreshold ?? 250), standardCost: Number.isFinite(std) && std > 0 ? std : 6.95 });
   } catch (err: any) {
-    res.json({ threshold: 250 });
+    res.json({ threshold: 250, standardCost: 6.95 });
   }
 });
 
