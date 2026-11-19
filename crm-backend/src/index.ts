@@ -5,6 +5,7 @@ import { seedLegalReturns } from './db/seedLegal';
 import seoRoutes from './routes/seoRoutes';
 import maintenanceRoutes from './routes/maintenanceRoutes';
 import withdrawalRoutes from './routes/withdrawalRoutes';
+import sendcloudWebhookRoutes from './routes/sendcloudWebhookRoutes';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
@@ -140,7 +141,7 @@ app.use('/api/', generalLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use(/^\/api\/auth\/2fa\/login-/, authLimiter);
 
-app.use(express.json());
+app.use(express.json({ verify: (req, _res, buf) => { (req as any).rawBody = buf; } })); // rawBody: nodig om de handtekening van Sendcloud-webhooks te controleren
 
 // Log all requests
 app.use((req, res, next) => {
@@ -191,6 +192,7 @@ app.use('/api/content', contentRoutes);
 app.use('/api/ai',      aiRoutes);
 app.use('/api/geo',     geoRoutes);
 app.use('/api/shipping', shippingRoutes);
+app.use('/api/sendcloud', sendcloudWebhookRoutes);
 app.use('/api/migration', migrationRoutes);
 app.use('/api/migrate-railway', migrateRailwayRoutes);
 app.use('/api/logs', logRoutes);
