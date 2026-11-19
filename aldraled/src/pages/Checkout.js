@@ -50,8 +50,8 @@ const Checkout = () => {
   }, []);
 
   useEffect(() => {
-    fetch(`${api.defaults?.baseURL?.replace('/api', '') || 'http://localhost:5000'}/api/shipping/methods/public?country=${country}`)
-      .then(r => r.json())
+    api.get('/shipping/methods/public', { params: { country } })
+      .then(r => r.data)
       .then(data => {
         const methods = Array.isArray(data) ? data : [];
         setShippingMethods(methods);
