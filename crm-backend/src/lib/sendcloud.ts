@@ -251,7 +251,7 @@ export async function computeShippingCost(opts: { country?: string; methodId?: s
   let cost = Number.isFinite(std) && std > 0 ? std : 6.95;
   try {
     const methods = await getShippingMethods(opts.country || 'NL');
-    const m = methods.find((x: any) => String(x.id) === String(opts.methodId));
+    const m = methods.find((x: any) => x.shipping_option_code && String(x.shipping_option_code) === String(opts.methodId)) || methods.find((x: any) => String(x.id) === String(opts.methodId));
     if (m && Number.isFinite(Number(m.price)) && Number(m.price) > 0) cost = Number(m.price); // prijs 0 = onbekend (geen quote / terugvallijst): dan geldt het standaardtarief
   } catch { /* standaardtarief blijft staan */ }
   return { cost: Math.max(0, cost), free: false, threshold };
@@ -275,7 +275,7 @@ export async function getShippingMethods(country: string = 'NL'): Promise<any[]>
       }),
     });
 
-    const options = data?.data;
+    const options = Array.isArray(data?.data) ? [...data.data].sort((a: any, b: any) => String(a.code).localeCompare(String(b.code))) : data?.data; // vaste volgorde: stabiele id's
     if (!Array.isArray(options) || options.length === 0) {
       return getFallbackMethods();
     }
