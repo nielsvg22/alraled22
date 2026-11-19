@@ -280,10 +280,11 @@ export async function getShippingMethods(country: string = 'NL'): Promise<any[]>
       return getFallbackMethods();
     }
 
+    // Voorkeursproduct per vervoerder (de gewone pakketdienst), onafhankelijk van de volgorde van Sendcloud
     const PRIORITY: Record<string, string> = {
       postnl: 'postnl:standard',
-      dhl: 'dhl Parcel NL:parcel',
-      dpd: 'dpd:dpd_nl_32480',
+      dhl: 'dhl:complete/handt,nbb',
+      dpd: 'dpd:home',
       ups: 'ups:standard',
       gls: 'gls:standard',
       bpost: 'bpost:standard',
