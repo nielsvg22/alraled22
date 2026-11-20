@@ -39,6 +39,9 @@ import { ensureAnalyticsTables } from './db/ensureAnalyticsTables';
 import { ensureProductImageTable } from './db/ensureProductImageTable';
 import { ensureContactTable } from './db/ensureContactTable';
 import { ensureEmailLogTable } from './db/ensureEmailLogTable';
+import { ensureReviewTable } from './db/ensureReviewTable';
+import { seedReviews } from './db/seedReviews';
+import reviewRoutes from './routes/reviewRoutes';
 import emailLogRoutes from './routes/emailLogRoutes';
 import { ensureTwoFactorTables, resetTwoFactorFromEnv } from './db/ensureTwoFactorTables';
 import { runMigrations } from './db/migrate';
@@ -83,11 +86,13 @@ async function bootstrap() {
   await ensureProductImageTable();
   await ensureContactTable();
   await ensureEmailLogTable();
+  await ensureReviewTable();
   await ensureTwoFactorTables();
   await resetTwoFactorFromEnv();
   await ensureAdmin();
   await seedExtraBlogs();
   await seedLegalReturns();
+  await seedReviews();
 }
 
 bootstrap();
@@ -189,6 +194,7 @@ app.use('/api/email-log', emailLogRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/content', contentRoutes);
+app.use('/api/reviews', reviewRoutes);
 app.use('/api/ai',      aiRoutes);
 app.use('/api/geo',     geoRoutes);
 app.use('/api/shipping', shippingRoutes);

@@ -396,6 +396,31 @@ export const contactSubmissions = mysqlTable('ContactSubmission', {
 ]);
 
 // Twee-staps verificatie (admins). Staan in het schema zodat `drizzle-kit push` bij het opstarten ze niet als "onbekende" tabellen verwijdert.
+// Klantreviews (zie routes/reviewRoutes). In het schema, zodat `drizzle-kit push` de tabel niet als "onbekend" verwijdert.
+export const reviews = mysqlTable('Review', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  author: varchar('author', { length: 255 }).notNull(),
+  role: varchar('role', { length: 255 }),
+  roleEn: varchar('roleEn', { length: 255 }),
+  roleDe: varchar('roleDe', { length: 255 }),
+  rating: int('rating').notNull().default(5),
+  title: varchar('title', { length: 255 }),
+  body: text('body').notNull(),
+  bodyEn: text('bodyEn'),
+  bodyDe: text('bodyDe'),
+  productId: varchar('productId', { length: 36 }),
+  source: varchar('source', { length: 100 }),
+  reviewedAt: timestamp('reviewedAt'),
+  published: boolean('published').notNull().default(true),
+  showOnHome: boolean('showOnHome').notNull().default(true),
+  sortOrder: int('sortOrder').notNull().default(0),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
+}, (t) => [
+  index('Review_published_idx').on(t.published),
+  index('Review_sortOrder_idx').on(t.sortOrder),
+]);
+
 // Uitgaande e-mails (zie lib/emailService). In het schema, zodat `drizzle-kit push` de tabel niet als "onbekend" verwijdert.
 export const emailLogs = mysqlTable('EmailLog', {
   id: varchar('id', { length: 36 }).primaryKey(),

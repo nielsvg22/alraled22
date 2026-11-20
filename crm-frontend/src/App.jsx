@@ -26,6 +26,7 @@ import Blog from './pages/Blog';
 import Security from './pages/Security';
 import TestData from './pages/TestData';
 import EmailLog from './pages/EmailLog';
+import Reviews from './pages/Reviews';
 import VolumeDiscount from './pages/VolumeDiscount';
 import Import from './pages/Import';
 import Categories from './pages/Categories';
@@ -88,6 +89,7 @@ function AppRoutes() {
         <Route path="legal" element={<AdminRoute><LegalPages /></AdminRoute>} />
         <Route path="blog" element={<AdminRoute><Blog /></AdminRoute>} />
         <Route path="security" element={<AdminRoute><Security /></AdminRoute>} />
+        <Route path="reviews" element={<AdminRoute><Reviews /></AdminRoute>} />
         <Route path="email-log" element={<AdminRoute><EmailLog /></AdminRoute>} />
         <Route path="test-data" element={<AdminRoute><TestData /></AdminRoute>} />
         <Route path="volume-discount" element={<AdminRoute><VolumeDiscount /></AdminRoute>} />
