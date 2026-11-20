@@ -615,6 +615,9 @@ if (id === 'cases') {
                 </Link>
               </div>
               <div className="space-y-0">
+                {process.image ? (
+                  <img src={getMediaUrl(process.image)} alt={process.title || ''} loading="lazy" className="w-full rounded-2xl object-cover aspect-[4/3] mb-8 shadow-sm" />
+                ) : null}
                 {(process.steps || []).map((step, idx) => (
                   <div key={idx} className="flex gap-5 pb-8 border-b border-gray-200 last:border-0 last:pb-0 pt-8 first:pt-0 group">
                     <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary text-xs font-black flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">

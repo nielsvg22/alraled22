@@ -1778,6 +1778,9 @@ export default function Pages() {
                                 <Field label="Beschrijving">
                                   <RichTextEditor minHeight="7rem" value={proc.description||''} onChange={html => setProc({ description:html })} />
                                 </Field>
+                                <Field label="Foto (rechts naast de tekst)">
+                                  <ImageField value={proc.image||''} onChange={v => setProc({ image: v })} height={36} />
+                                </Field>
                                 <div className="space-y-2 pt-2">
                                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">Stappen</p>
                                   {steps.map((s, i) => (
