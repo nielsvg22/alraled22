@@ -31,6 +31,7 @@ import {
   Newspaper,
   ShieldCheck,
   Percent,
+  Star,
 } from 'lucide-react';
 
 export default function DashboardLayout() {
@@ -94,6 +95,7 @@ export default function DashboardLayout() {
     navigation.push({ name: 'AI Assistent', href: '/ai', icon: Sparkles });
     navigation.push({ name: 'AI Instellingen', href: '/ai-settings', icon: Sparkles });
     navigation.push({ name: 'Betalingen', href: '/payments', icon: CreditCard });
+    navigation.push({ name: 'Reviews', href: '/reviews', icon: Star });
     navigation.push({ name: 'Uitgaande e-mails', href: '/email-log', icon: Mail });
     navigation.push({ name: 'Email Instellingen', href: '/email', icon: Mail });
     navigation.push({ name: 'Snelstart', href: '/snelstart', icon: Link2 });

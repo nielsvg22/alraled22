@@ -1746,7 +1746,7 @@ export default function Pages() {
                         return (
                           <SortableSection key={id} id={id}>
                             {({ dragHandleProps }) => (
-                              <Section title={`Ervaringen / reviews (${tmItems.length})`} icon={LayoutGrid} defaultOpen={false} dragHandleProps={dragHandleProps}>
+                              <Section title="Ervaringen (kop)" icon={LayoutGrid} defaultOpen={false} dragHandleProps={dragHandleProps}>
                                 <div className="grid grid-cols-2 gap-3">
                                   <Field label="Kleine kop (boven de titel)">
                                     <input className={`${iCls} ${iBdr}`} value={tm.eyebrow||''} onChange={e => setTm({ eyebrow: e.target.value })} placeholder="Wat onze klanten zeggen" />
@@ -1755,32 +1755,7 @@ export default function Pages() {
                                     <input className={`${iCls} ${iBdr}`} value={tm.title||''} onChange={e => setTm({ title: e.target.value })} placeholder="Ervaringen" />
                                   </Field>
                                 </div>
-                                <p className="text-xs text-gray-400">Zonder reviews wordt de sectie op de homepage niet getoond.</p>
-                                <div className="space-y-2 pt-2">
-                                  {tmItems.map((t, i) => (
-                                    <ItemCard key={i} number={i}
-                                      onDuplicate={() => setTmItems([...tmItems.slice(0,i+1), { ...tmItems[i] }, ...tmItems.slice(i+1)])}
-                                      onDelete={() => setTmItems(tmItems.filter((_,j) => j !== i))}>
-                                      <Field label="Review">
-                                        <textarea rows={3} className={`${iCls} ${iBdr}`} value={t.quote||''} onChange={e => { const a=[...tmItems]; a[i]={...a[i],quote:e.target.value}; setTmItems(a); }} />
-                                      </Field>
-                                      <div className="grid grid-cols-3 gap-3">
-                                        <Field label="Naam">
-                                          <input className={`${iCls} ${iBdr}`} value={t.author||''} onChange={e => { const a=[...tmItems]; a[i]={...a[i],author:e.target.value}; setTmItems(a); }} placeholder="bv. Jan de Vries" />
-                                        </Field>
-                                        <Field label="Functie / bedrijf">
-                                          <input className={`${iCls} ${iBdr}`} value={t.role||''} onChange={e => { const a=[...tmItems]; a[i]={...a[i],role:e.target.value}; setTmItems(a); }} placeholder="bv. Transportbedrijf" />
-                                        </Field>
-                                        <Field label="Sterren">
-                                          <select className={`${iCls} ${iBdr}`} value={Number(t.rating ?? 5)} onChange={e => { const a=[...tmItems]; a[i]={...a[i],rating:Number(e.target.value)}; setTmItems(a); }}>
-                                            {[5,4,3,2,1,0].map(n => <option key={n} value={n}>{n === 0 ? 'Geen sterren' : `${n} ${n === 1 ? 'ster' : 'sterren'}`}</option>)}
-                                          </select>
-                                        </Field>
-                                      </div>
-                                    </ItemCard>
-                                  ))}
-                                  <AddButton onClick={() => setTmItems([...tmItems, { quote:'', author:'', role:'', rating:5 }])} label="Review toevoegen" />
-                                </div>
+                                <p className="text-xs text-gray-500">De reviews zelf beheer je onder <a href="/reviews" className="text-blue-600 underline">Reviews</a> in het menu. Zonder gepubliceerde reviews wordt deze sectie op de homepage niet getoond.</p>
                               </Section>
                             )}
                           </SortableSection>

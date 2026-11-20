@@ -176,6 +176,7 @@ const Home = () => {
   });
   const [featuredProducts, setFeaturedProducts] = useState(() => readCache('home_featured') || []);
   const [customBlocks, setCustomBlocks] = useState([]);
+  const [apiReviews, setApiReviews] = useState(null); // null = nog niet geladen / niet beschikbaar
   const [sectionOrder, setSectionOrder] = useState(DEFAULT_SECTION_ORDER);
   const [hiddenSections, setHiddenSections] = useState([]);
   const [categories, setCategories] = useState(() => readCache('home_categories') || []);
@@ -203,6 +204,9 @@ const Home = () => {
         writeCache('home_categories', list);
       })
       .catch(() => {});
+    axios.get(`${API_URL}/api/reviews`, { params: { lang, home: 1 } })
+      .then(res => setApiReviews(Array.isArray(res.data) ? res.data : null))
+      .catch(() => setApiReviews(null));
     axios.get(`${API_URL}/api/content/page_blocks_home`, { params: { lang } })
       .then(res => setCustomBlocks(Array.isArray(res.data) ? res.data : []))
       .catch(() => {});
@@ -559,7 +563,8 @@ if (id === 'cases') {
 
     if (id === 'testimonials') {
       const tm = content.testimonials || DEFAULTS.testimonials;
-      const tmItems = (tm.items || []).filter((t) => t && String(t.quote || '').trim());
+      // Reviews komen uit het CRM (menu Reviews). Alleen als die niet geladen kunnen worden, vallen we terug op de standaardteksten.
+      const tmItems = (apiReviews || tm.items || DEFAULTS.testimonials.items).filter((t) => t && String(t.quote || '').trim());
       if (tmItems.length === 0) return null;
       return (
         <section className="py-12 px-6 md:px-10 bg-white">
