@@ -97,6 +97,14 @@ const DEFAULTS = {
       { title: "Tevredenheid", description: "Uw mening is gedurende het hele proces van belang. Van eerste contact tot levering." },
     ],
   },
+  testimonials: {
+    eyebrow: "Wat onze klanten zeggen",
+    title: "Ervaringen",
+    items: [
+      { quote: "Al jaren klant. Ze willen met je meedenken en hebben kwaliteitsproducten van het A-merk.", author: "Vaste klant", role: "Transportbedrijf", rating: 5 },
+      { quote: "Bedrijfswagenverlichting besteld en het geeft ongelofelijk veel licht! Vrijdag besteld, dinsdag al op kantoor.", author: "Tevreden klant", role: "Logistiek bedrijf", rating: 5 },
+    ],
+  },
   cta: {
     title: "Ben je benieuwd wat wij voor je kunnen betekenen?",
     subtitle: "Loopt u in het werkveld tegen een probleem aan? Wij komen graag bij u langs om samen tot een oplossing te komen.",
@@ -550,32 +558,38 @@ if (id === 'cases') {
     }
 
     if (id === 'testimonials') {
+      const tm = content.testimonials || DEFAULTS.testimonials;
+      const tmItems = (tm.items || []).filter((t) => t && String(t.quote || '').trim());
+      if (tmItems.length === 0) return null;
       return (
         <section className="py-12 px-6 md:px-10 bg-white">
           <div className="max-w-6xl mx-auto">
-            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2">Wat onze klanten zeggen</p>
-            <h2 className="text-2xl font-black text-secondary mb-8">Ervaringen</h2>
+            {tm.eyebrow ? <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2">{tm.eyebrow}</p> : null}
+            {tm.title ? <h2 className="text-2xl font-black text-secondary mb-8">{tm.title}</h2> : null}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {[
-                { quote: "Al jaren klant. Ze willen met je meedenken en hebben kwaliteitsproducten van het A-merk.", author: "Vaste klant", role: "Transportbedrijf" },
-                { quote: "Bedrijfswagenverlichting besteld en het geeft ongelofelijk veel licht! Vrijdag besteld, dinsdag al op kantoor.", author: "Tevreden klant", role: "Logistiek bedrijf" },
-              ].map(({ quote, author, role }, i) => (
-                <div key={i} className="bg-gray-50 border border-gray-100 rounded-2xl p-6 space-y-4">
-                  <div className="flex gap-1">
-                    {[1,2,3,4,5].map(s => <span key={s} className="text-primary text-sm">★</span>)}
+              {tmItems.map(({ quote, author, role, rating }, i) => {
+                const stars = Math.max(0, Math.min(5, Number(rating ?? 5)));
+                const name = String(author || '').trim();
+                return (
+                  <div key={i} className="bg-gray-50 border border-gray-100 rounded-2xl p-6 space-y-4">
+                    {stars > 0 && (
+                      <div className="flex gap-1" aria-label={`${stars} van 5 sterren`}>
+                        {[1, 2, 3, 4, 5].map((n) => <span key={n} className={`text-sm ${n <= stars ? 'text-primary' : 'text-gray-300'}`}>★</span>)}
+                      </div>
+                    )}
+                    <p className="text-sm text-gray-600 leading-relaxed italic">"{quote}"</p>
+                    {name && (
+                      <div className="flex items-center gap-3 pt-1">
+                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white text-xs font-black">{name[0]}</div>
+                        <div>
+                          <p className="text-xs font-bold text-secondary">{name}</p>
+                          {role ? <p className="text-[10px] text-gray-400">{role}</p> : null}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-600 leading-relaxed italic">"{quote}"</p>
-                  <div className="flex items-center gap-3 pt-1">
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white text-xs font-black">
-                      {author[0]}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-secondary">{author}</p>
-                      <p className="text-[10px] text-gray-400">{role}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
