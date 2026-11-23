@@ -51,6 +51,9 @@ const DEFAULT_PAGE = {
   partnersEyebrow: 'Onze Groothandelspartners',
   partnersTitle: 'Landelijke dekking via sterke partners',
   partnersText: 'Onze producten zijn verkrijgbaar via een geselecteerd netwerk van professionele groothandels. Elke partner heeft een eigen specialisatie en regio waar ze marktleider zijn.',
+  dealersEyebrow: 'Verkooppunten',
+  dealersTitle: 'Vind een vestiging bij jou in de buurt',
+  dealersText: '{aantal} vestigingen van onze groothandelspartners in Nederland.',
   benefitsEyebrow: 'Waarom ALRA?',
   benefitsTitle: 'Uw voordelen als groothandelspartner',
   ctaTitle: 'Klaar om samen te gaan?',
@@ -216,10 +219,10 @@ const Groothandels = () => {
       <section className="py-16 lg:py-20 px-6 md:px-10 bg-[#F7F9FC] border-t border-[#E4EAF1]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
-            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2">Verkooppunten</p>
-            <h2 className="text-3xl md:text-4xl font-black text-secondary">Vind een vestiging bij jou in de buurt</h2>
+            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2">{page.dealersEyebrow}</p>
+            <h2 className="text-3xl md:text-4xl font-black text-secondary">{page.dealersTitle}</h2>
             <p className="text-gray-500 text-base mt-4 max-w-2xl mx-auto">
-              {dealers.length} vestigingen van onze groothandelspartners in Nederland.
+              {String(page.dealersText).replace('{aantal}', String(dealers.length))}
             </p>
           </div>
 
