@@ -396,6 +396,29 @@ export const contactSubmissions = mysqlTable('ContactSubmission', {
 ]);
 
 // Twee-staps verificatie (admins). Staan in het schema zodat `drizzle-kit push` bij het opstarten ze niet als "onbekende" tabellen verwijdert.
+// Aanvragen groothandelspartner (zie routes/partnerRoutes). In het schema, zodat `drizzle-kit push` de tabel niet verwijdert.
+export const partnerApplications = mysqlTable('PartnerApplication', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  company: varchar('company', { length: 255 }).notNull(),
+  contactName: varchar('contactName', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  phone: varchar('phone', { length: 50 }),
+  website: varchar('website', { length: 255 }),
+  kvk: varchar('kvk', { length: 30 }),
+  vatNumber: varchar('vatNumber', { length: 32 }),
+  region: varchar('region', { length: 255 }),
+  message: text('message'),
+  language: varchar('language', { length: 2 }).notNull().default('nl'),
+  ip: varchar('ip', { length: 45 }),
+  status: varchar('status', { length: 12 }).notNull().default('NEW'),
+  notes: text('notes'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
+}, (t) => [
+  index('PartnerApplication_status_idx').on(t.status),
+  index('PartnerApplication_createdAt_idx').on(t.createdAt),
+]);
+
 // Klantreviews (zie routes/reviewRoutes). In het schema, zodat `drizzle-kit push` de tabel niet als "onbekend" verwijdert.
 export const reviews = mysqlTable('Review', {
   id: varchar('id', { length: 36 }).primaryKey(),

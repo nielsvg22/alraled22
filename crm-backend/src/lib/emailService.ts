@@ -624,3 +624,31 @@ export async function sendTestEmail(to: string): Promise<{ ok: boolean; error?: 
     return { ok: true };
   } catch (e: any) { return { ok: false, error: String(e?.message || e) }; }
 }
+
+// ── Aanvraag "Word groothandelspartner": bevestiging aan de aanvrager + melding aan ALRA ──
+const PA = {
+  nl: { subject: 'Wij hebben uw aanvraag ontvangen', title: 'Bedankt voor uw aanvraag', intro: 'Wij hebben uw aanvraag om groothandelspartner te worden ontvangen. Wij nemen binnen enkele werkdagen contact met u op.', company: 'Bedrijf', contact: 'Contactpersoon', region: 'Vestigingen / regio', msg: 'Bericht', regards: 'Met vriendelijke groet,' },
+  en: { subject: 'We have received your application', title: 'Thank you for your application', intro: 'We have received your application to become a wholesale partner. We will contact you within a few working days.', company: 'Company', contact: 'Contact person', region: 'Branches / region', msg: 'Message', regards: 'Kind regards,' },
+  de: { subject: 'Wir haben Ihre Anfrage erhalten', title: 'Vielen Dank für Ihre Anfrage', intro: 'Wir haben Ihre Anfrage, Großhandelspartner zu werden, erhalten. Wir melden uns innerhalb weniger Werktage bei Ihnen.', company: 'Unternehmen', contact: 'Ansprechpartner', region: 'Filialen / Region', msg: 'Nachricht', regards: 'Mit freundlichen Grüßen,' },
+} as const;
+
+export async function sendPartnerApplicationEmails(d: { company: string; contactName: string; email: string; phone?: string; website?: string; kvk?: string; vatNumber?: string; region?: string; message?: string; language?: string }): Promise<boolean> {
+  const settings = await getSettings();
+  await refreshContact();
+  const t = PA[normLang(d.language)];
+  const row = (label: string, value?: string) => value ? `<tr><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px;color:#6b7280;width:38%;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:14px;color:#1f2937;">${escHtml(value)}</td></tr>` : '';
+  const from = `"${settings?.fromName || 'ALRA LED Solutions'}" <${settings?.fromEmail || settings?.user || 'info@alra-led.nl'}>`;
+  const transport = createTransport(settings);
+  const sent = await transport.sendMail({
+    from, to: d.email, subject: t.subject,
+    text: `${t.title}\n\n${t.intro}\n\n${t.company}: ${d.company}\n${t.contact}: ${d.contactName}\n${d.region ? `${t.region}: ${d.region}\n` : ''}${d.message ? `${t.msg}: ${d.message}\n` : ''}\n${t.regards}\nALRA LED Solutions`,
+    html: htmlWrapper(`<h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#0c2d5e;">${t.title}</h1><p style="margin:0 0 24px;color:#6b7280;font-size:15px;">${t.intro}</p><table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">${row(t.company, d.company)}${row(t.contact, d.contactName)}${row(t.region, d.region)}${row(t.msg, d.message)}</table><p style="margin:0;font-size:14px;color:#374151;">${t.regards}<br>ALRA LED Solutions</p>`),
+  });
+  // Melding aan ALRA (Nederlands)
+  await transport.sendMail({
+    from, to: settings?.adminEmail || settings?.user || 'info@alra-led.nl', replyTo: d.email,
+    subject: `Nieuwe aanvraag groothandelspartner — ${d.company}`,
+    text: `Nieuwe aanvraag groothandelspartner\nBedrijf: ${d.company}\nContactpersoon: ${d.contactName}\nE-mail: ${d.email}\nTelefoon: ${d.phone || '-'}\nWebsite: ${d.website || '-'}\nKvK: ${d.kvk || '-'}\nBTW-nummer: ${d.vatNumber || '-'}\nVestigingen/regio: ${d.region || '-'}\nBericht: ${d.message || '-'}\n\nBekijk en beheer in het CRM onder Partneraanvragen: ${crmUrl()}/partner-applications`,
+  });
+  return sent;
+}

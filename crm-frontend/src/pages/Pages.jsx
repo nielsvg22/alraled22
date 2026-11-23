@@ -1088,7 +1088,7 @@ const GROOTHANDELS_DEFAULTS = {
   ],
   ctaTitle: 'Klaar om samen te gaan?',
   ctaText: 'Neem contact op voor een vrijblijvend gesprek over de mogelijkheden, condities en ons assortiment.',
-  ctaButton: 'Contact opnemen',
+  ctaButton: 'Aanmelden als partner',
   partners: [
     { id: 'mastermate', name: 'Mastermate', description: 'Nederlands groothandelsnetwerk voor elektrotechnische materialen, verlichting en installatietechniek. Ruim 48 vestigingen landelijk.', website: 'https://www.mastermate.nl', logo: '/uploads/mastermate-logo.png' },
     { id: 'aic-visser', name: 'AIC Visser', description: 'Specialist in verlichting, elektromateriaal en installatietechniek. Drie vestigingen in Harderwijk, Assen en Veghel.', website: 'https://www.aic.nl', logo: '/uploads/aic-visser-logo.png' },
