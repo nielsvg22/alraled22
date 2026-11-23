@@ -146,6 +146,9 @@ app.use('/api/', generalLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use(/^\/api\/auth\/2fa\/login-/, authLimiter);
 
+// Content opslaan (blogs, pagina's) kan grote teksten met ingebedde afbeeldingen bevatten: hogere limiet, alleen voor ingelogde PUT-verzoeken
+const bigJson = express.json({ limit: '25mb' });
+app.use('/api/content', (req, res, next) => (req.method === 'PUT' && req.headers.authorization ? bigJson(req, res, next) : next()));
 app.use(express.json({ verify: (req, _res, buf) => { (req as any).rawBody = buf; } })); // rawBody: nodig om de handtekening van Sendcloud-webhooks te controleren
 
 // Log all requests
