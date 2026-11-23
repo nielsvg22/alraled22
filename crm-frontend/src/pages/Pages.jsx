@@ -1076,6 +1076,9 @@ const GROOTHANDELS_DEFAULTS = {
   partnersEyebrow: 'Onze Groothandelspartners',
   partnersTitle: 'Landelijke dekking via sterke partners',
   partnersText: 'Onze producten zijn verkrijgbaar via een geselecteerd netwerk van professionele groothandels. Elke partner heeft een eigen specialisatie en regio waar ze marktleider zijn.',
+  dealersEyebrow: 'Verkooppunten',
+  dealersTitle: 'Vind een vestiging bij jou in de buurt',
+  dealersText: '{aantal} vestigingen van onze groothandelspartners in Nederland.',
   benefitsEyebrow: 'Waarom ALRA?',
   benefitsTitle: 'Uw voordelen als groothandelspartner',
   benefits: [
@@ -2222,6 +2225,18 @@ export default function Pages() {
               </Field>
               <Field label="Tekst">
                 <RichTextEditor minHeight="7rem" value={groothandels.heroText||''} onChange={html => setGroothandels({ ...groothandels, heroText:html })} />
+              </Field>
+            </Section>
+
+            <Section title="Verkooppunten (zoeken op vestiging)" defaultOpen={false}>
+              <Field label="Label boven de titel">
+                <input className={`${iCls} ${iBdr}`} value={groothandels.dealersEyebrow||''} onChange={e => setGroothandels({ ...groothandels, dealersEyebrow:e.target.value })} />
+              </Field>
+              <Field label="Titel">
+                <input className={`${iCls} ${iBdr}`} value={groothandels.dealersTitle||''} onChange={e => setGroothandels({ ...groothandels, dealersTitle:e.target.value })} />
+              </Field>
+              <Field label="Regel eronder" hint="Gebruik {aantal} om het echte aantal vestigingen te tonen, bijvoorbeeld '{aantal} vestigingen van onze groothandelspartners in Nederland.' De vestigingen zelf beheer je onder Verkooppunten in het menu.">
+                <input className={`${iCls} ${iBdr}`} value={groothandels.dealersText||''} onChange={e => setGroothandels({ ...groothandels, dealersText:e.target.value })} />
               </Field>
             </Section>
 
