@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { getMediaUrl, API_URL } from '../lib/api';
 import { ROUTES } from '../lib/routes';
@@ -7,6 +7,7 @@ import { buildDealerAddress, mergeDealers, DEFAULT_DEALERS } from '../lib/dealer
 import CustomBlocks from '../components/CustomBlocks';
 import RichText from '../components/RichText';
 import DealersMiniMap from '../components/DealersMiniMap';
+import PartnerForm from '../components/PartnerForm';
 
 const WHOLESALE_BRANDS = [
   {
@@ -58,7 +59,7 @@ const DEFAULT_PAGE = {
   benefitsTitle: 'Uw voordelen als groothandelspartner',
   ctaTitle: 'Klaar om samen te gaan?',
   ctaText: 'Neem contact op voor een vrijblijvend gesprek over de mogelijkheden, condities en ons assortiment.',
-  ctaButton: 'Contact opnemen',
+  ctaButton: 'Aanmelden als partner',
 };
 
 // Voordelen-kaarten: de punten staan per regel (zo bewerk je ze in het CRM)
@@ -73,6 +74,17 @@ const DEALERS_PREVIEW = 12;
 const Groothandels = () => {
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(DEFAULT_PAGE);
+  const location = useLocation();
+  const scrollToPartner = (e) => {
+    const el = document.getElementById('partner');
+    if (el) { e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  };
+  // Komt iemand via /groothandels#partner (bv. de knop op de homepage), scroll dan naar het formulier zodra de pagina er staat
+  useEffect(() => {
+    if (location.hash !== '#partner') return undefined;
+    const t = setTimeout(() => { const el = document.getElementById('partner'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 600);
+    return () => clearTimeout(t);
+  }, [location.hash]);
   const [cmsPartners, setCmsPartners] = useState(null);
   const [benefits, setBenefits] = useState(DEFAULT_BENEFITS);
   const [dealers, setDealers] = useState(DEFAULT_DEALERS);
@@ -158,9 +170,9 @@ const Groothandels = () => {
             </h1>
             <RichText value={page.heroText} className="text-white/70 text-lg max-w-xl leading-relaxed font-light" />
             <div className="flex flex-wrap gap-4 pt-4">
-              <Link to={ROUTES.contact} className="bg-primary text-white px-8 py-4 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
+              <a href="#partner" onClick={scrollToPartner} className="bg-primary text-white px-8 py-4 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
                 Word partner
-              </Link>
+              </a>
               <Link to={ROUTES.shop} className="bg-white/10 backdrop-blur border border-white/20 text-white px-8 py-4 rounded-full font-bold text-sm hover:bg-white/20 transition-all">
                 Bekijk assortiment
               </Link>
@@ -349,11 +361,13 @@ const Groothandels = () => {
             {page.ctaTitle}
           </h2>
           <RichText value={page.ctaText} className="text-white/60 text-lg leading-relaxed" />
-          <Link to={ROUTES.contact} className="inline-flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
+          <a href="#partner" onClick={scrollToPartner} className="inline-flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-full font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/30">
             {page.ctaButton} <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-          </Link>
+          </a>
         </div>
       </section>
+
+      <PartnerForm />
     </div>
   );
 };

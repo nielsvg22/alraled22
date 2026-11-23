@@ -641,7 +641,7 @@ if (id === 'cases') {
       if (hItems.length === 0) return null;
       // Knop onder items zonder eigen link: standaard "Word Groothandelspartner" naar de Groothandels-pagina (leeg tekstveld = geen knop)
       const highlightCtaText = highlights.ctaText === undefined || highlights.ctaText === null ? 'Word Groothandelspartner' : String(highlights.ctaText).trim();
-      const highlightCtaLink = (highlights.ctaLink || '').trim() || ROUTES.groothandels;
+      const highlightCtaLink = (highlights.ctaLink || '').trim() || `${ROUTES.groothandels}#partner`;
       return (
         <section className="py-24 md:py-32 px-6 md:px-12 bg-white">
           <div className="max-w-7xl mx-auto">
