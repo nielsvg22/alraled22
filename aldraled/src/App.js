@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { HelmetProvider } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { setAutoTranslateLanguage } from './lib/autoTranslate';
+import { applySeo, seoForPath, PAGE_SEO } from './lib/seoPages';
 import { AuthProvider } from './lib/AuthContext';
 import { CartProvider } from './lib/CartContext';
 import { ThemeProvider } from './lib/ThemeContext';
@@ -72,6 +73,9 @@ function SeoMeta() {
       if (!el) { el = create(); document.head.appendChild(el); }
       el.setAttribute(attr, value);
     };
+    const seo = seoForPath(pathname, lang);
+    const fallback = PAGE_SEO[''][lang] || PAGE_SEO[''].nl;
+    if (seo) applySeo(seo[0], seo[1]); else applySeo(fallback[0], fallback[1]); // pagina's met eigen inhoud (product, blog, ...) overschrijven dit zodra ze geladen zijn
     set('link[rel="canonical"]', () => { const l = document.createElement('link'); l.rel = 'canonical'; return l; }, 'href', url || window.location.origin);
     set('meta[property="og:url"]', () => { const m = document.createElement('meta'); m.setAttribute('property', 'og:url'); return m; }, 'content', url || window.location.origin);
     set('meta[property="og:locale"]', () => { const m = document.createElement('meta'); m.setAttribute('property', 'og:locale'); return m; }, 'content', { nl: 'nl_NL', en: 'en_GB', de: 'de_DE' }[lang] || 'nl_NL');

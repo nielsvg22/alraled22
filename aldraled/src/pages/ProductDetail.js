@@ -4,6 +4,7 @@ import { resolveLegacyProduct } from '../lib/legacyUrls';
 import { ROUTES } from "../lib/routes";
 import axios from 'axios';
 import { useCart } from '../lib/CartContext';
+import { applySeo } from '../lib/seoPages';
 import { getMediaUrl, API_URL, htmlToText, plainText, isRichHtml, sanitizeRich } from '../lib/api';
 import FormattedText from '../components/FormattedText';
 import analytics from '../lib/analytics';
@@ -31,6 +32,13 @@ const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct]           = useState(null);
+
+  // SEO: eigen titel en omschrijving per product (productnaam + samenvatting uit de beschrijving)
+  useEffect(() => {
+    if (!product || !product.name) return;
+    const desc = plainText(product.description || '').replace(/\s+/g, ' ').trim().slice(0, 155);
+    applySeo(`${product.name} | ALRA LED Solutions`, desc || `${product.name} bestellen bij ALRA LED Solutions. Professionele LED-verlichting, direct uit voorraad leverbaar.`);
+  }, [product]);
   const [related, setRelated]           = useState([]);
   const [fbt, setFbt]                   = useState([]);
   const [explicit, setExplicit]         = useState([]);
