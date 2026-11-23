@@ -2086,6 +2086,15 @@ export default function Pages() {
                       </div>
                     </ItemCard>
                   ))}
+                  {(about.facts||[]).length === 0 && (
+                    <div className="p-3 rounded-lg bg-blue-50 text-xs text-blue-800 space-y-2">
+                      <p>Op de website staan nu de standaardcijfers (12,5 jaar ervaring en 225+ aangesloten groothandels). Wil je ze aanpassen? Laad ze hieronder in en wijzig ze.</p>
+                      <button type="button" className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold" onClick={() => setAbout({ ...about, facts: [
+                        { value: '12,5', label: 'Jaar ervaring', sub: 'Gestart in 2014' },
+                        { value: '225+', label: 'Aangesloten groothandels', sub: 'Technische groothandels en partners' },
+                      ] })}>Standaardcijfers laden om aan te passen</button>
+                    </div>
+                  )}
                   <AddButton onClick={() => setAbout({ ...about, facts:[...(about.facts||[]),{value:'',label:'',sub:''}] })} label="Cijfer toevoegen" />
                 </div>
               </Field>
