@@ -1819,6 +1819,14 @@ export default function Pages() {
                                 <Field label="Ondertitel">
                                   <RichTextEditor minHeight="6rem" value={hl.subtitle||''} onChange={html => setHlMeta({ subtitle: html })} />
                                 </Field>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <Field label="Knoptekst (onder elk item zonder eigen link)" hint="Leeg laten = geen knop. Staat de tekst op 'Word Groothandelspartner', dan is dat ook de standaard.">
+                                    <input className={`${iCls} ${iBdr}`} value={hl.ctaText === undefined ? 'Word Groothandelspartner' : (hl.ctaText||'')} onChange={e => setHlMeta({ ctaText: e.target.value })} placeholder="Word Groothandelspartner" />
+                                  </Field>
+                                  <Field label="Knoplink" hint="Leeg = Groothandels-pagina.">
+                                    <input className={`${iCls} ${iBdr}`} value={hl.ctaLink||''} onChange={e => setHlMeta({ ctaLink: e.target.value })} placeholder="/groothandels" />
+                                  </Field>
+                                </div>
                                 <div className="space-y-3">
                                   {(hl.items||[]).map((it, i) => (
                                     <ItemCard key={i} number={i}

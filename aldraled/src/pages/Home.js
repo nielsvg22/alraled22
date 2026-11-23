@@ -639,6 +639,9 @@ if (id === 'cases') {
     if (id === 'highlights') {
       const hItems = highlights.items || [];
       if (hItems.length === 0) return null;
+      // Knop onder items zonder eigen link: standaard "Word Groothandelspartner" naar de Groothandels-pagina (leeg tekstveld = geen knop)
+      const highlightCtaText = highlights.ctaText === undefined || highlights.ctaText === null ? 'Word Groothandelspartner' : String(highlights.ctaText).trim();
+      const highlightCtaLink = (highlights.ctaLink || '').trim() || ROUTES.groothandels;
       return (
         <section className="py-24 md:py-32 px-6 md:px-12 bg-white">
           <div className="max-w-7xl mx-auto">
@@ -683,6 +686,14 @@ if (id === 'cases') {
                         ))}
                       </div>
                     )}
+                    {!item.link && highlightCtaText ? (
+                      <div>
+                        <Link to={highlightCtaLink} className="inline-flex items-center gap-2 bg-primary text-white px-7 py-3 rounded-full text-sm font-bold hover:bg-secondary transition-colors">
+                          {highlightCtaText}
+                          <span aria-hidden="true">&rarr;</span>
+                        </Link>
+                      </div>
+                    ) : null}
                     {item.link && (
                       <Link to={item.link} className="group inline-flex items-center gap-3 text-primary font-bold text-sm">
                         <span className="border-b-2 border-primary/30 pb-0.5 group-hover:border-primary transition-colors">{item.linkText || 'Bekijk producten'}</span>
