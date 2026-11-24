@@ -1,3 +1,10 @@
 # https://www.robotstxt.org/robotstxt.html
+# Alle zoekmachines mogen alles lezen. Bing en de zoekbot van OpenAI (ChatGPT Search) staan hieronder ook expliciet toegestaan.
 User-agent: *
 Disallow:
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
