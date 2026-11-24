@@ -20,9 +20,9 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
     const base = frontendUrl(req);
     const urls: { loc: string; lastmod?: string }[] = STATIC_PATHS.map((p) => ({ loc: `${base}${p}` }));
 
-    const rows = await db.select({ id: products.id, updatedAt: products.updatedAt }).from(products);
+    const rows = await db.select({ id: products.id, slug: products.slug, updatedAt: products.updatedAt }).from(products);
     for (const r of rows) {
-      urls.push({ loc: `${base}/product/${r.id}`, lastmod: r.updatedAt ? new Date(r.updatedAt as any).toISOString().slice(0, 10) : undefined });
+      urls.push({ loc: `${base}/product/${r.slug || r.id}`, lastmod: r.updatedAt ? new Date(r.updatedAt as any).toISOString().slice(0, 10) : undefined });
     }
 
     const blocks = (await getContent('page_blocks_blog')) as any;

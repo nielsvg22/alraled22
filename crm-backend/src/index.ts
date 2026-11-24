@@ -41,6 +41,8 @@ import { ensureContactTable } from './db/ensureContactTable';
 import { ensureEmailLogTable } from './db/ensureEmailLogTable';
 import { ensureReviewTable } from './db/ensureReviewTable';
 import { ensurePartnerTable } from './db/ensurePartnerTable';
+import { ensureProductSeoColumns } from './db/ensureProductSeo';
+import { seedProductSeo } from './db/seedProductSeo';
 import partnerRoutes from './routes/partnerRoutes';
 import { seedReviews } from './db/seedReviews';
 import reviewRoutes from './routes/reviewRoutes';
@@ -90,12 +92,14 @@ async function bootstrap() {
   await ensureEmailLogTable();
   await ensureReviewTable();
   await ensurePartnerTable();
+  await ensureProductSeoColumns();
   await ensureTwoFactorTables();
   await resetTwoFactorFromEnv();
   await ensureAdmin();
   await seedExtraBlogs();
   await seedLegalReturns();
   await seedReviews();
+  await seedProductSeo();
 }
 
 bootstrap();

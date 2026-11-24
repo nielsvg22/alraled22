@@ -7,7 +7,7 @@ import ImageUploader from '../components/ImageUploader';
 import RichTextEditor from '../components/RichTextEditor';
 
 const euro = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
-const emptyForm = { name: '', description: '', price: '', stock: '', category: '', categoryId: '', imageUrl: '', imageUrls: [], pdfUrl: '', videoUrl: '' };
+const emptyForm = { name: '', description: '', price: '', stock: '', category: '', categoryId: '', imageUrl: '', imageUrls: [], pdfUrl: '', videoUrl: '', slug: '', seoTitle: '', metaDescription: '' };
 
 const getProductImages = (product) => {
   const urls = Array.isArray(product?.images) ? product.images.map((image) => image.url || image).filter(Boolean) : [];
@@ -87,6 +87,7 @@ export default function ProductEditor() {
         name: p.name || '', description: p.description || '', price: String(p.price ?? ''), stock: String(p.stock ?? ''),
         category: p.category || '', categoryId: p.categoryId || '', imageUrl: imageUrls[0] || '', imageUrls,
         pdfUrl: p.pdfUrl || '', videoUrl: p.videoUrl || '',
+        slug: p.slug || '', seoTitle: p.seoTitle || '', metaDescription: p.metaDescription || '',
       });
       setDirty(false);
     }).catch((e) => { if (alive) setError(errorText(e, 'Product ophalen mislukt')); })
@@ -133,6 +134,8 @@ export default function ProductEditor() {
       price: parseFloat(formData.price), stock: parseInt(formData.stock || '0', 10),
       categoryId: formData.categoryId || null,
       pdfUrl: formData.pdfUrl || null, videoUrl: formData.videoUrl || null,
+      slug: formData.slug ? formData.slug.trim().toLowerCase() : null,
+      seoTitle: formData.seoTitle || null, metaDescription: formData.metaDescription || null,
     };
     try {
       if (isNew) {
@@ -229,6 +232,29 @@ export default function ProductEditor() {
             <RichTextEditor minHeight="22rem" value={formData.description} onChange={(html) => update({ description: html })} />
           </Card>
 
+          <Card title="Zoekmachine (SEO)" hint="Bepaalt hoe dit product in Google en in de browsertitel staat. Leeg laten = productnaam.">
+            <div className="space-y-4">
+              <div>
+                <label className={labelCls}>URL-naam</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 whitespace-nowrap">alra-led.com/product/</span>
+                  <input className={inputCls} placeholder="led-bouwlichtslang-45-meter" value={formData.slug || ''} onChange={(e) => update({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-{2,}/g, '-') })} />
+                  <button type="button" className="px-3 py-2 rounded-lg border text-xs font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap" onClick={() => update({ slug: String(formData.seoTitle || formData.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/°/g, ' graden ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') })}>Maak van titel</button>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">Alleen kleine letters, cijfers en streepjes. Pas je dit aan, dan werkt het oude adres niet meer voor bezoekers die het bewaard hebben, behalve het adres met het productnummer.</p>
+              </div>
+              <div>
+                <label className={labelCls}>SEO-titel <span className="font-medium normal-case text-gray-400">({(formData.seoTitle || '').length} tekens, ideaal tot 60)</span></label>
+                <input className={inputCls} placeholder="LED-bouwlichtslang 45 meter" value={formData.seoTitle || ''} onChange={(e) => update({ seoTitle: e.target.value })} />
+                <p className="text-xs text-gray-400 mt-1">In de browser en Google staat: "titel | ALRA LED Solutions".</p>
+              </div>
+              <div>
+                <label className={labelCls}>Meta-omschrijving <span className="font-medium normal-case text-gray-400">({(formData.metaDescription || '').length} tekens, ideaal 120 tot 155)</span></label>
+                <textarea rows={2} className={inputCls} placeholder="Leeg laten = eerste deel van de productbeschrijving." value={formData.metaDescription || ''} onChange={(e) => update({ metaDescription: e.target.value })} />
+              </div>
+            </div>
+          </Card>
+
           <Card title="Productfoto's" hint="De eerste foto is de hoofdfoto in de webshop.">
             <ImageUploader value={formData.imageUrls} onChange={(val) => update({ imageUrls: val, imageUrl: val[0] || '' })} label="" multiple />
           </Card>
@@ -252,7 +278,7 @@ export default function ProductEditor() {
           </Card>
 
           {!isNew && (
-            <Card title="Maak je set compleet (upsells)" hint="Koppel bijbehorende producten; ze verschijnen op de productpagina. Wijzigingen worden direct opgeslagen.">
+            <Card title="Maak je set compleet (upsells)" hint="Koppel bijbehorende producten. Alleen deze koppelingen bepalen de 'Aanbevolen set' en 'Vaak samen gekocht' op de productpagina; zonder koppelingen worden die niet getoond. Wijzigingen worden direct opgeslagen.">
               <div className="space-y-2">
                 {relations.map((rel) => (
                   <div key={rel.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">

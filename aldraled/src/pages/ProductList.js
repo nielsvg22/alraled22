@@ -99,7 +99,7 @@ function QuickViewModal({ product, onClose }) {
                 {added ? '✓ Toegevoegd' : 'In winkelwagen'}
               </button>
             </div>
-            <Link to={ROUTES.product(product.id)} onClick={onClose} className="text-center text-xs font-bold text-gray-400 hover:text-primary transition-colors">
+            <Link to={ROUTES.product(product)} onClick={onClose} className="text-center text-xs font-bold text-gray-400 hover:text-primary transition-colors">
               Volledige productpagina →
             </Link>
           </div>
@@ -191,7 +191,7 @@ function CompareModal({ list, onClose }) {
             <div />
             {list.map(p => (
               <div key={p.id} className="text-center">
-                <Link to={ROUTES.product(p.id)} onClick={onClose}
+                <Link to={ROUTES.product(p)} onClick={onClose}
                   className="block bg-secondary text-white text-xs font-bold py-2.5 rounded-xl hover:bg-primary transition-all">
                   Bekijk product →
                 </Link>
@@ -221,7 +221,7 @@ function ProductCard({ product, showInclVat, inCompare, onCompare, onQuickView, 
 
   return (
     <div className="group bg-white rounded-2xl border border-[#E4EAF1] overflow-hidden flex flex-col relative transition-all duration-200 hover:shadow-[0_14px_34px_-8px_rgba(7,27,54,0.18)] hover:-translate-y-1">
-      <Link to={ROUTES.product(product.id)} className="block">
+      <Link to={ROUTES.product(product)} className="block">
         {/* Image area */}
         <div className="relative aspect-[4/3] bg-[#F7F9FC] overflow-hidden">
           <img
@@ -254,7 +254,7 @@ function ProductCard({ product, showInclVat, inCompare, onCompare, onQuickView, 
 
       {/* Body */}
       <div className="p-4 pt-3 flex flex-col gap-2 flex-1">
-        <Link to={ROUTES.product(product.id)} className="block">
+        <Link to={ROUTES.product(product)} className="block">
           <h3 className="text-sm font-bold text-secondary leading-snug line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
             {product.name}
           </h3>

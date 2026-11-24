@@ -26,6 +26,9 @@ const productSchema = z.object({
   categoryId: z.string().trim().optional().nullable().or(z.literal('')),
   pdfUrl: z.string().trim().optional().nullable().or(z.literal('')),
   videoUrl: z.string().trim().optional().nullable().or(z.literal('')),
+  slug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'URL-naam: alleen kleine letters, cijfers en streepjes (bv. led-bouwlichtslang-45-meter)').max(255).optional().nullable().or(z.literal('')),
+  seoTitle: z.string().trim().max(255).optional().nullable().or(z.literal('')),
+  metaDescription: z.string().trim().max(500).optional().nullable().or(z.literal('')),
 });
 
 const listProductsSchema = z.object({
@@ -109,12 +112,17 @@ export const createProduct = async (req: Request, res: Response) => {
       categoryId: normalizeOptionalString(validatedData.categoryId),
       pdfUrl: normalizeOptionalString(validatedData.pdfUrl),
       videoUrl: normalizeOptionalString(validatedData.videoUrl),
+      slug: normalizeOptionalString(validatedData.slug),
+      seoTitle: normalizeOptionalString(validatedData.seoTitle),
+      metaDescription: normalizeOptionalString(validatedData.metaDescription),
     });
     res.status(201).json(product);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
     }
+    const code = (error as any)?.code || (error as any)?.cause?.code;
+    if (code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Deze URL-naam is al in gebruik bij een ander product.' });
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -153,6 +161,9 @@ export const updateProduct = async (req: Request, res: Response) => {
       ...(validatedData.videoUrl !== undefined
         ? { videoUrl: normalizeOptionalString(validatedData.videoUrl) }
         : {}),
+      ...(validatedData.slug !== undefined ? { slug: normalizeOptionalString(validatedData.slug) } : {}),
+      ...(validatedData.seoTitle !== undefined ? { seoTitle: normalizeOptionalString(validatedData.seoTitle) } : {}),
+      ...(validatedData.metaDescription !== undefined ? { metaDescription: normalizeOptionalString(validatedData.metaDescription) } : {}),
     });
     if (!product) return res.status(404).json({ error: 'Product not found' });
     res.json(product);
@@ -160,6 +171,8 @@ export const updateProduct = async (req: Request, res: Response) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
     }
+    const code = (error as any)?.code || (error as any)?.cause?.code;
+    if (code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Deze URL-naam is al in gebruik bij een ander product.' });
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -194,22 +207,19 @@ export const getProductRelations = async (req: Request, res: Response) => {
 
     const sameCategory = all.filter(p => p.id !== product.id && (!!product.category ? p.category === product.category : true));
     const shuffled = [...sameCategory].sort(() => Math.random() - 0.5);
-    
-    // Mix explicit with automatic recommendations
-    const fbt = explicit.length > 0 ? explicit.slice(0, 3).map(r => r.relatedProduct) : shuffled.slice(0, 3);
-    const alternatives = shuffled.slice(3, 7);
 
-    // Simple demo bundle: current + first accessory if exists, else first two from same category
-    const accessories = all.filter(p => p.category && String(p.category).toLowerCase().includes('access'));
-    const bundleItems = (accessories.length
-      ? [product, accessories[0]]
-      : [product, ...sameCategory.slice(0, 1)]
-    ).filter(Boolean) as Array<{ id: string; name: string; price: number; imageUrl: string | null }>;
-    const bundle = {
+    // "Vaak samen gekocht" en de "Aanbevolen set" komen alleen uit de koppelingen die in het CRM bij het product zijn ingesteld
+    // ("Maak je set compleet"). Zonder koppelingen worden ze niet getoond, zodat nooit een willekeurige combinatie wordt voorgesteld.
+    const linked = explicit.map(r => r.relatedProduct);
+    const fbt = linked.slice(0, 3);
+    const alternatives = shuffled.slice(0, 4);
+
+    const bundleItems = linked.length ? [product, ...linked.slice(0, 3)] : [];
+    const bundle = bundleItems.length ? {
       title: 'Aanbevolen set',
       items: bundleItems.map(p => ({ id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl })),
       total: bundleItems.reduce((sum, p) => sum + Number(p.price || 0), 0),
-    };
+    } : null;
 
     res.json({ fbt, alternatives, bundle, explicit });
   } catch (error) {

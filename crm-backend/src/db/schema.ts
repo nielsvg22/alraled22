@@ -46,6 +46,9 @@ export const products = mysqlTable('Product', {
   categoryId: varchar('categoryId', { length: 36 }).references(() => categories.id, { onDelete: 'set null' }),
   pdfUrl: varchar('pdfUrl', { length: 512 }),
   videoUrl: varchar('videoUrl', { length: 512 }),
+  slug: varchar('slug', { length: 255 }).unique('Product_slug_unique'),
+  seoTitle: varchar('seoTitle', { length: 255 }),
+  metaDescription: varchar('metaDescription', { length: 500 }),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });

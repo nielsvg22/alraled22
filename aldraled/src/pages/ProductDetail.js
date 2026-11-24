@@ -37,7 +37,8 @@ const ProductDetail = () => {
   useEffect(() => {
     if (!product || !product.name) return;
     const desc = plainText(product.description || '').replace(/\s+/g, ' ').trim().slice(0, 155);
-    applySeo(`${product.name} | ALRA LED Solutions`, desc || `${product.name} bestellen bij ALRA LED Solutions. Professionele LED-verlichting, direct uit voorraad leverbaar.`);
+    const title = (product.seoTitle || product.name).trim();
+    applySeo(`${title} | ALRA LED Solutions`, (product.metaDescription || '').trim() || desc || `${title} bestellen bij ALRA LED Solutions. Professionele LED-verlichting, direct uit voorraad leverbaar.`);
   }, [product]);
   const [related, setRelated]           = useState([]);
   const [fbt, setFbt]                   = useState([]);
@@ -56,19 +57,18 @@ const ProductDetail = () => {
 
   useEffect(() => {
     setLoading(true);
-    // Oude adressen met een naam i.p.v. id (bv. /product/werklamp/): zoek het juiste product en stuur door
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(id || '')) {
-      axios.get(`${API_URL}/api/products`)
-        .then((r) => {
-          const p = resolveLegacyProduct(id, r.data);
-          if (p) navigate(`/product/${p.id}`, { replace: true });
-          else setLoading(false);
-        })
-        .catch(() => setLoading(false));
-      return;
-    }
-    axios.get(`${API_URL}/api/products/${id}`)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(id || '');
+    const loadLegacy = () => axios.get(`${API_URL}/api/products`)
+      .then((r) => {
+        const p = resolveLegacyProduct(id, r.data);
+        if (p) navigate(ROUTES.product(p), { replace: true });
+        else setLoading(false);
+      })
+      .catch(() => setLoading(false));
+    axios.get(`${API_URL}/api/products/${encodeURIComponent(id)}`)
       .then(res => {
+        // Heeft het product een URL-naam, dan is dat het enige adres (oude id-adressen sturen door)
+        if (res.data.slug && id !== res.data.slug) { navigate(ROUTES.product(res.data), { replace: true }); return; }
         setProduct(res.data);
         analytics.trackProductView(res.data.id, res.data.name);
         setLoading(false);
@@ -81,7 +81,10 @@ const ProductDetail = () => {
           })
           .catch(() => {});
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        // Onbekende naam (bv. een oud WordPress-adres): zoek het juiste product en stuur door
+        if (!isUuid && err?.response?.status === 404) loadLegacy(); else setLoading(false);
+      });
   }, [id, navigate]);
 
   useEffect(() => {
@@ -451,7 +454,7 @@ const ProductDetail = () => {
                 <h2 className="text-lg font-bold text-gray-900 mb-5">Alternatieven</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {related.map(p => (
-                    <Link key={p.id} to={ROUTES.product(p.id)} className="group block">
+                    <Link key={p.id} to={ROUTES.product(p)} className="group block">
                       <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 mb-3">
                         <img src={getImageSrc(p)} alt={p.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" />
                       </div>

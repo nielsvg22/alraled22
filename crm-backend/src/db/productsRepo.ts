@@ -26,6 +26,9 @@ type ProductInput = {
   categoryId?: string | null;
   pdfUrl?: string | null;
   videoUrl?: string | null;
+  slug?: string | null;
+  seoTitle?: string | null;
+  metaDescription?: string | null;
 };
 
 function normalizeImageUrls(imageUrls?: string[] | null, imageUrl?: string | null) {
@@ -112,8 +115,10 @@ export async function listProducts(filters: ProductFilters = {}) {
   return await attachImages(rows);
 }
 
-export async function getProduct(id: string) {
-  const result = await db.select().from(products).where(eq(products.id, id));
+// Zoekt op id of, als dat niets oplevert, op URL-naam (slug)
+export async function getProduct(idOrSlug: string) {
+  let result = await db.select().from(products).where(eq(products.id, idOrSlug));
+  if (!result[0]) result = await db.select().from(products).where(eq(products.slug, idOrSlug));
   const product = result[0] ?? null;
   if (!product) return null;
   const [withImages] = await attachImages([product]);
@@ -135,6 +140,9 @@ export async function createProduct(input: ProductInput) {
     categoryId: input.categoryId ?? null,
     pdfUrl: input.pdfUrl ?? null,
     videoUrl: input.videoUrl ?? null,
+    slug: input.slug || null,
+    seoTitle: input.seoTitle || null,
+    metaDescription: input.metaDescription || null,
   });
   await replaceProductImages(id, imageUrls);
   return await getProduct(id);
@@ -162,6 +170,9 @@ export async function updateProduct(id: string, patch: Partial<ProductInput>) {
       ...(patch.categoryId !== undefined ? { categoryId: patch.categoryId } : {}),
       ...(patch.pdfUrl !== undefined ? { pdfUrl: patch.pdfUrl } : {}),
       ...(patch.videoUrl !== undefined ? { videoUrl: patch.videoUrl } : {}),
+      ...(patch.slug !== undefined ? { slug: patch.slug || null } : {}),
+      ...(patch.seoTitle !== undefined ? { seoTitle: patch.seoTitle || null } : {}),
+      ...(patch.metaDescription !== undefined ? { metaDescription: patch.metaDescription || null } : {}),
       updatedAt: new Date(),
     })
     .where(eq(products.id, id));

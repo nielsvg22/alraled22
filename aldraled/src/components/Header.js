@@ -80,7 +80,7 @@ function LiveSearch() {
           {results.map(product => (
             <Link
               key={product.id}
-              to={ROUTES.product(product.id)}
+              to={ROUTES.product(product)}
               onClick={() => { setQuery(''); setOpen(false); }}
               className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
             >
@@ -516,7 +516,7 @@ const Header = () => {
                     {shown.length > 0 ? (
                       <div className="grid grid-cols-4 gap-4 items-start">
                         {shown.map(product => (
-                          <Link key={product.id} to={ROUTES.product(product.id)} onClick={closeMegaNow}
+                          <Link key={product.id} to={ROUTES.product(product)} onClick={closeMegaNow}
                             className="group block rounded-2xl border border-gray-100 p-3 hover:border-primary/30 hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
                             <div className="aspect-square rounded-xl bg-gray-50 overflow-hidden">
                               <img src={getImageSrc(product)} alt={product.name} className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105" loading="lazy" decoding="async" />

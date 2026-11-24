@@ -8,7 +8,8 @@ export const ROUTES = {
   home: '/',
   about: '/over-ons',
   shop: '/producten',
-  product: (id) => `/product/${id}`,
+  // Accepteert een product (met URL-naam) of een los id; met een URL-naam wordt dat het adres
+  product: (p) => `/product/${p && typeof p === 'object' ? (p.slug || p.id) : p}`,
   contact: '/contact',
   dealers: '/verkooppunten',
   groothandels: '/groothandels',
