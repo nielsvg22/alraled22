@@ -306,7 +306,7 @@ const Groothandels = () => {
           {wholesaleProducts.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {wholesaleProducts.map(product => (
-                <Link key={product.id} to={ROUTES.product(product.id)} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <Link key={product.id} to={ROUTES.product(product)} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                   <div className="aspect-square bg-gray-50 flex items-center justify-center p-6 relative overflow-hidden">
                     <img src={getMediaUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" />
                     <div className="absolute inset-0 bg-gradient-to-t from-secondary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

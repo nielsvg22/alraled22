@@ -111,7 +111,7 @@ const OrderDetail = () => {
                 {item.product && <img src={getImageSrc(item.product)} alt={item.product.name} className="w-full h-full object-contain p-1" />}
               </div>
               <div className="flex-1 min-w-0">
-                {item.product?.id ? <Link to={ROUTES.product(item.product.id)} className="font-bold text-secondary hover:text-primary text-sm leading-snug">{item.product?.name}</Link> : <p className="font-bold text-secondary text-sm">{item.product?.name || 'Product'}</p>}
+                {item.product?.id ? <Link to={ROUTES.product(item.product)} className="font-bold text-secondary hover:text-primary text-sm leading-snug">{item.product?.name}</Link> : <p className="font-bold text-secondary text-sm">{item.product?.name || 'Product'}</p>}
                 <p className="text-xs text-gray-400 mt-0.5">{item.quantity} × {formatPrice(item.price)} (excl. btw)</p>
               </div>
               <p className="font-black text-secondary text-sm shrink-0">{formatPrice((item.price || 0) * (item.quantity || 0))}</p>

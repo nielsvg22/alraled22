@@ -515,7 +515,7 @@ if (id === 'cases') {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {featuredProducts.map(product => (
-                <Link key={product.id} to={ROUTES.product(product.id)} className="group block">
+                <Link key={product.id} to={ROUTES.product(product)} className="group block">
                   <div className="relative aspect-square overflow-hidden rounded-xl bg-gray-100 mb-3">
                     <img
                       src={getImageSrc(product, PLACEHOLDER_IMAGE)}
@@ -531,7 +531,7 @@ if (id === 'cases') {
                     </div>
                   </div>
                   <h3 className="text-sm font-bold text-secondary group-hover:text-primary transition-colors truncate">{product.name}</h3>
-                  <p className="text-sm font-black text-secondary mt-0.5">{formatPrice(product.price)}</p>
+                  <p className="text-sm font-black text-secondary mt-0.5">{formatPrice(product.price)} <span className="text-[10px] font-medium text-gray-400">excl. btw</span></p>
                 </Link>
               ))}
             </div>

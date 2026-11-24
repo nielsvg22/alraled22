@@ -283,7 +283,7 @@ function SeoLandingPage(props) {
             <h2 className="text-2xl font-black text-secondary mb-6">Producten</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {products.slice(0, 12).map(product => (
-                <Link key={product.id} to={ROUTES.product(product.id)} className="group block">
+                <Link key={product.id} to={ROUTES.product(product)} className="group block">
                   <div className="aspect-square overflow-hidden rounded-xl bg-gray-100 mb-3">
                     <img src={getImageSrc(product)} alt={product.name} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async" />
                   </div>
