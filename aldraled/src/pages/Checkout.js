@@ -521,7 +521,7 @@ const Checkout = () => {
                   <div className="grid grid-cols-3 gap-3 text-center">
                     {[
                       { icon: '🔒', label: 'SSL Beveiligd' },
-                      { icon: '🚚', label: 'Gratis verzending boven €250' },
+                      { icon: '🚚', label: 'Gratis verzending boven €250 ex btw' },
                       { icon: '↩️', label: '14 dagen retour' },
                     ].map(({ icon, label }) => (
                       <div key={label} className="flex flex-col items-center gap-1">
