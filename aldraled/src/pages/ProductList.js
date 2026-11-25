@@ -835,7 +835,7 @@ const ProductList = () => {
             {/* Service/trust block */}
             <div className="mt-12 bg-secondary rounded-2xl p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { Icon: IconTruck, title: 'Snelle levering', text: 'Gratis verzending boven €250,-' },
+                { Icon: IconTruck, title: 'Snelle levering', text: 'Gratis verzending boven €250,- ex btw' },
                 { Icon: IconShield, title: 'Garantie', text: 'Op alle producten' },
                 { Icon: IconChat, title: 'Expert advies', text: 'Bel 085-0021 606' },
               ].map(({ Icon: I, title, text }) => (

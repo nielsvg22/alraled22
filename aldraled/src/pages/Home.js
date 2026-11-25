@@ -114,7 +114,7 @@ const DEFAULTS = {
 };
 
 const TRUST_ITEMS = [
-  { icon: "🚚", label: "Gratis verzending", sub: "boven €250,-" },
+  { icon: "🚚", label: "Gratis verzending", sub: "boven €250,- ex btw" },
   { icon: "🛡️", label: "1 jaar garantie", sub: "op alle producten" },
   { icon: "✅", label: "CE, RoHS en/of TÜV", sub: "gecertificeerd" },
   { icon: "⚡", label: "Snel geleverd", sub: "direct uit voorraad" },
