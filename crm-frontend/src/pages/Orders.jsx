@@ -4,7 +4,7 @@ import {
   Eye, Clock, CheckCircle, Truck, XCircle, MoreVertical,
   Search, TrendingUp, ShoppingBag, AlertCircle,
   PackageCheck, Copy, X, ChevronDown, Mail, RefreshCw, Filter,
-  FileDown, CreditCard, ExternalLink, Wallet,
+  FileDown, CreditCard, ExternalLink, Wallet, Trash2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { errorText } from '../lib/errorText';
@@ -427,6 +427,24 @@ export default function Orders() {
   const [statusFilter, setFilter] = useState('ALL');
   const { isAdmin } = useAuth();
 
+  // Prullenbak: bestelling definitief verwijderen (voorraad komt terug); betaalde bestellingen vragen een extra bevestiging
+  const handleDelete = async (order) => {
+    const nr = `#${order.id.slice(0, 8).toUpperCase()}`;
+    if (!window.confirm(`Bestelling ${nr} van ${order.user?.name || 'klant'} (${euro.format(order.total)}) definitief verwijderen?\n\nDit kan niet ongedaan worden gemaakt. De voorraad wordt teruggezet.`)) return;
+    try {
+      try {
+        await api.delete(`/maintenance/orders/${order.id}`);
+      } catch (e) {
+        if (e?.response?.status === 409 && e.response.data?.needsConfirm) {
+          if (!window.confirm(`Let op: bestelling ${nr} is BETAALD.\n\nVerwijderen haalt alleen de bestelling uit het CRM; de betaling wordt niet teruggestort (doe dat in Mollie). Toch verwijderen?`)) return;
+          await api.delete(`/maintenance/orders/${order.id}`, { params: { confirmPaid: 1 } });
+        } else { throw e; }
+      }
+      setOrders(p => p.filter(o => o.id !== order.id));
+      if (selected?.id === order.id) setSelected(null);
+    } catch (e) { setError(errorText(e, 'Verwijderen mislukt')); }
+  };
+
   const fetchOrders = async () => {
     setLoading(true);
     try { setError(''); const r = await api.get('/orders'); setOrders(r.data); }
@@ -570,6 +588,11 @@ export default function Orders() {
                           </button>
                           {isAdmin && <StatusDropdown orderId={order.id} currentStatus={order.status} onUpdate={handleUpdate} />}
                         </div>
+                        {isAdmin && (
+                          <button onClick={() => handleDelete(order)} title="Bestelling verwijderen" className="ml-1 p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

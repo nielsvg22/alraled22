@@ -88,4 +88,37 @@ router.post('/test-data/purge', async (req: AuthRequest, res: Response) => {
   }
 });
 
+// Eén bestelling verwijderen (prullenbak in het CRM). Voorraad wordt teruggezet als de bestelling niet geannuleerd was.
+// Een bestelling met een betaling die als betaald staat vraagt extra bevestiging (?confirmPaid=1); de betaling zelf wordt niet teruggestort.
+router.delete('/orders/:id', async (req: AuthRequest, res: Response) => {
+  const id = String(req.params.id);
+  const conn = await pool.getConnection();
+  try {
+    const order = ((await conn.query('SELECT id, status FROM `Order` WHERE id = ?', [id]) as any)[0] as any[])[0];
+    if (!order) return res.status(404).json({ error: 'Bestelling niet gevonden' });
+    const paid = Number((((await conn.query("SELECT COUNT(*) n FROM `Payment` WHERE orderId = ? AND status = 'PAID'", [id]) as any)[0] as any[])[0]?.n) || 0);
+    if (paid > 0 && String(req.query.confirmPaid) !== '1') return res.status(409).json({ error: 'Deze bestelling is betaald.', needsConfirm: true });
+    await conn.beginTransaction();
+    let restored = 0;
+    if (order.status !== 'CANCELLED') {
+      const items = ((await conn.query('SELECT productId, quantity FROM `OrderItem` WHERE orderId = ? AND productId IS NOT NULL', [id]) as any)[0] as any[]);
+      for (const it of items) { await conn.query('UPDATE `Product` SET stock = stock + ? WHERE id = ?', [it.quantity, it.productId]); restored += Number(it.quantity); }
+    }
+    await conn.query('DELETE FROM `RmaItem` WHERE rmaId IN (SELECT id FROM `Rma` WHERE orderId = ?)', [id]);
+    await conn.query('DELETE FROM `Rma` WHERE orderId = ?', [id]);
+    await conn.query('DELETE FROM `SnelstartSyncLog` WHERE orderId = ?', [id]);
+    await conn.query('DELETE FROM `Payment` WHERE orderId = ?', [id]);
+    await conn.query('DELETE FROM `OrderItem` WHERE orderId = ?', [id]);
+    await conn.query('DELETE FROM `Order` WHERE id = ?', [id]);
+    await conn.commit();
+    res.json({ ok: true, stockRestoredUnits: restored });
+  } catch (err: any) {
+    try { await conn.rollback(); } catch { /* geen transactie */ }
+    console.error('[maintenance] order verwijderen', err);
+    res.status(500).json({ error: 'Verwijderen mislukt; er is niets gewijzigd' });
+  } finally {
+    conn.release();
+  }
+});
+
 export default router;
