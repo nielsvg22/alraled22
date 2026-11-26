@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { seedExtraBlogs } from './db/seedBlogs';
 import { seedLegalReturns } from './db/seedLegal';
+import { seedLegalComplaints } from './db/seedLegalComplaints';
 import seoRoutes from './routes/seoRoutes';
 import maintenanceRoutes from './routes/maintenanceRoutes';
 import withdrawalRoutes from './routes/withdrawalRoutes';
@@ -98,6 +99,7 @@ async function bootstrap() {
   await ensureAdmin();
   await seedExtraBlogs();
   await seedLegalReturns();
+  await seedLegalComplaints();
   await seedReviews();
   await seedProductSeo();
 }

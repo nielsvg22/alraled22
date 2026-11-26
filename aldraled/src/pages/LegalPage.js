@@ -72,7 +72,7 @@ const LegalPage = () => {
 
       <div className="max-w-4xl mx-auto px-6 md:px-10 py-12">
         <h1 className="text-3xl md:text-4xl font-black text-secondary leading-tight mb-8">{title}</h1>
-        <div className="prose prose-sm max-w-none text-gray-600 leading-relaxed">
+        <div className="prose prose-sm max-w-none text-gray-600 leading-relaxed prose-headings:font-black prose-headings:text-secondary prose-headings:tracking-tight prose-h2:text-xl prose-h2:mt-10 prose-h2:mb-3 prose-h3:text-base prose-a:text-primary prose-a:font-semibold prose-strong:text-secondary">
           <RichContent
             value={content}
             legacy={(text) => text.split('\n').map((paragraph, i) => (
