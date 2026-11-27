@@ -29,7 +29,13 @@ const productSchema = z.object({
   slug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'URL-naam: alleen kleine letters, cijfers en streepjes (bv. led-bouwlichtslang-45-meter)').max(255).optional().nullable().or(z.literal('')),
   seoTitle: z.string().trim().max(255).optional().nullable().or(z.literal('')),
   metaDescription: z.string().trim().max(500).optional().nullable().or(z.literal('')),
+  // Video's: link (YouTube, Vimeo, mp4) of een geüpload bestand (/uploads/...), met optionele titel
+  videos: z.array(z.object({
+    url: z.string().trim().min(1).max(600).refine((u) => /^https?:\/\//i.test(u) || u.startsWith('/uploads/'), 'Een video moet een link (https://) of een geüpload bestand zijn'),
+    title: z.string().trim().max(200).optional().default(''),
+  })).max(10).optional().nullable(),
 });
+const videosToJson = (v?: { url: string; title?: string }[] | null) => (v && v.length ? JSON.stringify(v.map((x) => ({ url: x.url, title: x.title || '' }))) : null);
 
 const listProductsSchema = z.object({
   search: z.string().trim().optional(),
@@ -115,6 +121,7 @@ export const createProduct = async (req: Request, res: Response) => {
       slug: normalizeOptionalString(validatedData.slug),
       seoTitle: normalizeOptionalString(validatedData.seoTitle),
       metaDescription: normalizeOptionalString(validatedData.metaDescription),
+      videos: videosToJson(validatedData.videos),
     });
     res.status(201).json(product);
   } catch (error) {
@@ -164,6 +171,7 @@ export const updateProduct = async (req: Request, res: Response) => {
       ...(validatedData.slug !== undefined ? { slug: normalizeOptionalString(validatedData.slug) } : {}),
       ...(validatedData.seoTitle !== undefined ? { seoTitle: normalizeOptionalString(validatedData.seoTitle) } : {}),
       ...(validatedData.metaDescription !== undefined ? { metaDescription: normalizeOptionalString(validatedData.metaDescription) } : {}),
+      ...(validatedData.videos !== undefined ? { videos: videosToJson(validatedData.videos) } : {}),
     });
     if (!product) return res.status(404).json({ error: 'Product not found' });
     res.json(product);

@@ -6,8 +6,17 @@ import { errorText } from '../lib/errorText';
 import ImageUploader from '../components/ImageUploader';
 import RichTextEditor from '../components/RichTextEditor';
 
+// Video's van een product: nieuw veld `videos` (JSON-tekst), met terugval op het oude losse YouTube-veld
+function readVideos(p) {
+  try {
+    const parsed = typeof p.videos === 'string' ? JSON.parse(p.videos) : p.videos;
+    if (Array.isArray(parsed) && parsed.length) return parsed.map((v) => ({ url: v.url || '', title: v.title || '' }));
+  } catch { /* ongeldige JSON */ }
+  return p.videoUrl ? [{ url: p.videoUrl, title: '' }] : [];
+}
+
 const euro = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
-const emptyForm = { name: '', description: '', price: '', stock: '', category: '', categoryId: '', imageUrl: '', imageUrls: [], pdfUrl: '', videoUrl: '', slug: '', seoTitle: '', metaDescription: '' };
+const emptyForm = { name: '', description: '', price: '', stock: '', category: '', categoryId: '', imageUrl: '', imageUrls: [], pdfUrl: '', videoUrl: '', videos: [], slug: '', seoTitle: '', metaDescription: '' };
 
 const getProductImages = (product) => {
   const urls = Array.isArray(product?.images) ? product.images.map((image) => image.url || image).filter(Boolean) : [];
@@ -64,6 +73,8 @@ export default function ProductEditor() {
   const [saved, setSaved] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoError, setVideoError] = useState('');
   const [error, setError] = useState('');
 
   const update = useCallback((patch) => { setFormData((f) => ({ ...f, ...patch })); setDirty(true); setSaved(false); }, []);
@@ -86,7 +97,7 @@ export default function ProductEditor() {
       setFormData({
         name: p.name || '', description: p.description || '', price: String(p.price ?? ''), stock: String(p.stock ?? ''),
         category: p.category || '', categoryId: p.categoryId || '', imageUrl: imageUrls[0] || '', imageUrls,
-        pdfUrl: p.pdfUrl || '', videoUrl: p.videoUrl || '',
+        pdfUrl: p.pdfUrl || '', videoUrl: p.videoUrl || '', videos: readVideos(p),
         slug: p.slug || '', seoTitle: p.seoTitle || '', metaDescription: p.metaDescription || '',
       });
       setDirty(false);
@@ -133,7 +144,10 @@ export default function ProductEditor() {
       imageUrl: imageUrls[0] || '', imageUrls,
       price: parseFloat(formData.price), stock: parseInt(formData.stock || '0', 10),
       categoryId: formData.categoryId || null,
-      pdfUrl: formData.pdfUrl || null, videoUrl: formData.videoUrl || null,
+      pdfUrl: formData.pdfUrl || null,
+      // Video's staan in de lijst; het oude losse veld wordt daarin meegenomen en daarom leeggemaakt
+      videoUrl: null,
+      videos: (formData.videos || []).filter((v) => String(v.url || '').trim()).map((v) => ({ url: v.url.trim(), title: (v.title || '').trim() })),
       slug: formData.slug ? formData.slug.trim().toLowerCase() : null,
       seoTitle: formData.seoTitle || null, metaDescription: formData.metaDescription || null,
     };
@@ -149,6 +163,19 @@ export default function ProductEditor() {
       }
     } catch (err) { setError(errorText(err, 'Opslaan mislukt')); }
     finally { setSaving(false); }
+  };
+
+  const setVideos = (list) => update({ videos: list });
+  const uploadVideo = async (file) => {
+    if (!file) return;
+    setVideoError(''); setVideoUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('video', file);
+      const r = await api.post('/uploads/video', fd, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 0 });
+      setVideos([...(formData.videos || []), { url: r.data.url, title: file.name.replace(/\.[^.]+$/, '') }]);
+    } catch (err) { setVideoError(errorText(err, 'Uploaden mislukt')); }
+    setVideoUploading(false);
   };
 
   const handleAddRelation = async (relatedId) => {
@@ -338,11 +365,46 @@ export default function ProductEditor() {
             </select>
           </Card>
 
-          <Card title="Documenten & video">
+          <Card title="Documenten">
             <label className={labelCls}><FileText size={12} className="inline mr-1" /> PDF-link</label>
             <input className={inputCls} placeholder="/uploads/product.pdf" value={formData.pdfUrl || ''} onChange={(e) => update({ pdfUrl: e.target.value })} />
-            <label className={`${labelCls} mt-4`}><Video size={12} className="inline mr-1" /> YouTube-link</label>
-            <input className={inputCls} placeholder="https://youtube.com/watch?v=..." value={formData.videoUrl || ''} onChange={(e) => update({ videoUrl: e.target.value })} />
+          </Card>
+
+          <Card title="Video's" hint="Verschijnen op de productpagina onder de tab Video. Plak een YouTube- of Vimeo-link, of upload een mp4-, webm- of mov-bestand (maximaal 200 MB).">
+            <div className="space-y-3">
+              {(formData.videos || []).length === 0 && <p className="text-sm text-gray-400">Nog geen video's.</p>}
+              {(formData.videos || []).map((v, i) => {
+                const list = formData.videos;
+                const isFile = String(v.url || '').startsWith('/uploads/');
+                const patch = (d) => setVideos(list.map((x, j) => (j === i ? { ...x, ...d } : x)));
+                const move = (dir) => { const j = i + dir; if (j < 0 || j >= list.length) return; const n = [...list]; [n[i], n[j]] = [n[j], n[i]]; setVideos(n); };
+                return (
+                  <div key={i} className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col">
+                        <button type="button" onClick={() => move(-1)} disabled={i === 0} className="p-0.5 text-gray-300 hover:text-gray-700 disabled:opacity-20"><ArrowUp size={13} /></button>
+                        <button type="button" onClick={() => move(1)} disabled={i === list.length - 1} className="p-0.5 text-gray-300 hover:text-gray-700 disabled:opacity-20"><ArrowDown size={13} /></button>
+                      </div>
+                      <input className={`${inputCls} !py-2`} placeholder="Titel (optioneel)" value={v.title || ''} onChange={(e) => patch({ title: e.target.value })} />
+                      <button type="button" onClick={() => setVideos(list.filter((_, j) => j !== i))} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg" title="Verwijderen"><Trash2 size={14} /></button>
+                    </div>
+                    {isFile ? (
+                      <video src={getMediaUrl(v.url)} controls preload="metadata" className="w-full rounded-lg bg-black max-h-48" />
+                    ) : (
+                      <input className={`${inputCls} !py-2`} placeholder="https://www.youtube.com/watch?v=..." value={v.url || ''} onChange={(e) => patch({ url: e.target.value })} />
+                    )}
+                  </div>
+                );
+              })}
+              {videoError && <p className="text-xs text-red-600">{videoError}</p>}
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => setVideos([...(formData.videos || []), { url: '', title: '' }])} className="flex items-center gap-1 px-3 py-2 rounded-lg border text-xs font-bold text-gray-600 hover:bg-gray-50"><Plus size={13} /> Link toevoegen</button>
+                <label className={`flex items-center gap-1 px-3 py-2 rounded-lg border text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer ${videoUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                  {videoUploading ? <><Loader2 size={13} className="animate-spin" /> Uploaden…</> : <><Video size={13} /> Video uploaden</>}
+                  <input type="file" accept="video/mp4,video/webm,video/quicktime" className="hidden" onChange={(e) => { uploadVideo(e.target.files?.[0]); e.target.value = ''; }} />
+                </label>
+              </div>
+            </div>
           </Card>
         </div>
       </div>
