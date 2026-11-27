@@ -85,6 +85,22 @@ async function ensureAdmin() {
     console.error('[server] Error ensuring admin:', err);
   }
 }
+// Eenmalig extra beheerder aanmaken via omgevingsvariabelen (PROVISION_ADMIN_EMAIL, PROVISION_ADMIN_PASSWORD, optioneel PROVISION_ADMIN_NAME).
+// Maakt alleen aan als het adres nog niet bestaat en wijzigt nooit een bestaand account. Haal de variabelen daarna weer weg.
+async function ensureProvisionedAdmin() {
+  const email = (process.env.PROVISION_ADMIN_EMAIL || '').trim().toLowerCase();
+  const password = process.env.PROVISION_ADMIN_PASSWORD || '';
+  if (!email || !password) return;
+  try {
+    const existing = await db.select().from(users).where(eq(users.email, email));
+    if (existing.length > 0) { console.log(`[server] Extra admin bestaat al: ${email}`); return; }
+    await db.insert(users).values({ email, password: await bcrypt.hash(password, 12), name: (process.env.PROVISION_ADMIN_NAME || email.split('@')[0] || 'Admin').trim(), role: 'ADMIN' });
+    console.log(`[server] Extra admin aangemaakt: ${email}`);
+  } catch (err) {
+    console.error('[server] Extra admin aanmaken mislukt:', err);
+  }
+}
+
 async function bootstrap() {
   await runMigrations();
   await ensureAnalyticsTables();
@@ -97,6 +113,7 @@ async function bootstrap() {
   await ensureTwoFactorTables();
   await resetTwoFactorFromEnv();
   await ensureAdmin();
+  await ensureProvisionedAdmin();
   await seedExtraBlogs();
   await seedLegalReturns();
   await seedLegalComplaints();
