@@ -29,6 +29,7 @@ type ProductInput = {
   slug?: string | null;
   seoTitle?: string | null;
   metaDescription?: string | null;
+  videos?: string | null;
 };
 
 function normalizeImageUrls(imageUrls?: string[] | null, imageUrl?: string | null) {
@@ -143,6 +144,7 @@ export async function createProduct(input: ProductInput) {
     slug: input.slug || null,
     seoTitle: input.seoTitle || null,
     metaDescription: input.metaDescription || null,
+    videos: input.videos || null,
   });
   await replaceProductImages(id, imageUrls);
   return await getProduct(id);
@@ -173,6 +175,7 @@ export async function updateProduct(id: string, patch: Partial<ProductInput>) {
       ...(patch.slug !== undefined ? { slug: patch.slug || null } : {}),
       ...(patch.seoTitle !== undefined ? { seoTitle: patch.seoTitle || null } : {}),
       ...(patch.metaDescription !== undefined ? { metaDescription: patch.metaDescription || null } : {}),
+      ...(patch.videos !== undefined ? { videos: patch.videos || null } : {}),
       updatedAt: new Date(),
     })
     .where(eq(products.id, id));

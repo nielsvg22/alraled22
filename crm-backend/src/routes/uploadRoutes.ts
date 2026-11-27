@@ -28,7 +28,26 @@ const upload = multer({
   },
 });
 
+// Video's bij producten: mp4, webm of mov, tot 200 MB
+const videoUpload = multer({
+  storage,
+  limits: { fileSize: 200 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (['video/mp4', 'video/webm', 'video/quicktime'].includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Alleen mp4-, webm- of mov-video\'s zijn toegestaan'));
+  },
+});
+
 const router = Router();
+
+router.post('/video', authMiddleware, adminMiddleware, (req: Request, res: Response) => {
+  videoUpload.single('video')(req, res, (err: any) => {
+    if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'De video is te groot (maximaal 200 MB)' : (err.message || 'Uploaden mislukt') });
+    if (!req.file) return res.status(400).json({ error: 'Geen bestand geüpload' });
+    // Relatief adres: werkt op elk domein van de site (de webshop schrijft /uploads/ om naar de huidige API)
+    res.json({ url: `/uploads/${req.file.filename}` });
+  });
+});
 
 router.post('/', authMiddleware, adminMiddleware, upload.single('image'), (req: Request, res: Response) => {
   if (!req.file) {

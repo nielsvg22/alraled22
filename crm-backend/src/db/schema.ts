@@ -49,6 +49,7 @@ export const products = mysqlTable('Product', {
   slug: varchar('slug', { length: 255 }).unique('Product_slug_unique'),
   seoTitle: varchar('seoTitle', { length: 255 }),
   metaDescription: varchar('metaDescription', { length: 500 }),
+  videos: text('videos'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow().onUpdateNow(),
 });
